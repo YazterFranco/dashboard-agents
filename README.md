@@ -128,11 +128,14 @@ Quita solo las entradas de AgentDash (las reconoce porque el comando contiene
 | `AGENTDASH_RETENTION_DAYS` | `7` | Días de historial |
 | `AGENTDASH_URL` | `http://127.0.0.1:4820` | A dónde envía el hook |
 | `AGENTDASH_DEBUG` | — | `1` para que el hook explique sus errores en stderr |
+| `AGENTDASH_ALLOWED_HOSTS` | — | Nombres extra (separados por comas) con los que abrir el dashboard, p. ej. si lo expones en tu red |
 
 ## Privacidad
 
 - Todo se queda en tu máquina. El servidor escucha solo en `127.0.0.1`, y en Docker el puerto
   también se publica solo en localhost.
+- Solo acepta peticiones cuyo `Host` y `Origin` sean locales (`localhost`, `127.0.0.1`, `::1`):
+  una web que visites no puede leer tu actividad por WebSocket ni mediante *DNS rebinding*.
 - El hook recorta los textos largos (más de 2000 caracteres) y solo copia dos variables de entorno
   (`TERM_PROGRAM` y `CLAUDE_CODE_ENTRYPOINT`, para distinguir CLI de VS Code).
 - Antes de guardar, el servidor redacta patrones de secretos (`sk-…`, `ghp_…`, `AKIA…`, `Bearer …`,

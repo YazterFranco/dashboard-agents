@@ -23,6 +23,16 @@ export interface BuildAppOptions {
   store: EventStore | null;
   webDir?: string;
   logger?: boolean;
+  /** Extra hostnames (besides localhost/127.0.0.1/::1) allowed in Host and Origin. */
+  allowedHosts?: string[];
+}
+
+const LOCAL_HOSTS = ['localhost', '127.0.0.1', '::1', '[::1]'];
+
+function hostnameOf(hostHeader: string): string {
+  const h = hostHeader.trim().toLowerCase();
+  if (h.startsWith('[')) return h.slice(0, h.indexOf(']') + 1);
+  return h.split(':')[0];
 }
 
 export interface BuiltApp {
@@ -45,6 +55,32 @@ export async function buildApp(opts: BuildAppOptions): Promise<BuiltApp> {
     const data = JSON.stringify(msg);
     for (const s of sockets) if (s.readyState === s.OPEN) s.send(data);
   };
+
+  // Browsers do not apply CORS to WebSockets, and DNS rebinding can make a hostile site
+  // same-origin with 127.0.0.1. Only local (or explicitly allowed) Host and Origin pass;
+  // non-browser clients such as the hook send no Origin.
+  const allowed = new Set([...LOCAL_HOSTS, ...(opts.allowedHosts ?? []).map((h) => h.toLowerCase())]);
+  app.addHook('onRequest', async (req, reply) => {
+    // A rejected WebSocket upgrade must not leave its raw socket open.
+    const deny = (error: string) => {
+      if (req.headers.upgrade) {
+        reply.header('connection', 'close');
+        reply.raw.once('finish', () => req.raw.socket?.destroy());
+      }
+      return reply.code(403).send({ error });
+    };
+    if (!allowed.has(hostnameOf(req.headers.host ?? ''))) return deny('host no permitido');
+    const origin = req.headers.origin;
+    if (origin) {
+      let originHost = '';
+      try {
+        originHost = new URL(origin).hostname.toLowerCase();
+      } catch {
+        /* invalid origin → rejected below */
+      }
+      if (!allowed.has(originHost)) return deny('origen no permitido');
+    }
+  });
 
   await app.register(fastifyWebsocket);
 
@@ -104,6 +140,7 @@ function safeCount(store: EventStore): number {
 }
 
 export interface StartServerOptions {
+  allowedHosts?: string[];
   host?: string;
   port?: number;
   dbPath?: string;
@@ -132,7 +169,12 @@ export async function startServer(opts: StartServerOptions = {}): Promise<Runnin
     console.error(`[agentdash] SQLite no disponible (${(err as Error).message}); se usará solo memoria`);
   }
 
-  const { app, pipeline, broadcast } = await buildApp({ store, webDir: opts.webDir, logger: opts.logger });
+  const allowedHosts = [
+    ...(opts.allowedHosts ?? []),
+    ...(env.AGENTDASH_ALLOWED_HOSTS ?? '').split(',').map((h) => h.trim()).filter(Boolean),
+    ...(host !== '0.0.0.0' && host !== '::' ? [host] : []),
+  ];
+  const { app, pipeline, broadcast } = await buildApp({ store, webDir: opts.webDir, logger: opts.logger, allowedHosts });
 
   const prune = () => {
     try {

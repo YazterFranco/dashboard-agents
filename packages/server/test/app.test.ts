@@ -106,3 +106,41 @@ describe('static UI', () => {
     expect((await app.inject({ method: 'GET', url: '/api/nope' })).statusCode).toBe(404);
   });
 });
+
+describe('browser access protection', () => {
+  it('rejects requests whose Host is not local (DNS rebinding)', async () => {
+    const app = await makeApp();
+    const res = await app.inject({ method: 'GET', url: '/api/agents', headers: { host: 'evil.example:4820' } });
+    expect(res.statusCode).toBe(403);
+  });
+  it('rejects cross-site browser origins, including WebSocket handshakes', async () => {
+    const app = await makeApp();
+    expect((await app.inject({ method: 'GET', url: '/api/agents', headers: { host: '127.0.0.1:4820', origin: 'https://evil.example' } })).statusCode).toBe(403);
+    expect((await app.inject({ method: 'GET', url: '/ws', headers: { host: '127.0.0.1:4820', origin: 'https://evil.example', connection: 'Upgrade', upgrade: 'websocket', 'sec-websocket-version': '13', 'sec-websocket-key': 'dGhlIHNhbXBsZSBub25jZQ==' } })).statusCode).toBe(403);
+  });
+  it('allows local origins (the UI and the Vite dev server) and clients without Origin', async () => {
+    const app = await makeApp();
+    expect((await app.inject({ method: 'GET', url: '/api/agents', headers: { host: '127.0.0.1:4820', origin: 'http://127.0.0.1:4820' } })).statusCode).toBe(200);
+    expect((await app.inject({ method: 'GET', url: '/api/agents', headers: { host: 'localhost:5173', origin: 'http://localhost:5173' } })).statusCode).toBe(200);
+    expect((await app.inject({ method: 'POST', url: '/api/ingest', headers: { host: '127.0.0.1:4820' }, payload: load('claude/prompt') })).statusCode).toBe(202);
+  });
+  it('accepts extra hosts when configured', async () => {
+    const { app } = await buildApp({ store: null, allowedHosts: ['dash.lan'] });
+    closers.push(() => app.close());
+    expect((await app.inject({ method: 'GET', url: '/api/agents', headers: { host: 'dash.lan:4820', origin: 'http://dash.lan:4820' } })).statusCode).toBe(200);
+  });
+  it('refuses a cross-site WebSocket on a real server', async () => {
+    const server = await startServer({ port: 0, dbPath: ':memory:' });
+    closers.push(() => server.close());
+    const status = await new Promise<number>((resolve) => {
+      const ws = new WebSocket(server.url.replace('http', 'ws') + '/ws', { headers: { origin: 'https://evil.example' } });
+      ws.on('unexpected-response', (_req, res) => resolve(res.statusCode ?? 0));
+      ws.on('open', () => {
+        ws.close();
+        resolve(101);
+      });
+      ws.on('error', () => {});
+    });
+    expect(status).toBe(403);
+  });
+});
