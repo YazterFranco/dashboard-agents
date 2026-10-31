@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 export default defineConfig({
   resolve: {
     alias: {
+      '@agentdash/shared/constants': fileURLToPath(new URL('./packages/shared/src/constants.ts', import.meta.url)),
       '@agentdash/shared': fileURLToPath(new URL('./packages/shared/src/index.ts', import.meta.url)),
     },
   },

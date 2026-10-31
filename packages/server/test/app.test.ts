@@ -87,3 +87,22 @@ describe('WebSocket', () => {
     expect(messages[1]).toMatchObject({ type: 'event', event: { type: 'prompt' }, agents: [{ id: 'sess-1', status: 'working' }] });
   });
 });
+
+describe('static UI', () => {
+  it('serves files added after startup, falls back to index.html and keeps API 404s', async () => {
+    const { mkdtempSync, mkdirSync, writeFileSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const dir = mkdtempSync(join(tmpdir(), 'agentdash-web-'));
+    writeFileSync(join(dir, 'index.html'), '<!doctype html><title>AgentDash</title>');
+    const { app } = await buildApp({ store: null, webDir: dir });
+    closers.push(() => app.close());
+    mkdirSync(join(dir, 'assets'));
+    writeFileSync(join(dir, 'assets', 'new.js'), 'console.log(1)');
+    const js = await app.inject({ method: 'GET', url: '/assets/new.js' });
+    expect(js.statusCode).toBe(200);
+    expect(js.headers['content-type']).toContain('javascript');
+    expect((await app.inject({ method: 'GET', url: '/agente/123' })).body).toContain('AgentDash');
+    expect((await app.inject({ method: 'GET', url: '/api/nope' })).statusCode).toBe(404);
+  });
+});
