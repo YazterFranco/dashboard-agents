@@ -1,0 +1,12 @@
+{
+  "v": 1,
+  "platform": "kiro-cli",
+  "receivedAt": 1793480000000,
+  "cwd": "/home/u/shop",
+  "ppid": 4242,
+  "pid": 5001,
+  "payload": {
+    "cwd": "/home/u/shop",
+    "hook_event_name": "agentSpawn"
+  }
+}

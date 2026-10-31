@@ -1,0 +1,10 @@
+{
+  "v": 1,
+  "platform": "kiro-ide",
+  "eventHint": "PreToolUse",
+  "receivedAt": 1793480000000,
+  "cwd": "/home/u/checkout",
+  "ppid": 777,
+  "pid": 9001,
+  "payload": null
+}
