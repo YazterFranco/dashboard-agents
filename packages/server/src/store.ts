@@ -1,6 +1,7 @@
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { DatabaseSync, type StatementSync } from 'node:sqlite';
+import { createRequire } from 'node:module';
+import type { DatabaseSync, StatementSync } from 'node:sqlite';
 import type { AgentEvent, Platform } from '@agentdash/shared';
 
 /** Append-only event history in SQLite (node:sqlite, no native dependencies). */
@@ -10,7 +11,9 @@ export class EventStore {
 
   constructor(path: string) {
     if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
-    this.db = new DatabaseSync(path);
+    // Loaded lazily so the CLI can silence node:sqlite's ExperimentalWarning before it fires.
+    const sqlite = createRequire(import.meta.url)('node:sqlite') as typeof import('node:sqlite');
+    this.db = new sqlite.DatabaseSync(path);
     this.db.exec(`
       PRAGMA journal_mode = WAL;
       CREATE TABLE IF NOT EXISTS events (
