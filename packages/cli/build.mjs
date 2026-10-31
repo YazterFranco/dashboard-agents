@@ -1,5 +1,5 @@
 import { build } from 'esbuild';
-import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs';
+import { chmodSync, cpSync, existsSync, mkdirSync, rmSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const here = (p) => fileURLToPath(new URL(p, import.meta.url));
@@ -22,6 +22,7 @@ await build({
   logLevel: 'warning',
 });
 
+chmodSync(here('./dist/agentdash.mjs'), 0o755);
 cpSync(here('./hook/hook.mjs'), here('./dist/hook.mjs'));
 const web = here('../web/dist');
 if (existsSync(web)) cpSync(web, here('./dist/web'), { recursive: true });

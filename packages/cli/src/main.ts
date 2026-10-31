@@ -23,7 +23,7 @@ const defaultUrl = () => process.env.AGENTDASH_URL ?? `http://${DEFAULT_HOST}:${
 
 const HELP = `AgentDash ${VERSION} — dashboard en vivo de agentes (Claude Code, Kiro)
 
-Uso:
+Uso (desde la carpeta del repo: npm run agentdash -- <comando>):
   agentdash start [--port 4820] [--host 127.0.0.1] [--db ruta]
   agentdash install <claude|kiro-cli|kiro-ide> [--agent nombre] [--workspace carpeta] [--print]
   agentdash uninstall <claude|kiro-cli|kiro-ide> [--agent nombre] [--workspace carpeta]
@@ -64,7 +64,7 @@ async function cmdInstall(kind: 'install' | 'uninstall', positionals: string[], 
     home: homedir(),
     hookSource: HOOK_SOURCE,
     agent: values.agent as string | undefined,
-    workspace: (values.workspace as string | undefined) ?? (t === 'kiro-ide' ? process.cwd() : undefined),
+    workspace: (values.workspace as string | undefined) ?? (t === 'kiro-ide' ? (process.env.INIT_CWD ?? process.cwd()) : undefined),
     print: Boolean(values.print),
   };
   const result = kind === 'install' ? await install(t, opts) : await uninstall(t, opts);

@@ -21,7 +21,8 @@ Tomamos lo visual de la primera y lo fiable de la segunda.
 3. Una herramienta de un Power de Kiro o de un MCP/plugin de Claude se etiqueta
    como tal (`power: stripe`, `mcp: github`, `plugin: code-review`).
 4. Si el dashboard está apagado, los agentes funcionan exactamente igual (fail-open).
-5. Se levanta con `docker compose up` o `npx agentdash start`.
+5. Se levanta con `docker compose up` o `npm run agentdash -- start` (desde el repo).
+   Nunca `npx agentdash`: hay un paquete público ajeno con ese nombre.
 
 ### Fuera de alcance (v1)
 
@@ -284,8 +285,8 @@ Componentes:
   extensiones), **Flujo** (últimas 12 herramientas como cadena; repeticiones seguidas se
   comprimen, p. ej. `Read ×3`), **Ahora** (herramienta en curso + resumen) y **Timeline**
   (eventos más recientes primero con duración y resultado).
-- **Estado vacío**: "Aún no hay agentes" con los comandos `npx agentdash install claude` y
-  `npx agentdash demo` listos para copiar.
+- **Estado vacío**: "Aún no hay agentes" con los comandos `npm run agentdash -- install claude` y
+  `npm run agentdash -- demo` listos para copiar.
 - Cliente WS con reconexión exponencial (0.5 s → 10 s) y re-snapshot al reconectar.
 - Responsive: en móvil el árbol y el detalle se apilan.
 

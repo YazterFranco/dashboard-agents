@@ -1,9 +1,10 @@
 import { useState } from 'react';
 
+// Run from the repo folder. Never `npx agentdash`: an unrelated public npm package has that name.
 const COMMANDS = [
-  ['Conecta Claude Code', 'npx agentdash install claude'],
-  ['Conecta Kiro CLI', 'npx agentdash install kiro-cli'],
-  ['O prueba con datos de ejemplo', 'npx agentdash demo'],
+  ['Conecta Claude Code', 'npm run agentdash -- install claude'],
+  ['Conecta Kiro CLI', 'npm run agentdash -- install kiro-cli'],
+  ['O prueba con datos de ejemplo', 'npm run agentdash -- demo'],
 ];
 
 export function EmptyState() {
@@ -20,7 +21,7 @@ export function EmptyState() {
   return (
     <section className="panel empty" aria-label="Sin agentes">
       <h2 className="panel-title">Aún no hay agentes</h2>
-      <p className="muted">Instala los hooks y abre una sesión nueva: aparecerá aquí en cuanto haga algo.</p>
+      <p className="muted">Desde la carpeta de AgentDash, instala los hooks y abre una sesión nueva: aparecerá aquí en cuanto haga algo.</p>
       <ul className="commands">
         {COMMANDS.map(([label, cmd]) => (
           <li key={cmd}>

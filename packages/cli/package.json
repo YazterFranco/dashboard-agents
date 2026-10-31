@@ -5,9 +5,10 @@
   "type": "module",
   "description": "AgentDash: dashboard en vivo de agentes de Claude Code y Kiro",
   "bin": {
-    "agentdash": "dist/agentdash.mjs"
+    "agentdash": "bin/agentdash.mjs"
   },
   "files": [
+    "bin",
     "dist"
   ],
   "engines": {
