@@ -6,5 +6,6 @@
   "cwd": "/home/u/checkout",
   "ppid": 777,
   "pid": 9001,
-  "payload": null
+  "payload": null,
+  "sessionPid": 777
 }

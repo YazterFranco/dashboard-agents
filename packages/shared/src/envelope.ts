@@ -9,6 +9,7 @@ export const HookEnvelopeSchema = z.object({
   cwd: z.string().optional(),
   ppid: z.number().int().optional(),
   pid: z.number().int().optional(),
+  sessionPid: z.number().int().optional(),
   envHints: z.record(z.string(), z.string()).optional(),
   payload: z.unknown(),
   payloadText: z.string().optional(),

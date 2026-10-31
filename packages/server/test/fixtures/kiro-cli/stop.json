@@ -8,5 +8,6 @@
   "payload": {
     "cwd": "/home/u/shop",
     "hook_event_name": "stop"
-  }
+  },
+  "sessionPid": 4242
 }

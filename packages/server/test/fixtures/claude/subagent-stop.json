@@ -13,5 +13,6 @@
     "hook_event_name": "SubagentStop",
     "stop_hook_active": false,
     "agent_id": "agent-7"
-  }
+  },
+  "sessionPid": 1001
 }

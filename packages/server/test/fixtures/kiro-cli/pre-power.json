@@ -12,5 +12,6 @@
     "tool_input": {
       "query": "webhooks signature"
     }
-  }
+  },
+  "sessionPid": 4242
 }

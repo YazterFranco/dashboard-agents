@@ -22,5 +22,6 @@
       "filePath": "src/auth/session.ts",
       "success": true
     }
-  }
+  },
+  "sessionPid": 1001
 }

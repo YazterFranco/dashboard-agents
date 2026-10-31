@@ -18,5 +18,6 @@
     },
     "agent_id": "agent-7",
     "agent_type": "test-runner"
-  }
+  },
+  "sessionPid": 1001
 }

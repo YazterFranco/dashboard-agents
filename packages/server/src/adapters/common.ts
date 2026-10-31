@@ -44,9 +44,11 @@ export function sessionIdFor(env: HookEnvelope): string {
   const p = asPayload(env.payload);
   const explicit = str(p?.session_id) ?? str(p?.sessionId);
   if (explicit) return explicit;
+  // ppid is NOT stable: hooks often run under a fresh `sh -c`, so each event would get its own
+  // parent. The hook reports sessionPid (first non-shell ancestor); without it, group by folder.
   const cwd = str(p?.cwd) ?? env.cwd ?? '';
-  if (env.platform === 'claude') return `claude:${env.ppid ?? 0}:${cwd}`;
-  return `kiro:${surfaceOf(env)}:${env.ppid ?? 0}:${cwd}`;
+  const prefix = env.platform === 'claude' ? 'claude' : `kiro:${surfaceOf(env)}`;
+  return env.sessionPid ? `${prefix}:${env.sessionPid}:${cwd}` : `${prefix}:${cwd}`;
 }
 
 export function makeRaw(env: HookEnvelope): string {

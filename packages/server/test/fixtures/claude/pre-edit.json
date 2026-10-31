@@ -18,5 +18,6 @@
       "old_string": "validateToken(",
       "new_string": "verifySession("
     }
-  }
+  },
+  "sessionPid": 1001
 }

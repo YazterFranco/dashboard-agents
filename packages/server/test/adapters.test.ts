@@ -103,7 +103,17 @@ describe('adapt — Kiro', () => {
     expect(adapt(load('kiro-ide/pre-tool-with-payload'))[0].tool).toMatchObject({ name: 'fsWrite', summary: 'src/checkout/spec.md' });
   });
   it('keeps two Kiro processes in the same folder apart', () => {
-    expect(adapt({ ...load('kiro-cli/pre-tool'), ppid: 9999 })[0].sessionId).not.toBe(adapt(load('kiro-cli/pre-tool'))[0].sessionId);
+    expect(adapt({ ...load('kiro-cli/pre-tool'), sessionPid: 9999 })[0].sessionId).not.toBe(adapt(load('kiro-cli/pre-tool'))[0].sessionId);
+  });
+  it('keeps one Kiro session together even when each hook runs under a new shell (different ppid)', () => {
+    const a = adapt({ ...load('kiro-cli/pre-tool'), ppid: 1111 })[0].sessionId;
+    const b = adapt({ ...load('kiro-cli/post-tool'), ppid: 2222 })[0].sessionId;
+    expect(a).toBe(b);
+  });
+  it('groups by folder when the session process is unknown', () => {
+    const env = { ...load('kiro-cli/pre-tool') };
+    delete env.sessionPid;
+    expect(adapt(env)[0].sessionId).toBe('kiro:cli:/home/u/shop');
   });
 });
 

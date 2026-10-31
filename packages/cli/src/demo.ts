@@ -18,6 +18,7 @@ function claudeAgent(session: string, folder: string, ppid: number, vscode = fal
     cwd,
     ppid,
     pid: ppid + 1,
+    sessionPid: ppid,
     envHints: vscode ? { TERM_PROGRAM: 'vscode' } : {},
     payload: { session_id: session, cwd, transcript_path: `/home/dev/.claude/projects/${folder}/${session}.jsonl`, ...payload },
   });
@@ -32,6 +33,7 @@ function kiroAgent(platform: 'kiro-cli' | 'kiro-ide', folder: string, ppid: numb
     cwd,
     ppid,
     pid: ppid + 1,
+    sessionPid: ppid,
     payload: payload ? { cwd, ...payload } : null,
   });
 }

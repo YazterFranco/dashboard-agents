@@ -8,6 +8,7 @@
   "payload": {
     "cwd": "/home/u/shop",
     "hook_event_name": "userPromptSubmit",
-    "prompt": "busca en la doc de stripe cómo validar webhooks"
-  }
+    "prompt": "busca en la doc de stripe c\u00f3mo validar webhooks"
+  },
+  "sessionPid": 4242
 }

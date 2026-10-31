@@ -22,5 +22,6 @@
       "interrupted": false,
       "is_error": true
     }
-  }
+  },
+  "sessionPid": 1001
 }

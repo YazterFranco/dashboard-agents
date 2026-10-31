@@ -12,5 +12,6 @@
     "permission_mode": "default",
     "hook_event_name": "UserPromptSubmit",
     "prompt": "refactoriza auth para usar verifySession()"
-  }
+  },
+  "sessionPid": 1001
 }

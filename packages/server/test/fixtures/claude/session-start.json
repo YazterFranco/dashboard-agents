@@ -12,5 +12,6 @@
     "permission_mode": "default",
     "hook_event_name": "SessionStart",
     "source": "startup"
-  }
+  },
+  "sessionPid": 1001
 }

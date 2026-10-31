@@ -123,8 +123,9 @@ interface AgentEvent {
 ### 4.2 Identidad de sesión
 
 - Claude: `session_id` del payload.
-- Kiro: `session_id` si llega; si no, `kiro:<surface>:<ppid>:<cwd>`. El `ppid` del hook es el
-  proceso del agente (CLI) o del IDE, estable mientras viva.
+- Kiro: `session_id` si llega; si no, `kiro:<surface>:<sessionPid>:<cwd>`, donde `sessionPid` es el primer
+  ancestro del hook que no es una shell (el `ppid` no sirve: los hooks suelen correr bajo un `sh -c` nuevo
+  en cada evento). Sin `sessionPid` (p. ej. Windows) se agrupa por carpeta: `kiro:<surface>:<cwd>`.
 
 ### 4.3 Adaptadores
 

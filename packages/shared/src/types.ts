@@ -73,6 +73,8 @@ export interface HookEnvelope {
   cwd?: string;
   ppid?: number;
   pid?: number;
+  /** Nearest ancestor of the hook that is not a shell: stable for the whole agent session. */
+  sessionPid?: number;
   envHints?: Record<string, string>;
   payload: unknown | null;
   payloadText?: string;

@@ -8,5 +8,6 @@
   "payload": {
     "cwd": "/home/u/shop",
     "hook_event_name": "agentSpawn"
-  }
+  },
+  "sessionPid": 4242
 }

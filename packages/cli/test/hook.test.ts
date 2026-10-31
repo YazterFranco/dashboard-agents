@@ -85,6 +85,22 @@ describe('hook.mjs', () => {
     expect(r.ms).toBeLessThan(2000);
   });
 
+  it('reports the same sessionPid when each invocation goes through a new shell', async () => {
+    const viaShell = () =>
+      new Promise<void>((resolve) => {
+        const child = spawn('sh', ['-c', `"${process.execPath}" "${HOOK}" kiro-cli`], { env: { PATH: process.env.PATH ?? '', AGENTDASH_URL: url } });
+        child.on('close', () => resolve());
+        child.stdin.end('{"hook_event_name":"stop"}');
+      });
+    await viaShell();
+    const first = received.at(-1);
+    await viaShell();
+    const second = received.at(-1);
+    expect(first.ppid).not.toBe(second.ppid);
+    expect(first.sessionPid).toBe(process.pid);
+    expect(second.sessionPid).toBe(process.pid);
+  });
+
   it('exits 0 without sending for an unknown platform', async () => {
     const before = received.length;
     const r = await run(['otra'], '{}');

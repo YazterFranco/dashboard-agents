@@ -15,5 +15,6 @@
     "tool_response": {
       "success": true
     }
-  }
+  },
+  "sessionPid": 4242
 }

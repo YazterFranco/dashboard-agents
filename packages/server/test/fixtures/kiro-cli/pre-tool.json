@@ -12,5 +12,6 @@
     "tool_input": {
       "path": "src/webhooks.ts"
     }
-  }
+  },
+  "sessionPid": 4242
 }

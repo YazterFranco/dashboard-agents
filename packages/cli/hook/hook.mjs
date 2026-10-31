@@ -7,7 +7,11 @@
 // Code and Kiro inject the stdout of some hooks into the agent's context),
 // and always exits 0 (exit 2 would block the agent's tool call).
 
+import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+
 const PLATFORMS = new Set(['claude', 'kiro-cli', 'kiro-ide']);
+const SHELLS = new Set(['sh', 'dash', 'bash', 'zsh', 'fish', 'ash', 'ksh', 'busybox', 'env', 'cmd.exe', 'powershell.exe', 'pwsh', 'pwsh.exe']);
 const ENV_HINTS = ['TERM_PROGRAM', 'CLAUDE_CODE_ENTRYPOINT'];
 const MAX_STDIN_BYTES = 16 * 1024 * 1024;
 const STDIN_IDLE_MS = 200;
@@ -69,6 +73,43 @@ function shrink(value, depth = 0) {
   return out;
 }
 
+/** Name and parent of a process, or null where we cannot ask cheaply (e.g. Windows). */
+function procInfo(pid) {
+  if (process.platform === 'linux') {
+    const stat = readFileSync(`/proc/${pid}/stat`, 'utf8');
+    const close = stat.lastIndexOf(')');
+    const name = stat.slice(stat.indexOf('(') + 1, close);
+    const ppid = Number(stat.slice(close + 2).split(' ')[1]);
+    return { name, ppid };
+  }
+  if (process.platform === 'darwin') {
+    const out = execFileSync('ps', ['-o', 'ppid=,comm=', '-p', String(pid)], { encoding: 'utf8', timeout: 300 }).trim();
+    const m = /^(\d+)\s+(.+)$/.exec(out);
+    return m ? { ppid: Number(m[1]), name: m[2].split('/').pop().replace(/^-/, '') } : null;
+  }
+  return null;
+}
+
+/**
+ * The agent process that owns this session: walk up from our parent, skipping shells
+ * (hooks are often run as `sh -c "node hook.mjs …"`, which gives every event a new ppid).
+ */
+function sessionPid() {
+  let pid = process.ppid;
+  for (let depth = 0; depth < 4 && pid > 1; depth++) {
+    let info;
+    try {
+      info = procInfo(pid);
+    } catch {
+      info = null;
+    }
+    if (!info) return undefined;
+    if (!SHELLS.has(info.name)) return pid;
+    pid = info.ppid;
+  }
+  return pid > 1 ? pid : undefined;
+}
+
 function envHints() {
   const hints = {};
   for (const key of ENV_HINTS) if (process.env[key]) hints[key] = process.env[key];
@@ -99,6 +140,7 @@ async function main() {
     cwd: process.cwd(),
     ppid: process.ppid,
     pid: process.pid,
+    sessionPid: sessionPid(),
     envHints: envHints(),
     payload,
     ...(payloadText !== undefined ? { payloadText } : {}),
