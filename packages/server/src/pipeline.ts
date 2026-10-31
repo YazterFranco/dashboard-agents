@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { AgentEvent, AgentState, HookEnvelope } from '@agentdash/shared';
+import { REPLAY_WINDOW_MS, type AgentEvent, type AgentState, type HookEnvelope } from '@agentdash/shared';
 import { adapt } from './adapters/index.js';
 import { markStale, reduce, type AgentMap } from './state.js';
 import type { EventStore } from './store.js';
@@ -56,6 +56,30 @@ export class Pipeline {
 
   tick(now: number): AgentState[] {
     return markStale(this.agentsById, now).map((id) => this.agentsById.get(id)!);
+  }
+
+  /**
+   * Forgets finished or stale agents idle for longer than the replay window, so a long-running
+   * server holds the same state a restart would rebuild. Returns the evicted ids.
+   */
+  evict(now: number): string[] {
+    const evicted: string[] = [];
+    for (const a of this.agentsById.values()) {
+      if (a.parentId) continue;
+      if ((a.status === 'done' || a.status === 'stale') && now - a.lastEventAt > REPLAY_WINDOW_MS) {
+        for (const other of this.agentsById.values()) if (other.sessionId === a.sessionId) evicted.push(other.id);
+      }
+    }
+    const gone = new Set(evicted);
+    for (const id of gone) this.agentsById.delete(id);
+    for (const [key, childId] of this.bindings) {
+      if (gone.has(childId)) {
+        this.bindings.delete(key);
+        this.boundChildren.delete(childId);
+      }
+    }
+    for (const key of this.openTools.keys()) if (gone.has(key.split('|')[0])) this.openTools.delete(key);
+    return evicted;
   }
 
   private bind(sessionId: string, externalId: string, childId: string): void {

@@ -102,3 +102,32 @@ describe('Pipeline', () => {
     expect(p.tick(base + 600_001).map((a) => a.status)).toEqual(['stale']);
   });
 });
+
+describe('Pipeline.evict', () => {
+  it('drops finished agents (and their children) older than 24 h, like a restart would', () => {
+    const p = new Pipeline(null);
+    p.ingest(env('claude/pre-task'));
+    p.ingest(env('claude/session-end'));
+    p.ingest(env('kiro-cli/pre-tool'));
+    const later = base + 24 * 60 * 60 * 1000 + 1;
+    expect(p.evict(later).sort()).toEqual(['sess-1', 'sess-1:tu-task']);
+    expect(p.agents().map((a) => a.id)).toEqual(['kiro:cli:4242:/home/u/shop']);
+  });
+  it('keeps active agents; they are evicted only after going stale', () => {
+    const p = new Pipeline(null);
+    p.ingest(env('kiro-cli/pre-tool'));
+    const later = base + 24 * 60 * 60 * 1000 + 1;
+    expect(p.evict(later)).toEqual([]);
+    p.tick(later);
+    expect(p.evict(later)).toEqual(['kiro:cli:4242:/home/u/shop']);
+  });
+  it('forgets subagent bindings of evicted sessions', () => {
+    const p = new Pipeline(null);
+    p.ingest(env('claude/pre-task'));
+    p.ingest(env('claude/tool-in-subagent'));
+    p.ingest(env('claude/session-end'));
+    p.evict(base + 24 * 60 * 60 * 1000 + 1);
+    p.ingest(env('claude/tool-in-subagent', { receivedAt: base + 24 * 60 * 60 * 1000 + 2 }));
+    expect(p.agents().find((a) => a.id === 'sess-1:agent-7')).toMatchObject({ parentId: 'sess-1' });
+  });
+});

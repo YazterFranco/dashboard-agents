@@ -187,8 +187,10 @@ export async function startServer(opts: StartServerOptions = {}): Promise<Runnin
   if (store) pipeline.replay(store.since(Date.now() - REPLAY_WINDOW_MS));
 
   const tickTimer = setInterval(() => {
-    const changed = pipeline.tick(Date.now());
-    if (changed.length) broadcast({ type: 'snapshot', agents: pipeline.agents() });
+    const now = Date.now();
+    const changed = pipeline.tick(now);
+    const evicted = pipeline.evict(now);
+    if (changed.length || evicted.length) broadcast({ type: 'snapshot', agents: pipeline.agents() });
   }, 30_000);
   const pruneTimer = setInterval(prune, 3_600_000);
   tickTimer.unref();
