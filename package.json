@@ -1,0 +1,18 @@
+{
+  "name": "agentdash-monorepo",
+  "private": true,
+  "type": "module",
+  "workspaces": ["packages/shared", "packages/server", "packages/cli", "packages/web"],
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p packages/shared && tsc -p packages/server && tsc -p packages/cli && tsc -p packages/web",
+    "build": "npm run build -w @agentdash/web && npm run build -w @agentdash/cli",
+    "e2e": "node e2e/smoke.cjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.0",
+    "typescript": "~5.9.3",
+    "vitest": "^3.2.7"
+  }
+}
