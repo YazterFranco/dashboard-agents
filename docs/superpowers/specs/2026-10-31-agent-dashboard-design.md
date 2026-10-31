@@ -68,8 +68,10 @@ Comportamiento:
 
 1. Lee stdin hasta 1 MB (si no hay stdin o es TTY, sigue con `null`). Timeout de lectura 200 ms.
 2. Construye el sobre `HookEnvelope`:
-   `{ v: 1, platform, eventHint, receivedAt, cwd, ppid, pid, payload, payloadText }`
-   (`payload` = JSON parseado o `null`; `payloadText` solo si no era JSON, recortado a 8 KB).
+   `{ v: 1, platform, eventHint, receivedAt, cwd, ppid, pid, envHints, payload, payloadText }`
+   (`payload` = JSON parseado o `null`; `payloadText` solo si no era JSON, recortado a 8 KB;
+   `envHints` = solo `TERM_PROGRAM` y `CLAUDE_CODE_ENTRYPOINT`, para distinguir
+   Claude CLI de Claude en VS Code; ninguna otra variable de entorno sale del proceso).
 3. `POST ${AGENTDASH_URL:-http://127.0.0.1:4820}/api/ingest` con timeout de 500 ms.
 4. **Siempre** `exit 0` y **nunca escribe en stdout**: en Claude Code y Kiro, el stdout de
    `SessionStart`/`UserPromptSubmit`/`agentSpawn` se inyecta en el contexto del agente, y un
