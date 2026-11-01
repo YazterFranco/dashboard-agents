@@ -1,0 +1,17 @@
+{
+  "v": 1,
+  "platform": "kiro-ide",
+  "eventHint": "PreToolUse",
+  "receivedAt": 1793480000000,
+  "cwd": "/home/u/checkout",
+  "ppid": 777,
+  "pid": 9002,
+  "payload": {
+    "hook_event_name": "preToolUse",
+    "tool_name": "fsWrite",
+    "tool_input": {
+      "path": "src/checkout/spec.md"
+    }
+  },
+  "sessionPid": 777
+}

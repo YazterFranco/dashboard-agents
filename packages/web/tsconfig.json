@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": "../..",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "types": ["vite/client"],
+    "paths": {
+      "@agentdash/shared": ["packages/shared/src/index.ts"],
+      "@agentdash/shared/constants": ["packages/shared/src/constants.ts"]
+    }
+  },
+  "include": ["src", "vite.config.ts"]
+}

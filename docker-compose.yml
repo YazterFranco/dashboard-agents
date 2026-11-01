@@ -1,0 +1,13 @@
+services:
+  agentdash:
+    build: .
+    image: agentdash:local
+    container_name: agentdash
+    ports:
+      - "127.0.0.1:4820:4820"
+    volumes:
+      - agentdash-data:/data
+    restart: unless-stopped
+
+volumes:
+  agentdash-data:

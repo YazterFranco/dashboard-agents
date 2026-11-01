@@ -1,0 +1,27 @@
+{
+  "v": 1,
+  "platform": "claude",
+  "receivedAt": 1793480000000,
+  "cwd": "/home/u/api",
+  "ppid": 1001,
+  "pid": 2001,
+  "payload": {
+    "session_id": "sess-1",
+    "transcript_path": "/home/u/.claude/projects/-home-u-api/sess-1.jsonl",
+    "cwd": "/home/u/api",
+    "permission_mode": "default",
+    "hook_event_name": "PostToolUse",
+    "tool_name": "Edit",
+    "tool_use_id": "tu-1",
+    "tool_input": {
+      "file_path": "src/auth/session.ts",
+      "old_string": "validateToken(",
+      "new_string": "verifySession("
+    },
+    "tool_response": {
+      "filePath": "src/auth/session.ts",
+      "success": true
+    }
+  },
+  "sessionPid": 1001
+}

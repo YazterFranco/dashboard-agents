@@ -1,0 +1,27 @@
+{
+  "name": "@agentdash/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "AgentDash: dashboard en vivo de agentes de Claude Code y Kiro",
+  "bin": {
+    "agentdash": "bin/agentdash.mjs"
+  },
+  "files": [
+    "bin",
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "@agentdash/server": "0.1.0",
+    "@agentdash/shared": "0.1.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.12"
+  }
+}

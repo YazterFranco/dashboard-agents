@@ -1,0 +1,27 @@
+{
+  "v": 1,
+  "platform": "claude",
+  "receivedAt": 1793480000000,
+  "cwd": "/home/u/api",
+  "ppid": 1001,
+  "pid": 2001,
+  "payload": {
+    "session_id": "sess-1",
+    "transcript_path": "/home/u/.claude/projects/-home-u-api/sess-1.jsonl",
+    "cwd": "/home/u/api",
+    "permission_mode": "default",
+    "hook_event_name": "PostToolUse",
+    "tool_name": "Bash",
+    "tool_use_id": "tu-9",
+    "tool_input": {
+      "command": "npm test"
+    },
+    "tool_response": {
+      "stdout": "",
+      "stderr": "1 failing",
+      "interrupted": false,
+      "is_error": true
+    }
+  },
+  "sessionPid": 1001
+}
