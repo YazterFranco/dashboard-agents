@@ -1,0 +1,25 @@
+# AgentDash como servicio de usuario de Podman (Linux, Podman 4.4 o superior).
+# Arranca solo al iniciar sesión y se reinicia si se cae.
+# Instalación paso a paso: docs/GUIA.md, sección «Podman: que arranque solo (Linux)».
+#
+# Requiere haber construido antes la imagen:
+#   podman build --format docker -t agentdash:local .
+
+[Unit]
+Description=AgentDash, dashboard en vivo de agentes
+Wants=network-online.target
+After=network-online.target
+
+[Container]
+Image=localhost/agentdash:local
+ContainerName=agentdash
+PublishPort=127.0.0.1:4820:4820
+Volume=agentdash-data:/data
+HealthCmd=wget -qO- http://127.0.0.1:4820/api/health
+HealthInterval=30s
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target
