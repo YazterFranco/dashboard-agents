@@ -1,12 +1,13 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { DEFAULT_HOST, DEFAULT_PORT, type AgentEvent } from '@agentdash/shared';
 import { startServer, VERSION } from '@agentdash/server';
 import { INSTALL_TARGETS, install, uninstall, type InstallTarget } from './install/index.js';
 import { runDemo } from './demo.js';
+import { availableEngines, chooseEngine, conflictWith, enginesRunningAgentDash, planDown, planLogs, planUp, runPlan } from './container.js';
 
 // node:sqlite is stable enough for us; hide its ExperimentalWarning from users.
 const emitWarning = process.emitWarning.bind(process);
@@ -19,6 +20,7 @@ process.emitWarning = ((warning: string | Error, ...rest: unknown[]) => {
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const HOOK_SOURCE = join(HERE, 'hook.mjs');
 const WEB_DIR = join(HERE, 'web');
+const REPO_ROOT = resolve(HERE, '../../..');
 const defaultUrl = () => process.env.AGENTDASH_URL ?? `http://${DEFAULT_HOST}:${process.env.AGENTDASH_PORT ?? DEFAULT_PORT}`;
 
 const HELP = `AgentDash ${VERSION} — dashboard en vivo de agentes (Claude Code, Kiro)
@@ -29,6 +31,7 @@ Uso (desde la carpeta del repo: npm run agentdash -- <comando>):
   agentdash uninstall <claude|kiro-cli|kiro-ide> [--agent nombre] [--workspace carpeta]
   agentdash demo [--url http://127.0.0.1:4820] [--speed 1]
   agentdash export-fixtures [--url ...] [--out fixtures] [--platform claude|kiro] [--limit 50]
+  agentdash container <up|down|logs|status> [--engine docker|podman]
 `;
 
 function fail(msg: string): never {
@@ -110,6 +113,54 @@ async function cmdExport(values: Record<string, unknown>) {
   process.stdout.write(`Exportados ${events.length} eventos a ${out}/ (revisa que no contengan datos privados antes de compartirlos)\n`);
 }
 
+const ENGINE_NAME = { docker: 'Docker', podman: 'Podman' } as const;
+
+async function health(): Promise<string> {
+  try {
+    const res = await fetch(`${defaultUrl()}/api/health`, { signal: AbortSignal.timeout(1500) });
+    const body = (await res.json()) as { ok?: boolean; agents?: number; events?: number };
+    return body.ok ? `responde en ${defaultUrl()} (${body.agents} agentes, ${body.events} eventos)` : `respondió ${res.status}`;
+  } catch {
+    return `no responde en ${defaultUrl()}`;
+  }
+}
+
+async function cmdContainer(positionals: string[], values: Record<string, unknown>) {
+  const action = positionals[1];
+  if (!['up', 'down', 'logs', 'status'].includes(action ?? '')) fail('usa: container <up|down|logs|status> [--engine docker|podman]');
+  if (!existsSync(join(REPO_ROOT, 'Dockerfile'))) fail(`no encuentro el Dockerfile en ${REPO_ROOT}; usa el comando desde el repo de AgentDash`);
+  const available = availableEngines();
+  const running = enginesRunningAgentDash(available);
+  if (action === 'status') {
+    const where = running.length ? running.map((e) => ENGINE_NAME[e]).join(' y ') : 'ningún motor de contenedores';
+    process.stdout.write(`Motores disponibles: ${available.map((e) => ENGINE_NAME[e]).join(', ') || 'ninguno'}\n`);
+    process.stdout.write(`AgentDash corriendo con: ${where}\n`);
+    process.stdout.write(`Servidor: ${await health()}\n`);
+    return;
+  }
+  const choice = chooseEngine({ requested: (values.engine as string | undefined) ?? process.env.AGENTDASH_ENGINE, available, running });
+  if ('error' in choice) fail(choice.error);
+  if (choice.note) process.stdout.write(`${choice.note}\n`);
+  if (action === 'up') {
+    const conflict = conflictWith(choice.engine, running);
+    if (conflict) fail(conflict);
+  }
+  const plan = action === 'up' ? planUp : action === 'down' ? planDown : planLogs;
+  const code = runPlan(plan(choice.engine), REPO_ROOT);
+  if (code !== 0) process.exit(code);
+  if (action === 'up') {
+    for (let i = 0; i < 30; i++) {
+      const state = await health();
+      if (state.startsWith('responde')) {
+        process.stdout.write(`AgentDash con ${ENGINE_NAME[choice.engine]}: ${state}\n`);
+        return;
+      }
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    fail(`el contenedor arrancó pero el servidor ${await health()}; revisa "npm run agentdash -- container logs --engine ${choice.engine}"`);
+  }
+}
+
 async function main() {
   const { values, positionals } = parseArgs({
     allowPositionals: true,
@@ -125,6 +176,7 @@ async function main() {
       out: { type: 'string' },
       platform: { type: 'string' },
       limit: { type: 'string' },
+      engine: { type: 'string' },
       help: { type: 'boolean', short: 'h' },
       version: { type: 'boolean', short: 'v' },
     },
@@ -140,6 +192,8 @@ async function main() {
       return cmdDemo(values);
     case 'export-fixtures':
       return cmdExport(values);
+    case 'container':
+      return cmdContainer(positionals, values);
     default:
       process.stdout.write(HELP);
       if (positionals[0] && !values.help) process.exitCode = 1;

@@ -7,7 +7,7 @@ MCP y plugins de Claude) y el historial de cada sesión.
 
 ![AgentDash con la demo](docs/img/dashboard.png)
 
-**[Guía completa](docs/GUIA.md)**: requisitos, despliegue (local, Docker, servidor de equipo), uso,
+**[Guía completa](docs/GUIA.md)**: requisitos, despliegue (local, Docker o Podman, servidor de equipo), uso,
 solución de problemas y cómo ampliarlo.
 
 **¿Quieres verlo sin instalar nada?** Abre [`docs/demo/index.html`](docs/demo/index.html) en tu navegador:
@@ -35,7 +35,7 @@ si el dashboard está apagado, tus agentes funcionan exactamente igual.
 ## Requisitos
 
 - Node.js **22.13 o superior** (para el servidor y la instalación de hooks).
-- Docker (opcional, para levantar el servidor en un contenedor).
+- Docker o Podman (opcional, para levantar el servidor en un contenedor).
 
 ## Empezar
 
@@ -59,13 +59,17 @@ npm link -w @agentdash/cli
 
 ### 1. Levanta el dashboard
 
-Con Docker:
+Con Docker o Podman (si tienes los dos, elige uno con `--engine`):
 
 ```bash
-docker compose up -d --build
+npm run agentdash -- container up --engine docker
 ```
 
-O sin Docker:
+```bash
+npm run agentdash -- container up --engine podman
+```
+
+O sin contenedor:
 
 ```bash
 npm run agentdash -- start

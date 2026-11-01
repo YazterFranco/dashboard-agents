@@ -40,7 +40,7 @@ cómo seguir ampliándolo. Si solo quieres verlo funcionar sin instalar nada, ab
 | **Node.js** | 22.13 o superior | Compilar el proyecto, ejecutar el servidor sin Docker y el instalador de hooks |
 | **npm** | el que trae Node 22 | Instalar dependencias |
 | **git** | cualquiera reciente | Clonar el repo |
-| **Docker + Docker Compose v2** | opcional | Levantar el servidor en un contenedor |
+| **Docker** (con Compose v2) **o Podman** 4.x | opcional | Levantar el servidor en un contenedor (Podman 4.4+ para el arranque automático con Quadlet) |
 | **Claude Code** | versión reciente con hooks | CLI o extensión de VS Code |
 | **Kiro CLI** | versión con hooks en la config del agente | `~/.kiro/agents/*.json` |
 | **Kiro IDE** | 1.0 o superior (hooks en `.kiro/hooks/`) | Por proyecto |
@@ -107,57 +107,198 @@ Debe responder `0.1.0`.
 >
 > Después de eso, `agentdash <comando>` funciona en cualquier carpeta.
 
-### 3.1 Con Docker (recomendado)
+### 3.1 Con contenedor: Docker o Podman (recomendado)
 
-El contenedor arranca solo al iniciar Docker, guarda el historial en un volumen y publica el puerto
-**solo en localhost**.
+El servidor y la UI corren en un contenedor que guarda el historial en un volumen y publica el puerto
+**solo en localhost**. Tus agentes y el hook siguen corriendo en tu máquina, como siempre.
 
-1. Construye y arranca:
+Funciona con **Docker** y con **Podman**. Usa **solo uno de los dos** para AgentDash: ambos publican
+el puerto 4820 y solo uno puede tenerlo.
+
+El comando `container` hace todo con el motor que elijas:
+
+| Para | Comando |
+| --- | --- |
+| Construir y arrancar | `npm run agentdash -- container up --engine docker` (o `--engine podman`) |
+| Ver qué motor lo corre y si responde | `npm run agentdash -- container status` |
+| Ver logs | `npm run agentdash -- container logs` |
+| Parar (conserva el historial) | `npm run agentdash -- container down` |
+
+Si no indicas `--engine`, usa el motor que ya está corriendo AgentDash. Si no hay ninguno y tienes los
+dos instalados, usa Docker y te avisa. Para que tu motor por defecto sea Podman, añade esta línea a tu
+`~/.bashrc` o `~/.zshrc`:
+
+```bash
+export AGENTDASH_ENGINE=podman
+```
+
+Pasos:
+
+1. Arranca con el motor que prefieras (la primera vez tarda un par de minutos en construir la imagen):
 
    ```bash
-   docker compose up -d --build
+   npm run agentdash -- container up --engine docker
    ```
 
-2. Comprueba que está sano (debe decir `"ok":true`):
+2. Comprueba que responde (debe decir `Servidor: responde en http://127.0.0.1:4820`):
 
    ```bash
-   curl -s http://127.0.0.1:4820/api/health
+   npm run agentdash -- container status
    ```
 
 3. Abre <http://127.0.0.1:4820> en el navegador. Verás la pantalla «Aún no hay agentes».
 
-Operaciones habituales:
+#### Si tienes Docker y Podman instalados
 
-| Para | Comando |
-| --- | --- |
-| Ver logs | `docker compose logs -f agentdash` |
-| Parar | `docker compose stop` |
-| Arrancar de nuevo | `docker compose start` |
-| Reiniciar | `docker compose restart` |
-| Borrar contenedor (conserva el historial) | `docker compose down` |
-| Borrar contenedor **y** historial | `docker compose down -v` |
+- **Elige uno para AgentDash.** Si intentas arrancarlo con un motor mientras el otro ya lo corre,
+  `container up` se niega y te dice cómo pararlo.
+- **Para cambiar de motor,** para primero el que dejas y arranca el otro:
 
-**Copia de seguridad del historial** (el volumen se llama `dashboard-agents_agentdash-data`):
+  ```bash
+  npm run agentdash -- container down --engine docker
+  ```
 
-```bash
-docker run --rm -v dashboard-agents_agentdash-data:/data -v "$PWD":/backup alpine cp /data/agentdash.db /backup/agentdash-backup.db
-```
+  ```bash
+  npm run agentdash -- container up --engine podman
+  ```
 
-> Si clonaste el repo en una carpeta con otro nombre, el volumen se llama `<carpeta>_agentdash-data`.
-> Compruébalo con `docker volume ls`.
+  `down` elimina el contenedor, así no vuelve a arrancar solo cuando se reinicie el motor que dejas.
+  Si te saltas este paso, ese motor intentará levantarlo al arrancar y fallará con
+  `address already in use`; no rompe nada, pero confunde.
+- **Cada motor tiene su propio historial** (Docker: volumen `dashboard-agents_agentdash-data`;
+  Podman: volumen `agentdash-data`). Para llevarlo de uno a otro, mira
+  [Mover el historial](#mover-el-historial-entre-docker-y-podman).
 
-**Detrás de un proxy corporativo:** si `npm ci` falla dentro del build por certificados, pasa el
-certificado de tu empresa como *secret* (no queda guardado en la imagen):
+#### Docker: detalles
 
-```bash
-docker build --secret id=ca,src=/ruta/a/ca-empresa.crt -t agentdash:local .
-```
+- **Arranque automático:** el contenedor tiene `restart: unless-stopped`, así que vuelve solo cuando
+  arranca Docker. Activa «Start Docker Desktop when you sign in» (macOS/Windows) o, en Linux,
+  `sudo systemctl enable docker`.
+- Comandos equivalentes sin el CLI: `docker compose up -d --build`, `docker compose logs -f agentdash`,
+  `docker compose down` (`docker compose down -v` borra también el historial).
+- Si clonaste el repo en una carpeta con otro nombre, el volumen se llama `<carpeta>_agentdash-data`
+  (compruébalo con `docker volume ls`).
+- **Detrás de un proxy corporativo**, si `npm ci` falla dentro del build por certificados, pasa el
+  certificado como *secret* (no queda guardado en la imagen) y arranca sin reconstruir:
 
-```bash
-docker compose up -d
-```
+  ```bash
+  docker build --secret id=ca,src=/ruta/a/ca-empresa.crt -t agentdash:local .
+  ```
 
-### 3.2 Sin Docker (Node directamente)
+  ```bash
+  docker compose up -d
+  ```
+
+#### Podman: detalles
+
+- **macOS y Windows:** Podman corre dentro de una máquina virtual. Créala una vez y arráncala; los
+  puertos publicados llegan igual a tu `127.0.0.1`:
+
+  ```bash
+  podman machine init
+  ```
+
+  ```bash
+  podman machine start
+  ```
+
+- La imagen se construye con `--format docker` para conservar el chequeo de salud (con el formato OCI,
+  el predeterminado de Podman, se pierde). El CLI ya lo hace por ti.
+- Comandos equivalentes sin el CLI:
+  `podman build --format docker -t agentdash:local .`,
+  `podman run -d --replace --name agentdash -p 127.0.0.1:4820:4820 -v agentdash-data:/data --restart unless-stopped agentdash:local`,
+  `podman logs -f agentdash` y `podman rm -f agentdash` (`podman volume rm agentdash-data` borra el historial).
+- **Detrás de un proxy corporativo:**
+
+  ```bash
+  podman build --format docker --secret id=ca,src=/ruta/a/ca-empresa.crt -t agentdash:local .
+  ```
+
+- **Arranque automático:** Podman no tiene un servicio permanente como Docker. En Linux, usa Quadlet
+  (siguiente apartado). En macOS y Windows, tras reiniciar arranca la máquina (`podman machine start`,
+  o activa el arranque al iniciar sesión en Podman Desktop) y, si AgentDash no volvió solo, ejecuta
+  `npm run agentdash -- container up --engine podman`.
+
+#### Podman: que arranque solo (Linux)
+
+Requiere Podman 4.4 o superior. El repo incluye la unidad `deploy/podman/agentdash.container`, que
+convierte AgentDash en un servicio de tu usuario: arranca al iniciar sesión y se reinicia si se cae.
+
+1. Si lo tenías corriendo con el CLI, páralo (Quadlet gestionará el contenedor a partir de ahora):
+
+   ```bash
+   npm run agentdash -- container down --engine podman
+   ```
+
+2. Construye la imagen:
+
+   ```bash
+   podman build --format docker -t agentdash:local .
+   ```
+
+3. Copia la unidad a la carpeta de Quadlet:
+
+   ```bash
+   mkdir -p ~/.config/containers/systemd && cp deploy/podman/agentdash.container ~/.config/containers/systemd/
+   ```
+
+4. Recarga systemd y arranca el servicio:
+
+   ```bash
+   systemctl --user daemon-reload
+   ```
+
+   ```bash
+   systemctl --user start agentdash
+   ```
+
+5. Para que arranque al encender la máquina aunque no hayas iniciado sesión:
+
+   ```bash
+   loginctl enable-linger "$USER"
+   ```
+
+Con Quadlet, gestiona AgentDash con `systemctl --user status|restart|stop agentdash` y mira los logs
+con `journalctl --user -u agentdash -f`. No uses `container up --engine podman` a la vez: los dos
+usarían el mismo contenedor. Para actualizar, reconstruye la imagen (paso 2) y ejecuta
+`systemctl --user restart agentdash`.
+
+#### Mover el historial entre Docker y Podman
+
+Ejemplo de Docker a Podman; para el sentido contrario, intercambia `docker` y `podman` y los nombres
+de los volúmenes. Ejecútalo desde la carpeta del repo.
+
+1. Para los dos contenedores. Al pararse de forma ordenada, SQLite deja todo en un solo archivo:
+
+   ```bash
+   npm run agentdash -- container down --engine docker
+   ```
+
+   ```bash
+   npm run agentdash -- container down --engine podman
+   ```
+
+2. Copia el historial de Docker a la carpeta actual:
+
+   ```bash
+   docker run --rm --user root -v dashboard-agents_agentdash-data:/data -v "$PWD":/backup --entrypoint cp agentdash:local /data/agentdash.db /backup/agentdash.db
+   ```
+
+3. Cópialo al volumen de Podman (con el dueño correcto para el usuario del contenedor):
+
+   ```bash
+   podman run --rm --user root -v agentdash-data:/data -v "$PWD":/backup:Z --entrypoint sh agentdash:local -c "cp /backup/agentdash.db /data/agentdash.db && chown 1000:1000 /data/agentdash.db"
+   ```
+
+4. Arranca con Podman:
+
+   ```bash
+   npm run agentdash -- container up --engine podman
+   ```
+
+El paso 2 también sirve como **copia de seguridad** del historial.
+
+### 3.2 Sin contenedor (Node directamente)
 
 ```bash
 npm run agentdash -- start
@@ -245,11 +386,13 @@ git pull
 npm install && npm run build
 ```
 
-Con Docker, reconstruye el contenedor (el historial se conserva):
+Con contenedor, vuelve a construirlo y arrancarlo con tu motor (el historial se conserva):
 
 ```bash
-docker compose up -d --build
+npm run agentdash -- container up --engine docker
 ```
+
+Con Quadlet: `podman build --format docker -t agentdash:local .` y `systemctl --user restart agentdash`.
 
 Vuelve a ejecutar el instalador de cada plataforma que uses, para copiar el `hook.mjs` nuevo a
 `~/.agentdash/`. Es seguro repetirlo:
@@ -272,11 +415,22 @@ npm run agentdash -- uninstall kiro-cli --agent mi-agente
 npm run agentdash -- uninstall kiro-ide --workspace /ruta/a/mi-proyecto
 ```
 
+Docker (borra contenedor e historial):
+
 ```bash
 docker compose down -v
 ```
 
-Por último borra la carpeta `~/.agentdash` (el hook y el historial sin Docker).
+Podman:
+
+```bash
+podman rm -f agentdash && podman volume rm agentdash-data
+```
+
+Si usaste Quadlet, antes: `systemctl --user stop agentdash` y borra
+`~/.config/containers/systemd/agentdash.container`.
+
+Por último borra la carpeta `~/.agentdash` (el hook y el historial sin contenedor).
 
 ---
 
@@ -406,6 +560,9 @@ línea `ports:`) y los hooks (`AGENTDASH_URL`).
 | El comando de 4.5 no hace aparecer nada | El servidor no corre o está en otro puerto | `curl -s http://127.0.0.1:4820/api/health`; revisa `AGENTDASH_URL` |
 | `403 host no permitido` u `origen no permitido` | Abriste el dashboard con un nombre que no es local | Usa `127.0.0.1` o `localhost`, o añade el nombre a `AGENTDASH_ALLOWED_HOSTS` |
 | `EADDRINUSE` al arrancar | El puerto 4820 está ocupado | Usa otro con `AGENTDASH_PORT` y ajusta `AGENTDASH_URL` |
+| `AgentDash ya está corriendo con Docker/Podman` | El otro motor ya tiene el puerto 4820 | Para ese con `container down --engine <motor>` o sigue usándolo |
+| El contenedor de Docker o Podman sale con `address already in use` | Quedó un contenedor viejo del otro motor que arranca solo | Ejecuta `container down --engine <motor que no usas>` para eliminarlo |
+| `No encontré Docker o Podman en marcha` | El motor no está arrancado | Abre Docker Desktop, `sudo systemctl start docker` o `podman machine start` |
 | `falta compilar` | No se ejecutó el build | `npm install && npm run build` |
 | `No such built-in module: node:sqlite` al arrancar | Node < 22.13 | Actualiza Node (`node --version`) |
 | `no es JSON válido; no lo modifico` | Tu `settings.json` o el JSON del agente tiene un error | Corrígelo, o usa `--print` y pega el bloque a mano |
