@@ -7,7 +7,7 @@ MCP y plugins de Claude) y el historial de cada sesión.
 
 ![AgentDash con la demo](docs/img/dashboard.png)
 
-📘 **[Guía completa](docs/GUIA.md)**: requisitos, despliegue (local, Docker, servidor de equipo), uso,
+**[Guía completa](docs/GUIA.md)**: requisitos, despliegue (local, Docker, servidor de equipo), uso,
 solución de problemas y cómo ampliarlo.
 
 **¿Quieres verlo sin instalar nada?** Abre [`docs/demo/index.html`](docs/demo/index.html) en tu navegador:
