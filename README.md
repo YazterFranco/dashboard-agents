@@ -7,6 +7,10 @@ MCP y plugins de Claude) y el historial de cada sesión.
 
 ![AgentDash con la demo](docs/img/dashboard.png)
 
+**¿Quieres verlo sin instalar nada?** Abre [`docs/demo/index.html`](docs/demo/index.html) en tu navegador:
+es una simulación interactiva con datos de ejemplo, la guía de instalación y un inspector que
+muestra qué recibe el hook y cómo lo interpreta AgentDash.
+
 - **Oficina pixel**: cada agente en su escritorio. La silueta indica la plataforma (persona = Claude,
   fantasma = Kiro), la burbuja muestra la herramienta actual y el monitor, el estado.
 - **Flujos**: agentes y subagentes en árbol, con sus extensiones.
