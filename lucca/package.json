@@ -3,14 +3,15 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "packages/shared"
+    "packages/shared",
+    "packages/server"
   ],
   "engines": {
     "node": ">=22.13"
   },
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc -p packages/shared"
+    "typecheck": "tsc -p packages/shared && tsc -p packages/server"
   },
   "devDependencies": {
     "@types/node": "^22.19.0",
