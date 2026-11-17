@@ -4,15 +4,17 @@
   "type": "module",
   "workspaces": [
     "packages/shared",
-    "packages/server"
+    "packages/server",
+    "packages/web"
   ],
   "engines": {
     "node": ">=22.13"
   },
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc -p packages/shared && tsc -p packages/server",
-    "dev:server": "NODE_OPTIONS=--disable-warning=ExperimentalWarning LUCCA_DEMO=1 tsx packages/server/src/index.ts"
+    "typecheck": "tsc -p packages/shared && tsc -p packages/server && tsc -p packages/web",
+    "dev:server": "NODE_OPTIONS=--disable-warning=ExperimentalWarning LUCCA_DEMO=1 tsx packages/server/src/index.ts",
+    "dev:web": "npm run dev -w @lucca/web"
   },
   "devDependencies": {
     "@types/node": "^22.19.0",
