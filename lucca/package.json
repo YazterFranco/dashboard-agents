@@ -11,7 +11,8 @@
   },
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc -p packages/shared && tsc -p packages/server"
+    "typecheck": "tsc -p packages/shared && tsc -p packages/server",
+    "dev:server": "NODE_OPTIONS=--disable-warning=ExperimentalWarning LUCCA_DEMO=1 tsx packages/server/src/index.ts"
   },
   "devDependencies": {
     "@types/node": "^22.19.0",
