@@ -9,23 +9,23 @@
 
 ## 1. Base del proyecto
 
-- [ ] 1.1 Crear `lucca/` con `package.json` (workspaces `shared`, `server`, `web`), `tsconfig.base.json`, `vitest.config.ts` y `.gitignore` (incluye `.env` y `data/`), y verificar que `npm install` y `npm run typecheck` pasan en `lucca/`
-- [ ] 1.2 Añadir `lucca/.env.example` (`ANTHROPIC_API_KEY`, `MEREB_URL`, `MEREB_USER`, `MEREB_PASSWORD`, `MEREB_STUDENT` opcional, `LUCCA_PUBLIC_URL`, `LUCCA_PORT`, `TZ`) y verificar que no contiene valores reales
-- [ ] 1.3 Crear en `shared` los esquemas zod (`Task`, `Subject`, `TaskStatus`, `Settings`, mensajes WS) y verificar con pruebas de vitest que aceptan y rechazan los casos de ejemplo
-- [ ] 1.4 Crear el servidor Fastify con `/api/health`, carga de configuración desde `.env` y registros sin secretos, y verificar con una prueba que `/api/health` no expone ningún valor del `.env`
-- [ ] 1.5 Implementar la BD SQLite (`node:sqlite`) con migraciones para `tasks`, `progress_events`, `settings` y `parent_sessions`, y verificar con pruebas que las migraciones se aplican sobre una BD vacía y son idempotentes
-- [ ] 1.6 Implementar el middleware de solo red privada y verificar con pruebas que rechaza una IP pública con 403 y acepta 192.168.x.x, 10.x.x.x y 127.0.0.1
+- [x] 1.1 Crear `lucca/` con `package.json` (workspaces `shared`, `server`, `web`), `tsconfig.base.json`, `vitest.config.ts` y `.gitignore` (incluye `.env` y `data/`), y verificar que `npm install` y `npm run typecheck` pasan en `lucca/`
+- [x] 1.2 Añadir `lucca/.env.example` (`ANTHROPIC_API_KEY`, `MEREB_URL`, `MEREB_USER`, `MEREB_PASSWORD`, `MEREB_STUDENT` opcional, `LUCCA_PUBLIC_URL`, `LUCCA_PORT`, `TZ`) y verificar que no contiene valores reales
+- [x] 1.3 Crear en `shared` los esquemas zod (`Task`, `Subject`, `TaskStatus`, `Settings`, mensajes WS) y verificar con pruebas de vitest que aceptan y rechazan los casos de ejemplo _(hecho sin los mensajes WS: no hay WebSocket hasta la fase 4)_
+- [x] 1.4 Crear el servidor Fastify con `/api/health`, carga de configuración desde `.env` y registros sin secretos, y verificar con una prueba que `/api/health` no expone ningún valor del `.env`
+- [x] 1.5 Implementar la BD SQLite (`node:sqlite`) con migraciones para `tasks`, `progress_events`, `settings` y `parent_sessions`, y verificar con pruebas que las migraciones se aplican sobre una BD vacía y son idempotentes _(hecho con las tablas de la fase 1; el resto llega con su fase)_
+- [x] 1.6 Implementar el middleware de solo red privada y verificar con pruebas que rechaza una IP pública con 403 y acepta 192.168.x.x, 10.x.x.x y 127.0.0.1
 
 ## 2. "Mi semana", voz e idioma (sin IA)
 
-- [ ] 2.1 Crear la web Vite + React con los tokens del estilo C · Bento (oscuro y claro) y las fuentes autoalojadas Andika y Bricolage Grotesque, y verificar que `npm run build -w web` termina sin errores
-- [ ] 2.2 Implementar la lógica de "día de trabajo", atrasadas, fines de semana y estados en `shared`, y verificar con pruebas los escenarios de weekly-planner (martes 17, domingo, entrega el miércoles, atrasada)
-- [ ] 2.3 Implementar la pantalla "Mi semana" (saludo, mascota Nova, días, tarjetas, estado vacío, "sin agenda todavía") y verificar con Testing Library que el día de hoy queda seleccionado y que todos los controles miden ≥ 60 px
-- [ ] 2.4 Implementar las estrellas como derivación de `progress_events` (nunca restan, reinicio semanal) y verificar con pruebas
-- [ ] 2.5 Implementar el diccionario ES/EN de la interfaz y el cambio de idioma sin perder la pantalla actual, y verificar con una prueba de componente
-- [ ] 2.6 Implementar `Speaker` con Web Speech API (modos Escuchar/Leer/Ambos, velocidad 0,9, preferencia de voces, fragmentos por idioma, resaltado por palabra o frase, desbloqueo con el primer toque) y verificar con pruebas usando un `speechSynthesis` simulado
-- [ ] 2.7 Añadir `manifest.webmanifest`, iconos y metadatos de "Añadir a pantalla de inicio", y verificar que el manifiesto es válido en la build
-- [ ] 2.8 Verificar en un navegador real a 1024×768 y 768×1024 que "Mi semana" no tiene desplazamiento horizontal (captura con Playwright)
+- [x] 2.1 Crear la web Vite + React con los tokens del estilo C · Bento (oscuro y claro) y las fuentes autoalojadas Andika y Bricolage Grotesque, y verificar que `npm run build -w web` termina sin errores
+- [x] 2.2 Implementar la lógica de "día de trabajo", atrasadas, fines de semana y estados en `shared`, y verificar con pruebas los escenarios de weekly-planner (martes 17, domingo, entrega el miércoles, atrasada)
+- [x] 2.3 Implementar la pantalla "Mi semana" (saludo, mascota Nova, días, tarjetas, estado vacío, "sin agenda todavía") y verificar con Testing Library que el día de hoy queda seleccionado y que todos los controles miden ≥ 60 px _(los tamaños ≥ 60 px se verifican en navegador real con `npm run e2e`, no en jsdom)_
+- [x] 2.4 Implementar las estrellas como derivación de `progress_events` (nunca restan, reinicio semanal) y verificar con pruebas
+- [x] 2.5 Implementar el diccionario ES/EN de la interfaz y el cambio de idioma sin perder la pantalla actual, y verificar con una prueba de componente
+- [x] 2.6 Implementar `Speaker` con Web Speech API (modos Escuchar/Leer/Ambos, velocidad 0,9, preferencia de voces, fragmentos por idioma, resaltado por palabra o frase, desbloqueo con el primer toque) y verificar con pruebas usando un `speechSynthesis` simulado _(el resaltado visual palabra por palabra llega con las pantallas de lección; `Speaker` ya emite `onWord`)_
+- [x] 2.7 Añadir `manifest.webmanifest`, iconos y metadatos de "Añadir a pantalla de inicio", y verificar que el manifiesto es válido en la build _(manifiesto e icono incluidos en la build; no se validó con una herramienta externa)_
+- [x] 2.8 Verificar en un navegador real a 1024×768 y 768×1024 que "Mi semana" no tiene desplazamiento horizontal (captura con Playwright)
 
 ## 3. Área del padre y agenda
 

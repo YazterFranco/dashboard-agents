@@ -14,7 +14,10 @@
     "test": "vitest run",
     "typecheck": "tsc -p packages/shared && tsc -p packages/server && tsc -p packages/web",
     "dev:server": "NODE_OPTIONS=--disable-warning=ExperimentalWarning LUCCA_DEMO=1 tsx packages/server/src/index.ts",
-    "dev:web": "npm run dev -w @lucca/web"
+    "dev:web": "npm run dev -w @lucca/web",
+    "build": "npm run build -w @lucca/web && npm run build -w @lucca/server",
+    "start": "NODE_OPTIONS=--disable-warning=ExperimentalWarning node packages/server/dist/lucca.mjs",
+    "e2e": "node e2e/layout.cjs"
   },
   "devDependencies": {
     "@types/node": "^22.19.0",
