@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import type { KidState } from '@lucca/shared';
 import type { Prefs } from '../prefs';
-import type { Speaker } from '../speaker';
+import type { Segment, SpeakHandlers, Speaker } from '../speaker';
 import { demoState, task } from '../testFixtures';
 import { WeekScreen } from './WeekScreen';
 
@@ -11,8 +11,28 @@ afterEach(cleanup);
 
 const ES: Prefs = { lang: 'es', voiceMode: 'both', theme: 'dark' };
 
-function fakeSpeaker(): Speaker & { speak: ReturnType<typeof vi.fn>; stop: ReturnType<typeof vi.fn> } {
-  return { available: () => true, speak: vi.fn(), stop: vi.fn(), speaking: false };
+type FakeSpeaker = Speaker & { speak: Mock; stop: Mock; finish(): void };
+
+/** Un lector que recuerda si está hablando, como el de verdad. */
+function fakeSpeaker(): FakeSpeaker {
+  let playing = false;
+  const speak = vi.fn((_segments: Segment[], _handlers?: SpeakHandlers) => {
+    playing = true;
+  });
+  const stop = vi.fn(() => {
+    playing = false;
+  });
+  return {
+    available: () => true,
+    speak,
+    stop,
+    finish: () => {
+      playing = false;
+    },
+    get speaking() {
+      return playing;
+    },
+  };
 }
 
 function setup(opts: { state?: KidState; prefs?: Prefs } = {}) {
@@ -165,7 +185,7 @@ describe('WeekScreen speech', () => {
     const { speaker, container } = setup();
     fireEvent.pointerDown(container.firstElementChild!);
     expect(speaker.speak).toHaveBeenCalledTimes(1);
-    expect(speaker.speak).toHaveBeenCalledWith([{ text: 'Hoy, martes 17. Te faltan 3 tareas. ¿Empezamos con Ciencias?', lang: 'es' }]);
+    expect(speaker.speak).toHaveBeenCalledWith([{ text: 'Hoy, martes 17. Te faltan 3 tareas. ¿Empezamos con Ciencias?', lang: 'es' }], expect.anything());
     fireEvent.pointerDown(container.firstElementChild!);
     expect(speaker.speak).toHaveBeenCalledTimes(1);
   });
@@ -182,12 +202,62 @@ describe('WeekScreen speech', () => {
     fireEvent.pointerDown(container.firstElementChild!);
     fireEvent.click(day(/Miércoles 18/));
     expect(speaker.speak).toHaveBeenCalledTimes(2);
-    expect(speaker.speak).toHaveBeenLastCalledWith([{ text: 'Miércoles 18. 2 tareas por hacer. ¿Empezamos con Inglés?', lang: 'es' }]);
+    expect(speaker.speak).toHaveBeenLastCalledWith([{ text: 'Miércoles 18. 2 tareas por hacer. ¿Empezamos con Inglés?', lang: 'es' }], expect.anything());
   });
 
   it('a speaker button reads the subject and the title', () => {
     const { speaker } = setup();
     fireEvent.click(screen.getByRole('button', { name: 'Escuchar: Las partes de la planta' }));
-    expect(speaker.speak).toHaveBeenLastCalledWith([{ text: 'Ciencias. Las partes de la planta', lang: 'es' }]);
+    expect(speaker.speak).toHaveBeenLastCalledWith([{ text: 'Ciencias. Las partes de la planta', lang: 'es' }], expect.anything());
+  });
+});
+
+describe('WeekScreen listen buttons toggle', () => {
+  const cardButton = () => screen.getByRole('button', { name: 'Escuchar: Las partes de la planta' });
+
+  it('pressing a card speaker again while it plays stops the reading', () => {
+    const { speaker } = setup();
+    fireEvent.click(cardButton());
+    expect(speaker.speak).toHaveBeenCalledTimes(1);
+    fireEvent.click(cardButton());
+    expect(speaker.stop).toHaveBeenCalledTimes(1);
+    expect(speaker.speak).toHaveBeenCalledTimes(1);
+  });
+
+  it("Nova's button also stops its own reading", () => {
+    const { speaker } = setup();
+    const nova = screen.getByRole('button', { name: 'Escuchar a Nova' });
+    fireEvent.click(nova);
+    fireEvent.click(nova);
+    expect(speaker.speak).toHaveBeenCalledTimes(1);
+    expect(speaker.stop).toHaveBeenCalledTimes(1);
+  });
+
+  it('reads again once the reading has ended', () => {
+    const { speaker } = setup();
+    fireEvent.click(cardButton());
+    const handlers = speaker.speak.mock.calls[0][1] as SpeakHandlers;
+    speaker.finish();
+    handlers.onEnd?.();
+    fireEvent.click(cardButton());
+    expect(speaker.speak).toHaveBeenCalledTimes(2);
+    expect(speaker.stop).not.toHaveBeenCalled();
+  });
+
+  it('another speaker button while one plays starts the new reading', () => {
+    const { speaker } = setup();
+    fireEvent.click(cardButton());
+    fireEvent.click(screen.getByRole('button', { name: 'Escuchar a Nova' }));
+    expect(speaker.speak).toHaveBeenCalledTimes(2);
+    expect(speaker.stop).not.toHaveBeenCalled();
+  });
+
+  it('Nova stops the automatic reading that started after the first touch', () => {
+    const { speaker, container } = setup();
+    fireEvent.pointerDown(container.firstElementChild!);
+    expect(speaker.speak).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Escuchar a Nova' }));
+    expect(speaker.stop).toHaveBeenCalledTimes(1);
+    expect(speaker.speak).toHaveBeenCalledTimes(1);
   });
 });

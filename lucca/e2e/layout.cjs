@@ -47,6 +47,13 @@ function measure({ MIN_TAP, MIN_PRIMARY, MIN_FONT }) {
     if (r.width < MIN_TAP - 0.5 || r.height < MIN_TAP - 0.5) problems.push(`botón pequeño (${Math.round(r.width)}×${Math.round(r.height)}): ${name}`);
     if (b.classList.contains('btn-primary') && r.height < MIN_PRIMARY - 0.5) problems.push(`acción principal baja (${Math.round(r.height)}px): ${name}`);
   }
+  for (const b of document.querySelectorAll('.task-card button')) {
+    const card = b.closest('.task-card').getBoundingClientRect();
+    const r = b.getBoundingClientRect();
+    if (r.right > card.right + 0.5 || r.left < card.left - 0.5) {
+      problems.push(`botón fuera de su tarjeta: ${(b.getAttribute('aria-label') || b.textContent || '').trim().slice(0, 40)}`);
+    }
+  }
   for (const sel of ['.summary', '.suggestion', '.task-title', '.free-day p']) {
     for (const el of document.querySelectorAll(sel)) {
       const size = parseFloat(getComputedStyle(el).fontSize);

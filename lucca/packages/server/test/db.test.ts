@@ -91,4 +91,12 @@ describe('LuccaDb', () => {
     opened.pop();
     expect(open(file).getSettings().lang).toBe('en');
   });
+
+  it('hasProgress tells whether a kind was ever recorded for a task', () => {
+    const db = open();
+    db.addProgress({ id: 'e1', taskId: 't1', kind: 'task_done', at: '2026-11-20T15:00:00Z' });
+    expect(db.hasProgress('t1', 'task_done')).toBe(true);
+    expect(db.hasProgress('t1', 'lesson_done')).toBe(false);
+    expect(db.hasProgress('t2', 'task_done')).toBe(false);
+  });
 });

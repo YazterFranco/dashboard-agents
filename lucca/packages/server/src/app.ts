@@ -6,6 +6,7 @@ import { z } from 'zod';
 import {
   KidStateSchema,
   ProgressKindSchema,
+  STAR_KINDS,
   localDate,
   mondayOf,
   nextStatus,
@@ -67,7 +68,10 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
     const task = db.getTask(body.data.taskId);
     if (!task || task.hidden || task.retired) return reply.code(404).send({ error: 'tarea no encontrada' });
 
-    db.addProgress({ id: randomUUID(), taskId: task.id, kind: body.data.kind, at: now().toISOString() });
+    // Una estrella se gana una sola vez por tarea y tipo: repetir "¡Terminé!" (un reintento de red, o repasar
+    // una tarea ya hecha otra semana) no suma otra. Los demás eventos (pistas, pasos) siempre se registran.
+    const alreadyEarned = STAR_KINDS.includes(body.data.kind) && db.hasProgress(task.id, body.data.kind);
+    if (!alreadyEarned) db.addProgress({ id: randomUUID(), taskId: task.id, kind: body.data.kind, at: now().toISOString() });
     const status = nextStatus(task.status, body.data.kind);
     if (status !== task.status) db.setTaskStatus(task.id, status);
     return { status, starsThisWeek: starsNow() };

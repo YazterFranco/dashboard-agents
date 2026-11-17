@@ -202,9 +202,9 @@ h3 {
   border-color: transparent;
 }
 .btn-primary {
-  flex: 1;
+  flex: 1 1 150px;
   min-height: var(--tap-primary);
-  padding: 0 20px;
+  padding: 0 16px;
   border-radius: var(--radius-pill);
   background: var(--on-accent);
   color: var(--c, #fff);
@@ -375,6 +375,7 @@ h3 {
 }
 .task-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
 }

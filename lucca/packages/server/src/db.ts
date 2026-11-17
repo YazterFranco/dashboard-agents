@@ -2,7 +2,7 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createRequire } from 'node:module';
 import type { DatabaseSync } from 'node:sqlite';
-import { SettingsSchema, TaskSchema, type ProgressEvent, type Settings, type Task, type TaskStatus } from '@lucca/shared';
+import { SettingsSchema, TaskSchema, type ProgressEvent, type ProgressKind, type Settings, type Task, type TaskStatus } from '@lucca/shared';
 
 /** Cada migración sube `PRAGMA user_version` en uno. No se editan las antiguas: se añade una nueva. */
 const MIGRATIONS: string[] = [
@@ -137,6 +137,10 @@ export class LuccaDb {
   /** Solo añade: un `id` repetido se ignora. */
   addProgress(ev: ProgressEvent): void {
     this.db.prepare('INSERT OR IGNORE INTO progress_events (id, task_id, kind, at) VALUES (?, ?, ?, ?)').run(ev.id, ev.taskId, ev.kind, ev.at);
+  }
+
+  hasProgress(taskId: string, kind: ProgressKind): boolean {
+    return this.db.prepare('SELECT 1 FROM progress_events WHERE task_id = ? AND kind = ? LIMIT 1').get(taskId, kind) !== undefined;
   }
 
   listProgress(): ProgressEvent[] {

@@ -62,4 +62,15 @@ describe('App', () => {
     document.dispatchEvent(new Event('visibilitychange'));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
   });
+
+  it('selects the new day when the screen refreshes on another day', async () => {
+    const wednesday = { ok: true, json: async () => demoState({ today: '2026-11-18' }) };
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(okResponse()).mockResolvedValue(wednesday));
+    render(<App />);
+    const tuesday = await screen.findByRole('button', { name: /Martes 17/ });
+    expect(tuesday.getAttribute('aria-pressed')).toBe('true');
+    document.dispatchEvent(new Event('visibilitychange'));
+    await waitFor(() => expect(screen.getByRole('button', { name: /Miércoles 18/ }).getAttribute('aria-pressed')).toBe('true'));
+    expect(screen.getByRole('button', { name: /Martes 17/ }).getAttribute('aria-pressed')).toBe('false');
+  });
 });

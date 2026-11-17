@@ -33,6 +33,25 @@ export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask }: WeekS
   const [selected, setSelected] = useState<IsoDate>(today);
   /** El navegador solo deja hablar después de un toque: el primero "arma" la lectura automática. */
   const armed = useRef(false);
+  /** Qué botón inició la lectura en curso: pulsarlo otra vez la detiene. */
+  const playing = useRef<string | null>(null);
+
+  const startSpeaking = (key: string, text: string) => {
+    playing.current = key;
+    speaker.speak([{ text, lang }], {
+      onEnd: () => {
+        if (playing.current === key) playing.current = null;
+      },
+    });
+  };
+  const toggleSpeaking = (key: string, text: string) => {
+    if (speaker.speaking && playing.current === key) {
+      speaker.stop();
+      playing.current = null;
+    } else {
+      startSpeaking(key, text);
+    }
+  };
 
   const describe = (date: IsoDate) => {
     const items = dayTasks(state.tasks, date, today);
@@ -48,20 +67,20 @@ export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask }: WeekS
     return { items, summary, suggestion };
   };
 
-  const readDay = (date: IsoDate) => {
+  const dayText = (date: IsoDate): string => {
     const { summary, suggestion } = describe(date);
-    speaker.speak([{ text: sentences([summary.replace(' · ', '. '), suggestion]), lang }]);
+    return sentences([summary.replace(' · ', '. '), suggestion]);
   };
 
   const onFirstTouch = () => {
     if (armed.current) return;
     armed.current = true;
-    if (shouldAutoSpeak(prefs.voiceMode)) readDay(selected);
+    if (shouldAutoSpeak(prefs.voiceMode)) startSpeaking('nova', dayText(selected));
   };
 
   const selectDay = (date: IsoDate) => {
     setSelected(date);
-    if (armed.current && shouldAutoSpeak(prefs.voiceMode)) readDay(date);
+    if (armed.current && shouldAutoSpeak(prefs.voiceMode)) startSpeaking('nova', dayText(date));
   };
 
   const { items, summary, suggestion } = describe(selected);
@@ -83,7 +102,7 @@ export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask }: WeekS
             <p className="suggestion">{t(lang, 'noAgenda')}</p>
           )}
           {speakers && hasAgenda ? (
-            <button type="button" className="btn-icon btn-nova" aria-label={t(lang, 'listenMascot')} onClick={() => readDay(selected)}>
+            <button type="button" className="btn-icon btn-nova" aria-label={t(lang, 'listenMascot')} onClick={() => toggleSpeaking('nova', dayText(selected))}>
               <SpeakerIcon />
             </button>
           ) : null}
@@ -111,7 +130,7 @@ export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask }: WeekS
                 lang={lang}
                 showSpeaker={speakers}
                 onOpen={() => onOpenTask(item.task.id)}
-                onListen={() => speaker.speak([{ text: `${subjectLabelOf(item, lang)}. ${taskTitle(item.task, lang)}`, lang }])}
+                onListen={() => toggleSpeaking(item.task.id, `${subjectLabelOf(item, lang)}. ${taskTitle(item.task, lang)}`)}
               />
             ))
           )}

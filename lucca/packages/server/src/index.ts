@@ -5,9 +5,13 @@ import { localDate } from '@lucca/shared';
 import { buildApp } from './app.js';
 import { loadConfig, type Config } from './config.js';
 import { LuccaDb } from './db.js';
+import { loadDotEnv } from './env.js';
 import { seedDemo } from './seed.js';
 
 async function main(): Promise<void> {
+  // El `.env` de la carpeta desde la que se arranca; lo que ya esté en el entorno manda.
+  loadDotEnv(join(process.cwd(), '.env'));
+
   let config: Config;
   try {
     config = loadConfig(process.env);

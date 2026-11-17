@@ -10,6 +10,7 @@ import { LuccaDb } from '../src/db.js';
 
 // 2026-11-18T03:00:00Z = martes 17 a las 22:00 en Panamá.
 const NOW = new Date('2026-11-18T03:00:00Z');
+let clock = NOW;
 
 function task(partial: Partial<Task> & { id: string }): Task {
   return TaskSchema.parse({ subject: 'math', title: `Tarea ${partial.id}`, source: 'manual', ...partial });
@@ -21,10 +22,11 @@ describe('app', () => {
   const dirs: string[] = [];
 
   async function setup(opts: { webDir?: string | null; tasks?: Task[] } = {}) {
+    clock = NOW;
     db = new LuccaDb(':memory:');
     for (const t of opts.tasks ?? []) db.upsertTask(t);
     const config = { ...loadConfig({}), webDir: opts.webDir ?? null, aiConfigured: true, dbPath: '/secret/path/lucca.db' };
-    app = await buildApp({ db, config, now: () => NOW });
+    app = await buildApp({ db, config, now: () => clock });
   }
   afterEach(async () => {
     await app?.close();
@@ -85,6 +87,26 @@ describe('app', () => {
     await post({ taskId: 'a', kind: 'task_done' });
     const second = await post({ taskId: 'a', kind: 'task_done' });
     expect(second.json()).toEqual({ status: 'done', starsThisWeek: 1 });
+  });
+
+  it.each(['task_done', 'lesson_done', 'practice_done'] as const)(
+    'a repeated %s in a later week gives no new star and logs no second event',
+    async (kind) => {
+      await setup({ tasks: [task({ id: 'a' })] });
+      clock = new Date('2026-11-20T15:00:00Z'); // viernes 20
+      expect((await post({ taskId: 'a', kind })).json().starsThisWeek).toBe(1);
+      clock = new Date('2026-11-23T15:00:00Z'); // lunes 23: otra semana
+      const again = await post({ taskId: 'a', kind });
+      expect(again.json().starsThisWeek).toBe(0);
+      expect(db.listProgress().filter((e) => e.kind === kind)).toHaveLength(1);
+    },
+  );
+
+  it('events that give no stars are always logged', async () => {
+    await setup({ tasks: [task({ id: 'a' })] });
+    await post({ taskId: 'a', kind: 'hint_used' });
+    await post({ taskId: 'a', kind: 'hint_used' });
+    expect(db.listProgress().filter((e) => e.kind === 'hint_used')).toHaveLength(2);
   });
 
   it('progress on an unknown or hidden task is 404', async () => {

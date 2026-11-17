@@ -55,7 +55,7 @@ export function App() {
   };
 
   if (state) {
-    return <WeekScreen state={state} prefs={prefs} speaker={speaker} onPrefs={onPrefs} onOpenTask={() => undefined} />;
+    return <WeekScreen key={state.today} state={state} prefs={prefs} speaker={speaker} onPrefs={onPrefs} onOpenTask={() => undefined} />;
   }
 
   return (
