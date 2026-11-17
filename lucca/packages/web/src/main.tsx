@@ -7,9 +7,10 @@ import '@fontsource/andika/latin-ext-700.css';
 import '@fontsource/bricolage-grotesque/latin-700.css';
 import '@fontsource/bricolage-grotesque/latin-800.css';
 import './styles.css';
+import { App } from './App';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <h1>Lucca</h1>
+    <App />
   </StrictMode>,
 );
