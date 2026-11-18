@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi, type Mock } from 'vitest';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import type { KidState } from '@lucca/shared';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import type { KidState, ProgressKind } from '@lucca/shared';
 import type { Prefs } from '../prefs';
 import type { ProgressResult } from '../progress';
 import type { Segment, SpeakHandlers, Speaker } from '../speaker';
@@ -36,11 +36,11 @@ function fakeSpeaker(): FakeSpeaker {
   };
 }
 
-function setup(opts: { state?: KidState; prefs?: Prefs } = {}) {
+function setup(opts: { state?: KidState; prefs?: Prefs; onProgress?: (taskId: string, kind: ProgressKind) => Promise<ProgressResult> } = {}) {
   const speaker = fakeSpeaker();
   const onPrefs = vi.fn();
   const onOpenTask = vi.fn();
-  const onProgress = vi.fn(async (): Promise<ProgressResult> => ({ ok: true, starsGained: 0 }));
+  const onProgress = vi.fn(opts.onProgress ?? (async (): Promise<ProgressResult> => ({ ok: true, starsGained: 0 })));
   const utils = render(
     <WeekScreen
       state={opts.state ?? demoState()}
@@ -476,6 +476,198 @@ describe('WeekScreen week plan', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Week plan' })).toBeTruthy();
     expect(screen.getByText('Start with today')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Go to Tuesday 17' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Back to my week' })).toBeTruthy();
+  });
+});
+
+describe('WeekScreen day guide', () => {
+  const guideMe = () => fireEvent.click(screen.getByRole('button', { name: 'Guíame' }));
+  const title = () => screen.getByRole('heading', { level: 1 }).textContent;
+  const click = (name: string) => fireEvent.click(screen.getByRole('button', { name }));
+  /** Pulsa y deja que React procese lo que pasa después de la respuesta (act espera las promesas). */
+  const clickAndWait = async (name: string) => {
+    await act(async () => {
+      click(name);
+    });
+  };
+
+  it('opens the guide with the started task first', () => {
+    setup();
+    guideMe();
+    expect(screen.getByText('Tarea 1 de 3')).toBeTruthy();
+    expect(title()).toBe('Las partes de la planta');
+    expect(screen.getByText('Ciencias')).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: '¡Hola, Lucca!' })).toBeNull();
+  });
+
+  it('"¡Ya la hice!" sends task_done and moves to the next task', async () => {
+    const { onProgress } = setup();
+    guideMe();
+    await clickAndWait('¡Ya la hice!');
+    expect(onProgress).toHaveBeenCalledWith('tue-sci', 'task_done');
+    expect(screen.getByText('Tarea 2 de 3')).toBeTruthy();
+    expect(title()).toBe('Restas sin llevar, pág. 26');
+  });
+
+  it('"Más tarde" sends the task to the end without changing it', () => {
+    const { onProgress } = setup();
+    guideMe();
+    click('Más tarde');
+    expect(onProgress).not.toHaveBeenCalled();
+    expect(title()).toBe('Restas sin llevar, pág. 26');
+    expect(screen.getByText('Tarea 1 de 3')).toBeTruthy();
+    click('Más tarde');
+    click('Más tarde');
+    expect(title()).toBe('Las partes de la planta');
+  });
+
+  it('"Más tarde" is disabled for the last task', async () => {
+    setup();
+    guideMe();
+    await clickAndWait('¡Ya la hice!');
+    await clickAndWait('¡Ya la hice!');
+    expect(title()).toBe('Leer “La semilla mágica” y dibujar el final');
+    expect((screen.getByRole('button', { name: 'Más tarde' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('finishing the last task shows the celebration with the stars earned', async () => {
+    const answers = [1, 1, 0];
+    setup({ onProgress: async () => ({ ok: true, starsGained: answers.shift()! }) });
+    guideMe();
+    await clickAndWait('¡Ya la hice!');
+    await clickAndWait('¡Ya la hice!');
+    await clickAndWait('¡Ya la hice!');
+    expect(title()).toBe('¡Terminaste el día!');
+    expect(screen.getByText('Estrellas ganadas: 2')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Volver a mi semana' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: '¡Ya la hice!' })).toBeNull();
+  });
+
+  it('a failed send says "Inténtalo otra vez", keeps the task and allows retrying', async () => {
+    const results: ProgressResult[] = [{ ok: false }, { ok: true, starsGained: 1 }];
+    setup({ onProgress: async () => results.shift()! });
+    guideMe();
+    await clickAndWait('¡Ya la hice!');
+    expect(screen.getByText('Inténtalo otra vez')).toBeTruthy();
+    expect(screen.getByText('Tarea 1 de 3')).toBeTruthy();
+    expect(title()).toBe('Las partes de la planta');
+    expect((screen.getByRole('button', { name: '¡Ya la hice!' }) as HTMLButtonElement).disabled).toBe(false);
+    await clickAndWait('¡Ya la hice!');
+    expect(screen.queryByText('Inténtalo otra vez')).toBeNull();
+    expect(screen.getByText('Tarea 2 de 3')).toBeTruthy();
+  });
+
+  it('a double tap sends one event and does not skip a task', async () => {
+    let resolve!: (r: ProgressResult) => void;
+    const { onProgress } = setup({ onProgress: () => new Promise<ProgressResult>((r) => (resolve = r)) });
+    guideMe();
+    const button = screen.getByRole('button', { name: '¡Ya la hice!' });
+    fireEvent.click(button);
+    fireEvent.click(button);
+    expect(onProgress).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      resolve({ ok: true, starsGained: 1 });
+    });
+    expect(screen.getByText('Tarea 2 de 3')).toBeTruthy();
+    expect(title()).toBe('Restas sin llevar, pág. 26');
+  });
+
+  it('skips a queued task that is already done or gone', () => {
+    const { rerender, speaker, onPrefs, onOpenTask, onProgress } = setup();
+    guideMe();
+    const changed = demoState();
+    changed.tasks = changed.tasks.filter((t) => t.id !== 'tue-math').map((t) => (t.id === 'tue-sci' ? { ...t, status: 'done' as const } : t));
+    rerender(<WeekScreen state={changed} prefs={ES} speaker={speaker} onPrefs={onPrefs} onOpenTask={onOpenTask} onProgress={onProgress} />);
+    expect(title()).toBe('Leer “La semilla mágica” y dibujar el final');
+    expect(screen.getByText('Tarea 3 de 3')).toBeTruthy();
+  });
+
+  it('a day with everything done shows the done message instead of an empty guide', () => {
+    setup();
+    fireEvent.click(day(/Lunes 16/));
+    guideMe();
+    expect(screen.getByText('¡Lo hiciste todo! ¡Buen trabajo!')).toBeTruthy();
+    expect(screen.queryByText(/^Tarea \d/)).toBeNull();
+    expect(screen.getByRole('button', { name: 'Volver a mi semana' })).toBeTruthy();
+  });
+
+  it('a day without tasks shows the free-day message instead of an empty guide', () => {
+    setup();
+    fireEvent.click(day(/Jueves 19/));
+    guideMe();
+    expect(screen.getByText('¡Nada más por hoy! Tiempo de jugar.')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: '¡Ya la hice!' })).toBeNull();
+  });
+
+  it('reads each step aloud in "both" mode', () => {
+    const { speaker } = setup();
+    guideMe();
+    expect(speaker.speak).toHaveBeenLastCalledWith([{ text: 'Tarea 1 de 3. Ciencias. Las partes de la planta.', lang: 'es' }], expect.anything());
+    click('Más tarde');
+    expect(speaker.speak).toHaveBeenLastCalledWith([{ text: 'Tarea 1 de 3. Matemáticas. Restas sin llevar, pág. 26.', lang: 'es' }], expect.anything());
+  });
+
+  it('does not read and has no speaker button in "text" mode', () => {
+    const { speaker } = setup({ prefs: { ...ES, voiceMode: 'text' } });
+    guideMe();
+    expect(speaker.speak).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: /^Escuchar: / })).toBeNull();
+  });
+
+  it('the speaker button stops a reading in progress and reads again afterwards', () => {
+    const { speaker } = setup();
+    guideMe();
+    expect(speaker.speak).toHaveBeenCalledTimes(1);
+    click('Escuchar: Las partes de la planta');
+    expect(speaker.stop).toHaveBeenCalledTimes(1);
+    click('Escuchar: Las partes de la planta');
+    expect(speaker.speak).toHaveBeenCalledTimes(2);
+  });
+
+  it('leaving the guide stops the reading', () => {
+    const { speaker } = setup();
+    guideMe();
+    speaker.stop.mockClear();
+    click('Volver a mi semana');
+    expect(speaker.stop).toHaveBeenCalled();
+  });
+
+  it('back returns to the week with the same day selected and the focus on "Guíame"', () => {
+    setup();
+    fireEvent.click(day(/Miércoles 18/));
+    guideMe();
+    click('Volver a mi semana');
+    expect(day(/Miércoles 18/).getAttribute('aria-pressed')).toBe('true');
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Guíame' }));
+  });
+
+  it('moves the focus to the heading when it opens and when the task changes', () => {
+    setup();
+    guideMe();
+    expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1 }));
+    (document.activeElement as HTMLElement).blur();
+    click('Más tarde');
+    expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1 }));
+  });
+
+  it('works on a day of a past week', () => {
+    const state = demoState();
+    state.tasks.push(task({ id: 'past', title: 'Tarea de la semana pasada', assignedDate: '2026-11-10', dueDate: '2026-11-20' }));
+    setup({ state });
+    fireEvent.click(screen.getByRole('button', { name: 'Semana anterior' }));
+    expect(day(/Martes 10/).getAttribute('aria-pressed')).toBe('true');
+    guideMe();
+    expect(title()).toBe('Tarea de la semana pasada');
+    expect(screen.getByText('Tarea 1 de 1')).toBeTruthy();
+  });
+
+  it('works in English', () => {
+    setup({ prefs: { ...ES, lang: 'en' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guide me' }));
+    expect(screen.getByText('Task 1 of 3')).toBeTruthy();
+    expect(title()).toBe('The parts of a plant');
+    expect(screen.getByRole('button', { name: 'I did it!' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Later' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Back to my week' })).toBeTruthy();
   });
 });

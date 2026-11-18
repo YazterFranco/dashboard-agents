@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import { taskTitle, type DayTask, type Lang } from '@lucca/shared';
+import { taskTitle, type DayTask, type Lang, type Task } from '@lucca/shared';
 import { dueLabel, subjectName, t, type MessageKey } from '../i18n';
 import { PlayIcon, SpeakerIcon, SubjectIcon } from './SubjectIcon';
 
@@ -19,8 +19,8 @@ interface TaskCardProps {
 }
 
 /** Nombre de la materia: el de Lucca en su idioma; si es "Otra", el que escribió el colegio. */
-export function subjectLabelOf(item: DayTask, lang: Lang): string {
-  const { subject, subjectLabel } = item.task;
+export function subjectLabelOf(task: Task, lang: Lang): string {
+  const { subject, subjectLabel } = task;
   return subject === 'other' && subjectLabel ? subjectLabel : subjectName(lang, subject);
 }
 
@@ -39,7 +39,7 @@ export function TaskCard({ item, lang, showSpeaker, onOpen, onListen }: TaskCard
         <span className="pill">{t(lang, STATUS_LABEL[task.status])}</span>
       </div>
       <div className="task-body">
-        <span className="task-subject">{subjectLabelOf(item, lang)}</span>
+        <span className="task-subject">{subjectLabelOf(task, lang)}</span>
         <h3 className="task-title" id={titleId}>
           {title}
         </h3>

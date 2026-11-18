@@ -345,6 +345,108 @@ h3 {
   background: var(--bar);
 }
 
+/* ---------- Guía del día ---------- */
+.hello-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.btn-guide {
+  flex: none;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.guide {
+  max-width: 760px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+.guide-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.guide-step {
+  margin: 0;
+  font: 800 24px var(--font-display);
+}
+.guide-card {
+  padding: 32px;
+  border-radius: var(--radius-tile);
+  background: var(--c);
+  color: var(--on-accent);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+.guide-card h1,
+.guide-end h1 {
+  font: 800 40px/1.1 var(--font-display);
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+.guide-card h1:focus,
+.guide-end h1:focus { outline: none; }
+.guide-icon {
+  width: var(--tap-primary);
+  height: var(--tap-primary);
+}
+.guide-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 3px solid var(--on-accent);
+}
+.dot.on { background: var(--on-accent); }
+.guide-error {
+  margin: 0;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  background: var(--on-accent);
+  color: var(--c);
+  font-weight: 700;
+}
+.guide-actions {
+  width: 100%;
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.guide-actions .btn-primary { flex: 1 1 220px; }
+.guide-later {
+  background: rgba(16, 24, 40, 0.14);
+  color: var(--on-accent);
+}
+.guide-actions button:disabled { opacity: 0.55; cursor: default; }
+.guide-end {
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+}
+.guide-stars {
+  margin: 0;
+  font: 700 26px var(--font-display);
+}
+
 /* ---------- Plan de la semana ---------- */
 .plan-open { flex: none; }
 .plan {
@@ -640,7 +742,8 @@ h3 {
   .tasks { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
   .task-card:nth-child(n) { border-radius: var(--radius-tile); }
   .task-card:nth-child(2n) { border-top-left-radius: 80px; }
-  .plan { padding: 16px; }
+  .plan,
+  .guide { padding: 16px; }
   .side { flex-direction: row; flex-wrap: wrap; }
   .side > * { flex: 1 1 320px; }
 }

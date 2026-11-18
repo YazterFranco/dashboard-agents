@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   dayTasks,
   defaultDayOf,
+  guideOrder,
   mondayOf,
   plannerToday,
   shiftWeek,
@@ -16,8 +17,10 @@ import {
 import { subjectName, summaryLine, t, weekProgressText, weekRange } from '../i18n';
 import type { Prefs } from '../prefs';
 import type { ProgressResult } from '../progress';
+import { sentences } from '../speech';
 import { shouldAutoSpeak, showSpeakerButtons, type Speaker } from '../speaker';
 import { Controls } from './Controls';
+import { DayGuide } from './DayGuide';
 import { DayStrip } from './DayStrip';
 import { Mascot } from './Mascot';
 import { ProgressBar } from './ProgressBar';
@@ -37,23 +40,17 @@ interface WeekScreenProps {
   onProgress(taskId: string, kind: ProgressKind): Promise<ProgressResult>;
 }
 
-/** Une frases para leerlas en voz alta: cada una termina en un signo de puntuación. */
-function sentences(parts: (string | null)[]): string {
-  return parts
-    .filter((p): p is string => Boolean(p))
-    .map((p) => (/[.!?…]$/.test(p.trim()) ? p.trim() : `${p.trim()}.`))
-    .join(' ');
-}
-
-export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask }: WeekScreenProps) {
+export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask, onProgress }: WeekScreenProps) {
   const { lang } = prefs;
   const today = plannerToday(state.today);
   const [weekStart, setWeekStart] = useState<IsoDate>(mondayOf(today));
   const [selected, setSelected] = useState<IsoDate>(today);
-  const [view, setView] = useState<'week' | 'plan'>('week');
+  const [view, setView] = useState<'week' | 'plan' | 'guide'>('week');
+  const [guideIds, setGuideIds] = useState<string[]>([]);
   const planButton = useRef<HTMLButtonElement>(null);
+  const guideButton = useRef<HTMLButtonElement>(null);
   /** Al volver de una vista, el foco regresa al botón que la abrió. */
-  const returnFocus = useRef<'plan' | null>(null);
+  const returnFocus = useRef<'plan' | 'guide' | null>(null);
   const days = weekDays(weekStart);
   const summaries = weekSummary(state.tasks, days, today);
   const totals = weekTotals(summaries);
@@ -102,10 +99,9 @@ export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask }: WeekS
   };
 
   useEffect(() => {
-    if (view === 'week' && returnFocus.current === 'plan') {
-      planButton.current?.focus();
-      returnFocus.current = null;
-    }
+    if (view !== 'week' || !returnFocus.current) return;
+    (returnFocus.current === 'plan' ? planButton : guideButton).current?.focus();
+    returnFocus.current = null;
   }, [view]);
 
   const openPlan = () => {
@@ -130,8 +126,30 @@ export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask }: WeekS
   };
 
   const { items, summary, suggestion } = describe(selected);
+  const pendingCount = items.filter((i) => i.task.status !== 'done').length;
+
+  const openGuide = () => {
+    setGuideIds(guideOrder(items).map((i) => i.task.id));
+    returnFocus.current = 'guide';
+    setView('guide');
+  };
   const speakers = showSpeakerButtons(prefs.voiceMode);
   const hasAgenda = state.tasks.length > 0;
+
+  if (view === 'guide') {
+    return (
+      <DayGuide
+        lang={lang}
+        voiceMode={prefs.voiceMode}
+        speaker={speaker}
+        tasks={state.tasks}
+        initialIds={guideIds}
+        emptyMessage={items.length === 0 ? t(lang, 'freeDay') : pendingCount === 0 ? t(lang, 'mascotAllDone') : null}
+        onProgress={onProgress}
+        onBack={() => setView('week')}
+      />
+    );
+  }
 
   if (view === 'plan') {
     return (
@@ -165,10 +183,17 @@ export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask }: WeekS
           ) : (
             <p className="suggestion">{t(lang, 'noAgenda')}</p>
           )}
-          {speakers && hasAgenda ? (
-            <button type="button" className="btn-icon btn-nova" aria-label={t(lang, 'listenMascot')} onClick={() => toggleSpeaking('nova', dayText(selected))}>
-              <SpeakerIcon />
-            </button>
+          {hasAgenda ? (
+            <div className="hello-actions">
+              {speakers ? (
+                <button type="button" className="btn-icon btn-nova" aria-label={t(lang, 'listenMascot')} onClick={() => toggleSpeaking('nova', dayText(selected))}>
+                  <SpeakerIcon />
+                </button>
+              ) : null}
+              <button ref={guideButton} type="button" className="btn-primary btn-guide" onClick={openGuide}>
+                {t(lang, 'guideStart')}
+              </button>
+            </div>
           ) : null}
         </div>
       </section>
@@ -227,7 +252,7 @@ export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask }: WeekS
                 lang={lang}
                 showSpeaker={speakers}
                 onOpen={() => onOpenTask(item.task.id)}
-                onListen={() => toggleSpeaking(item.task.id, `${subjectLabelOf(item, lang)}. ${taskTitle(item.task, lang)}`)}
+                onListen={() => toggleSpeaking(item.task.id, `${subjectLabelOf(item.task, lang)}. ${taskTitle(item.task, lang)}`)}
               />
             ))
           )}
