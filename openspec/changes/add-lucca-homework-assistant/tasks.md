@@ -27,6 +27,16 @@
 - [x] 2.7 Añadir `manifest.webmanifest`, iconos y metadatos de "Añadir a pantalla de inicio", y verificar que el manifiesto es válido en la build _(manifiesto e icono incluidos en la build; no se validó con una herramienta externa)_
 - [x] 2.8 Verificar en un navegador real a 1024×768 y 768×1024 que "Mi semana" no tiene desplazamiento horizontal (captura con Playwright)
 
+## 2b. Elegir la semana y guías por semana y por día (petición de papá)
+
+- [ ] 2b.1 Añadir en `shared` la lógica pura (`shiftWeek`, `weekTotals`, `guideOrder`, `defaultDayOf`) y verificar con pruebas los escenarios de elegir semana, resumen y orden de la guía
+- [ ] 2b.2 Añadir los textos ES/EN (rango de fechas, resumen, plan, guía) y verificar con pruebas que no falta ninguna clave y que el rango cruza bien de mes
+- [ ] 2b.3 Enviar el progreso desde la pantalla con actualización optimista y verificar con pruebas que se deshace si el servidor falla
+- [ ] 2b.4 Implementar los botones de semana y el resumen con barra de progreso, y verificar con Testing Library los escenarios de elegir la semana
+- [ ] 2b.5 Implementar "Plan de la semana" y verificar con Testing Library sus escenarios
+- [ ] 2b.6 Implementar "Guíame" (orden, "¡Ya la hice!", "Más tarde", cierre, voz) y verificar con Testing Library sus escenarios
+- [ ] 2b.7 Verificar en navegador real que las tres vistas no desbordan a 1024×768 y 768×1024, en oscuro y claro
+
 ## 3. Área del padre y agenda
 
 - [ ] 3.1 Implementar el PIN (hash scrypt, bloqueo tras 5 intentos, sesión de 15 min, cookie httpOnly SameSite=Strict) y verificar con pruebas los escenarios de parent-area

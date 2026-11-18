@@ -11,6 +11,7 @@ Ahora es buen momento porque la IA generativa ya puede crear interfaces interact
 - **Nueva aplicación "Asistente de Lucca"** en la carpeta `lucca/` de este repo, separada de AgentDash. Usa el mismo stack: TypeScript, React, Node, SQLite y Docker.
 - **Lectura automática de la agenda de Mereb** desde la web, con la sesión del padre. Si falla, el padre sube una captura o foto de la agenda.
 - **Pantalla principal "Mi semana"** con el estilo C · Bento aprobado (modo oscuro y claro): días de lunes a viernes, tareas por día, estado y estrellas.
+- **Elegir la semana y guías por semana y por día**: Lucca puede ir a la semana anterior o siguiente, ver el "Plan de la semana" con el avance y pedir "Guíame" para recorrer las tareas del día una a una, con voz.
 - **"Entender"**: lecciones interactivas generadas con IA a partir de una biblioteca de bloques propios, más un bloque "libre" aislado (sandbox) para animaciones especiales. Se preparan por adelantado y el padre puede revisarlas.
 - **"Hacer la tarea"**: foto de la hoja o del libro (con la cámara de la tablet o con el celular mediante un código QR). La IA la lee y lo guía ejercicio por ejercicio con una escalera de 3 pistas, sin dar nunca la respuesta final. Sin foto, guía por tema.
 - **"Practicar"**: juegos cortos de unos 5 minutos sobre el mismo tema.
@@ -23,7 +24,7 @@ Ahora es buen momento porque la IA generativa ya puede crear interfaces interact
 
 ### New Capabilities
 - `lucca/agenda-sync`: obtener y normalizar las tareas de la agenda de Mereb (automático con navegador sin interfaz, respaldo por foto y captura manual).
-- `lucca/weekly-planner`: pantalla principal de Lucca con la semana, las tareas por día, su estado y las estrellas.
+- `lucca/weekly-planner`: pantalla principal de Lucca con la semana (elegible), las tareas por día, su estado, las estrellas, el plan de la semana y la guía del día.
 - `lucca/interactive-lessons`: generación, validación, preparación anticipada y presentación de lecciones interactivas a partir de bloques.
 - `lucca/homework-help`: guía paso a paso para hacer la tarea, a partir de la foto de la hoja o del tema, con escalera de pistas.
 - `lucca/practice-games`: sesiones cortas de práctica con juegos sobre el tema de la tarea.

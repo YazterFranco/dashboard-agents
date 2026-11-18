@@ -157,6 +157,14 @@ Se usa `<input type="file" accept="image/*" capture="environment">`, que abre la
 - **Ejercicios que no se pueden comprobar** (dibujar, leer un cuento): pasos guiados y un botón "Lo hice" en lugar de comprobar la respuesta.
 - **Tareas de otros días:** Lucca puede abrir las tareas de cualquier día de la semana visible, no solo las de hoy.
 
+### D15. Elegir la semana y guías por semana y por día (petición posterior)
+La elección de semana, el plan y la guía son **estado de pantalla del cliente**: no cambian la API de lectura (`/api/kid/state` ya trae las tareas) y toda la lógica es pura y compartida (`shiftWeek`, `weekTotals`, `guideOrder`, `defaultDayOf` en `shared`).
+- **Vistas:** `WeekPlan` y `DayGuide` son vistas de pantalla completa dentro de `WeekScreen` (con botón "Volver a mi semana"); no son rutas todavía, así que el botón "atrás" del navegador no las recorre. Las rutas llegan con "Entender / Hacer la tarea".
+- **"¡Ya la hice!"** envía `task_done` a `/api/kid/progress` con actualización optimista; si falla, deshace el cambio y la mascota dice "Inténtalo otra vez". La estrella la decide el servidor (una por tarea y tipo, ver D14/I5).
+- **La guía no abre lecciones** hasta que existan (fase 3); entonces "Empezar" se añade antes de "¡Ya la hice!".
+- **Orden de la guía:** empezada, urgentes, materia; "Más tarde" manda la tarea al final de la ronda, solo en memoria.
+- **Alternativas descartadas:** guía como asistente conversacional con IA (sin chat libre y con costo por tarea); calendario mensual (demasiado abstracto a los 7 años).
+
 ## Risks / Trade-offs
 
 - **[La página de Mereb cambia o pide captcha]** → Hay 3 niveles de respaldo (D5), avisos al padre y el adaptador aislado con pruebas sobre HTML de muestra.

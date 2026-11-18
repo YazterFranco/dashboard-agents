@@ -2,12 +2,12 @@
 
 ## Purpose
 
-Pantalla principal de Lucca, "Mi semana": muestra qué tareas tiene cada día escolar, en qué estado están y cuántas estrellas lleva. Usa el estilo C · Bento aprobado y está pensada para un niño de 7 años.
+Pantalla principal de Lucca, "Mi semana": muestra qué tareas tiene cada día escolar, en qué estado están y cuántas estrellas lleva, le deja elegir la semana y lo guía por semana y por día. Usa el estilo C · Bento aprobado y está pensada para un niño de 7 años.
 
 ## ADDED Requirements
 
 ### Requirement: Vista semanal
-El sistema SHALL mostrar los días escolares de lunes a viernes de la semana actual, con su número de día, un indicador de tareas pendientes y el día de hoy resaltado. Al abrir, SHALL quedar seleccionado hoy. En sábado o domingo, SHALL mostrarse la semana siguiente con el lunes seleccionado.
+El sistema SHALL mostrar los días escolares de lunes a viernes de la semana elegida (por defecto la actual), con su número de día, un indicador de tareas pendientes y el día de hoy resaltado. Al abrir, SHALL quedar seleccionado hoy. En sábado o domingo, SHALL mostrarse la semana siguiente con el lunes seleccionado.
 
 #### Scenario: Abrir un martes
 - **WHEN** Lucca abre el asistente el martes 17
@@ -16,6 +16,82 @@ El sistema SHALL mostrar los días escolares de lunes a viernes de la semana act
 #### Scenario: Abrir un domingo
 - **WHEN** Lucca abre el asistente un domingo
 - **THEN** ve la semana siguiente con el lunes seleccionado
+
+### Requirement: Elegir la semana
+El sistema SHALL permitir a Lucca ir a la semana anterior, a la siguiente o volver a la actual con botones grandes, mostrando el rango de fechas y marcando la semana actual. Al cambiar de semana queda seleccionado hoy si pertenece a esa semana; si no, el primer día con tareas por hacer o, si no hay, el lunes.
+
+#### Scenario: Semana siguiente
+- **WHEN** Lucca pulsa "Semana siguiente" estando en la semana del 16
+- **THEN** ve lunes 23 a viernes 27, el rango "23 – 27 de noviembre" y el botón "Esta semana" para volver
+
+#### Scenario: Volver a esta semana
+- **WHEN** Lucca pulsa "Esta semana" desde otra semana
+- **THEN** vuelve a la semana actual con hoy seleccionado
+
+#### Scenario: Rango que cruza de mes
+- **WHEN** la semana elegida empieza el 30 de noviembre
+- **THEN** el rango se muestra como "30 nov – 4 dic"
+
+#### Scenario: Semana sin tareas
+- **WHEN** la semana elegida no tiene tareas
+- **THEN** Lucca ve el mensaje de día libre en el día seleccionado y ningún error
+
+### Requirement: Resumen de la semana
+El sistema SHALL mostrar el avance de la semana elegida como "N de M tareas listas" con una barra de progreso, contando las tareas que aparecen en los días de esa semana. La mascota SHALL poder leer ese resumen en voz alta.
+
+#### Scenario: Semana con avance
+- **WHEN** la semana elegida tiene 10 tareas y 5 están listas
+- **THEN** Lucca ve "5 de 10 tareas listas" y la barra llena a la mitad
+
+#### Scenario: Semana sin tareas en el resumen
+- **WHEN** la semana elegida no tiene tareas
+- **THEN** Lucca ve "Sin tareas esta semana" y no ve barra de progreso
+
+### Requirement: Plan de la semana
+El sistema SHALL ofrecer una vista "Plan de la semana" que lista cada día escolar con sus tareas (icono de la materia, título y estado) y dice por dónde empezar: hoy, o el primer día con tareas por hacer si hoy está completo. Tocar un día SHALL llevar a Lucca a ese día.
+
+#### Scenario: Ver el plan
+- **WHEN** Lucca abre "Plan de la semana" el martes 17 con tareas por hacer
+- **THEN** ve de lunes a viernes sus tareas con su estado y el mensaje "Empieza por hoy"
+
+#### Scenario: Hoy ya está completo
+- **WHEN** todas las tareas de hoy están listas y el miércoles tiene tareas por hacer
+- **THEN** el plan dice "Empieza por el miércoles"
+
+#### Scenario: Ir a un día desde el plan
+- **WHEN** Lucca toca el miércoles en el plan
+- **THEN** vuelve a "Mi semana" con el miércoles seleccionado
+
+### Requirement: Guía del día
+El sistema SHALL ofrecer "Guíame" para recorrer las tareas pendientes del día seleccionado de una en una, mostrando "Tarea N de M", la materia y el título, con los botones "¡Ya la hice!" y "Más tarde". El orden SHALL ser: primero la ya empezada, luego las urgentes y luego por materia.
+
+#### Scenario: Guiarme un día con tres pendientes
+- **WHEN** Lucca pulsa "Guíame" el martes 17 con Ciencias a medias, Matemáticas y Español por hacer
+- **THEN** ve primero Ciencias como "Tarea 1 de 3"
+
+#### Scenario: Ya la hice
+- **WHEN** Lucca pulsa "¡Ya la hice!" en una tarea de la guía
+- **THEN** la tarea queda "¡Lista!", gana una estrella y la guía pasa a la siguiente tarea
+
+#### Scenario: Más tarde
+- **WHEN** Lucca pulsa "Más tarde" en una tarea
+- **THEN** la tarea pasa al final de esta ronda, conserva su estado y no ve ningún mensaje de regaño
+
+#### Scenario: Terminar el día
+- **WHEN** Lucca completa la última tarea pendiente de la guía
+- **THEN** ve "¡Terminaste el día!" con las estrellas ganadas y vuelve a "Mi semana" al pulsar el botón
+
+#### Scenario: Día sin tareas pendientes
+- **WHEN** Lucca pulsa "Guíame" en un día sin tareas por hacer
+- **THEN** ve el mensaje de día libre o de todo listo en lugar de una guía vacía
+
+#### Scenario: Guía con voz
+- **WHEN** Lucca avanza a otra tarea de la guía con el modo "Escuchar" o "Ambos"
+- **THEN** la tarea se lee en voz alta y el botón de escuchar la detiene al pulsarlo mientras suena
+
+#### Scenario: Salir de la guía
+- **WHEN** Lucca pulsa "Volver a mi semana" en cualquier momento de la guía
+- **THEN** vuelve a "Mi semana" con el mismo día seleccionado
 
 ### Requirement: Día de trabajo de cada tarea
 El sistema SHALL colocar cada tarea en su "día de trabajo": la fecha asignada si Mereb la da, o si no, el día escolar anterior a la entrega. Cada tarea SHALL mostrar su día de entrega ("Entregar: mié 18"). El padre puede mover una tarea a otro día.
