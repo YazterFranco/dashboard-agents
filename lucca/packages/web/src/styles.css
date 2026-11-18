@@ -10,6 +10,7 @@
 
   --accent: #c6f432;
   --ring: #c6f432;
+  --bar: #c6f432;
   --star: #ffd15c;
   --nova: #b79cff;
 
@@ -44,6 +45,7 @@
   --muted: #4a5568;
   --line: #b8c2d2;
   --ring: #3b2ee0;
+  --bar: #15803d;
   color-scheme: light;
 }
 
@@ -284,6 +286,64 @@ h3 {
 .day-dot.has-pending { background: #ff8a7a; }
 .day-btn[aria-pressed='true'] .day-dot.has-pending { background: var(--on-accent); }
 .day-done { display: flex; height: 8px; align-items: center; }
+
+/* ---------- Elegir la semana y su resumen ---------- */
+.week-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.week-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.btn-chip {
+  background: var(--chip);
+  border-color: transparent;
+  color: var(--ink);
+}
+.week-range {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font: 700 20px var(--font-display);
+}
+.pill-this {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-family: var(--font-body);
+}
+.week-current { flex: none; }
+.week-progress {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.week-progress-text {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+.bar {
+  flex: 1 1 160px;
+  height: 16px;
+  border-radius: var(--radius-pill);
+  background: var(--chip);
+  overflow: hidden;
+}
+.bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--bar);
+}
 
 /* ---------- Tareas ---------- */
 .tasks {

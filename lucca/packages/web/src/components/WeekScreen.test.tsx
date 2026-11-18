@@ -123,7 +123,8 @@ describe('WeekScreen', () => {
 
   it('shows a speaker button per card only when the mode includes audio', () => {
     const both = setup();
-    expect(screen.getAllByRole('button', { name: /^Escuchar: / })).toHaveLength(3);
+    const cards = screen.getAllByRole('article');
+    expect(cards.map((c) => within(c).queryAllByRole('button', { name: /^Escuchar: / }).length)).toEqual([1, 1, 1]);
     both.unmount();
     setup({ prefs: { ...ES, voiceMode: 'text' } });
     expect(screen.queryAllByRole('button', { name: /^Escuchar: / })).toHaveLength(0);
@@ -132,7 +133,8 @@ describe('WeekScreen', () => {
 
   it('labels the speaker buttons in the active language', () => {
     setup({ prefs: { ...ES, lang: 'en' } });
-    expect(screen.getAllByRole('button', { name: /^Listen: / })).toHaveLength(3);
+    const cards = screen.getAllByRole('article');
+    expect(cards.map((c) => within(c).queryAllByRole('button', { name: /^Listen: / }).length)).toEqual([1, 1, 1]);
   });
 
   it('opens a task from its primary button', () => {
@@ -268,5 +270,112 @@ describe('WeekScreen listen buttons toggle', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Escuchar a Nova' }));
     expect(speaker.stop).toHaveBeenCalledTimes(1);
     expect(speaker.speak).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('WeekScreen week selection and summary', () => {
+  const nextWeek = () => fireEvent.click(screen.getByRole('button', { name: 'Semana siguiente' }));
+
+  it('shows the range and marks the current week', () => {
+    setup();
+    expect(screen.getByText('16 – 20 de noviembre')).toBeTruthy();
+    expect(screen.getByText('Esta semana')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Esta semana' })).toBeNull();
+  });
+
+  it('next week shows Monday 23 to Friday 27 and a way back', () => {
+    setup();
+    nextWeek();
+    expect(screen.getByText('23 – 27 de noviembre')).toBeTruthy();
+    expect(day(/Lunes 23/)).toBeTruthy();
+    expect(day(/Viernes 27/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Lunes 16/ })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Esta semana' })).toBeTruthy();
+  });
+
+  it('previous week shows Monday 9', () => {
+    setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Semana anterior' }));
+    expect(screen.getByText('9 – 13 de noviembre')).toBeTruthy();
+    expect(day(/Lunes 9/)).toBeTruthy();
+  });
+
+  it('"Esta semana" returns to the current week with today selected', () => {
+    setup();
+    nextWeek();
+    fireEvent.click(screen.getByRole('button', { name: 'Esta semana' }));
+    expect(day(/Martes 17/).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByText('16 – 20 de noviembre')).toBeTruthy();
+  });
+
+  it('shows a range that crosses the month', () => {
+    setup();
+    nextWeek();
+    nextWeek();
+    expect(screen.getByText('30 nov – 4 dic')).toBeTruthy();
+    expect(day(/Lunes 30/)).toBeTruthy();
+  });
+
+  it('selects the first day with pending tasks in another week', () => {
+    const state = demoState();
+    state.tasks.push(task({ id: 'thu', title: 'Tarea del jueves', assignedDate: '2026-11-26', dueDate: '2026-11-27' }));
+    setup({ state });
+    nextWeek();
+    expect(day(/Jueves 26/).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByText('Tarea del jueves')).toBeTruthy();
+  });
+
+  it('an empty week selects Monday and shows the free-day message', () => {
+    setup();
+    nextWeek();
+    expect(day(/Lunes 23/).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByText('¡Nada más por hoy! Tiempo de jugar.')).toBeTruthy();
+  });
+
+  it('summarises the week with a progress bar', () => {
+    setup();
+    expect(screen.getByText('2 de 7 tareas listas')).toBeTruthy();
+    const bar = screen.getByRole('progressbar', { name: '2 de 7 tareas listas' });
+    expect(bar.getAttribute('aria-valuemin')).toBe('0');
+    expect(bar.getAttribute('aria-valuemax')).toBe('7');
+    expect(bar.getAttribute('aria-valuenow')).toBe('2');
+  });
+
+  it('a week without tasks says so and has no progress bar', () => {
+    setup();
+    nextWeek();
+    expect(screen.getByText('Sin tareas esta semana')).toBeTruthy();
+    expect(screen.queryByRole('progressbar')).toBeNull();
+  });
+
+  it('past weeks do not show the unfinished overdue tasks, which moved to today', () => {
+    const state = demoState();
+    state.tasks.push(task({ id: 'old', title: 'Tarea vieja', assignedDate: '2026-11-10', dueDate: '2026-11-11' }));
+    setup({ state });
+    expect(screen.getByText('Tarea vieja')).toBeTruthy(); // hoy, como «¡Para hoy!»
+    fireEvent.click(screen.getByRole('button', { name: 'Semana anterior' }));
+    fireEvent.click(day(/Martes 10/));
+    expect(screen.queryByText('Tarea vieja')).toBeNull();
+    expect(screen.getByText('Sin tareas esta semana')).toBeTruthy();
+  });
+
+  it('reads the week summary aloud', () => {
+    const { speaker } = setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Escuchar: 2 de 7 tareas listas' }));
+    expect(speaker.speak).toHaveBeenLastCalledWith([{ text: '16 – 20 de noviembre. 2 de 7 tareas listas.', lang: 'es' }], expect.anything());
+  });
+
+  it('has no weekly speaker button in text mode', () => {
+    setup({ prefs: { ...ES, voiceMode: 'text' } });
+    expect(screen.queryByRole('button', { name: /^Escuchar: 2 de 7/ })).toBeNull();
+  });
+
+  it('works in English', () => {
+    setup({ prefs: { ...ES, lang: 'en' } });
+    expect(screen.getByText('November 16 – 20')).toBeTruthy();
+    expect(screen.getByText('2 of 7 tasks done')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Previous week' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Next week' })).toBeTruthy();
+    expect(screen.getByText('This week')).toBeTruthy();
   });
 });

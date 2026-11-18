@@ -1,6 +1,19 @@
 import { useRef, useState } from 'react';
-import { dayTasks, plannerToday, taskTitle, weekDays, weekSummary, type IsoDate, type KidState, type ProgressKind } from '@lucca/shared';
-import { subjectName, summaryLine, t } from '../i18n';
+import {
+  dayTasks,
+  defaultDayOf,
+  mondayOf,
+  plannerToday,
+  shiftWeek,
+  taskTitle,
+  weekDays,
+  weekSummary,
+  weekTotals,
+  type IsoDate,
+  type KidState,
+  type ProgressKind,
+} from '@lucca/shared';
+import { subjectName, summaryLine, t, weekProgressText, weekRange } from '../i18n';
 import type { Prefs } from '../prefs';
 import type { ProgressResult } from '../progress';
 import { shouldAutoSpeak, showSpeakerButtons, type Speaker } from '../speaker';
@@ -10,6 +23,7 @@ import { Mascot } from './Mascot';
 import { StarsTile } from './StarsTile';
 import { SpeakerIcon } from './SubjectIcon';
 import { TaskCard, subjectLabelOf } from './TaskCard';
+import { WeekNav } from './WeekNav';
 
 interface WeekScreenProps {
   state: KidState;
@@ -32,8 +46,14 @@ function sentences(parts: (string | null)[]): string {
 export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask }: WeekScreenProps) {
   const { lang } = prefs;
   const today = plannerToday(state.today);
-  const days = weekDays(today);
+  const [weekStart, setWeekStart] = useState<IsoDate>(mondayOf(today));
   const [selected, setSelected] = useState<IsoDate>(today);
+  const days = weekDays(weekStart);
+  const summaries = weekSummary(state.tasks, days, today);
+  const totals = weekTotals(summaries);
+  const isCurrentWeek = weekStart === mondayOf(today);
+  const range = weekRange(lang, weekStart);
+  const progressText = weekProgressText(lang, totals.done, totals.total);
   /** El navegador solo deja hablar después de un toque: el primero "arma" la lectura automática. */
   const armed = useRef(false);
   /** Qué botón inició la lectura en curso: pulsarlo otra vez la detiene. */
@@ -75,6 +95,11 @@ export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask }: WeekS
     return sentences([summary.replace(' · ', '. '), suggestion]);
   };
 
+  const goToWeek = (monday: IsoDate) => {
+    setWeekStart(monday);
+    setSelected(defaultDayOf(monday, state.tasks, today));
+  };
+
   const onFirstTouch = () => {
     if (armed.current) return;
     armed.current = true;
@@ -114,8 +139,40 @@ export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask }: WeekS
 
       {hasAgenda ? (
         <section className="tile week-tile">
-          <h2>{t(lang, 'week')}</h2>
-          <DayStrip days={weekSummary(state.tasks, days, today)} selected={selected} today={state.today} lang={lang} onSelect={selectDay} />
+          <div className="week-head">
+            <h2>{t(lang, 'week')}</h2>
+            <WeekNav
+              lang={lang}
+              range={range}
+              isCurrent={isCurrentWeek}
+              onPrev={() => goToWeek(shiftWeek(weekStart, -1))}
+              onNext={() => goToWeek(shiftWeek(weekStart, 1))}
+              onCurrent={() => goToWeek(mondayOf(today))}
+            />
+          </div>
+          <DayStrip days={summaries} selected={selected} today={state.today} lang={lang} onSelect={selectDay} />
+          <div className="week-progress">
+            {totals.total === 0 ? (
+              <p className="week-progress-text">{t(lang, 'weekNone')}</p>
+            ) : (
+              <>
+                <p className="week-progress-text">{progressText}</p>
+                <div className="bar" role="progressbar" aria-label={progressText} aria-valuemin={0} aria-valuemax={totals.total} aria-valuenow={totals.done}>
+                  <span style={{ width: `${Math.round((totals.done / totals.total) * 100)}%` }} />
+                </div>
+                {speakers ? (
+                  <button
+                    type="button"
+                    className="btn-icon btn-chip"
+                    aria-label={t(lang, 'listenTask', { title: progressText })}
+                    onClick={() => toggleSpeaking('week', sentences([range, progressText]))}
+                  >
+                    <SpeakerIcon />
+                  </button>
+                ) : null}
+              </>
+            )}
+          </div>
         </section>
       ) : null}
 
