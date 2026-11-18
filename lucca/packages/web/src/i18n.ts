@@ -1,4 +1,4 @@
-import { SUBJECTS, type IsoDate, type Lang, type Subject } from '@lucca/shared';
+import { SUBJECTS, addDays, mondayOf, type IsoDate, type Lang, type Subject } from '@lucca/shared';
 
 const ES = {
   hello: '¡Hola, {name}!',
@@ -32,6 +32,23 @@ const ES = {
   loading: 'Un momento…',
   offline: 'No encuentro tu agenda ahora. ¡Díselo a papá!',
   retry: 'Intentar de nuevo',
+  weekPrev: 'Semana anterior',
+  weekNext: 'Semana siguiente',
+  thisWeek: 'Esta semana',
+  weekNone: 'Sin tareas esta semana',
+  planOpen: 'Plan de la semana',
+  planStartToday: 'Empieza por hoy',
+  planStartDay: 'Empieza por el {day}',
+  planAllDone: '¡Todo listo esta semana!',
+  planGoToDay: 'Ir a {day}',
+  guideStart: 'Guíame',
+  guideStep: 'Tarea {n} de {m}',
+  guideDone: '¡Ya la hice!',
+  guideLater: 'Más tarde',
+  guideBack: 'Volver a mi semana',
+  guideFinished: '¡Terminaste el día!',
+  guideStarsEarned: 'Estrellas ganadas: {n}',
+  guideRetry: 'Inténtalo otra vez',
   'subject.math': 'Matemáticas',
   'subject.spanish': 'Español',
   'subject.english': 'Inglés',
@@ -78,6 +95,23 @@ const EN: Record<MessageKey, string> = {
   loading: 'Just a moment…',
   offline: "I can't find your agenda right now. Tell Dad!",
   retry: 'Try again',
+  weekPrev: 'Previous week',
+  weekNext: 'Next week',
+  thisWeek: 'This week',
+  weekNone: 'No tasks this week',
+  planOpen: 'Week plan',
+  planStartToday: 'Start with today',
+  planStartDay: 'Start with {day}',
+  planAllDone: 'Everything is done this week!',
+  planGoToDay: 'Go to {day}',
+  guideStart: 'Guide me',
+  guideStep: 'Task {n} of {m}',
+  guideDone: 'I did it!',
+  guideLater: 'Later',
+  guideBack: 'Back to my week',
+  guideFinished: 'You finished the day!',
+  guideStarsEarned: 'Stars earned: {n}',
+  guideRetry: 'Try again',
   'subject.math': 'Math',
   'subject.spanish': 'Spanish',
   'subject.english': 'English',
@@ -163,4 +197,32 @@ export function summaryLine(lang: Lang, a: SummaryArgs): string {
     else tail = a.isToday ? `${a.pending} ${noun} left` : `${a.pending} ${noun} to do`;
   }
   return `${head} · ${tail}`;
+}
+
+const MONTHS_LONG: Record<Lang, string[]> = {
+  es: ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
+  en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+};
+const MONTHS_SHORT: Record<Lang, string[]> = {
+  es: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'],
+  en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+};
+
+/** Rango de lunes a viernes de la semana que contiene `date`: «16 – 20 de noviembre», «30 nov – 4 dic». */
+export function weekRange(lang: Lang, date: IsoDate): string {
+  const monday = mondayOf(date);
+  const friday = addDays(monday, 4);
+  const [m1, m2] = [Number(monday.slice(5, 7)) - 1, Number(friday.slice(5, 7)) - 1];
+  const [d1, d2] = [Number(monday.slice(8, 10)), Number(friday.slice(8, 10))];
+  if (m1 === m2) {
+    return lang === 'es' ? `${d1} – ${d2} de ${MONTHS_LONG.es[m1]}` : `${MONTHS_LONG.en[m1]} ${d1} – ${d2}`;
+  }
+  return lang === 'es'
+    ? `${d1} ${MONTHS_SHORT.es[m1]} – ${d2} ${MONTHS_SHORT.es[m2]}`
+    : `${MONTHS_SHORT.en[m1]} ${d1} – ${MONTHS_SHORT.en[m2]} ${d2}`;
+}
+
+export function weekProgressText(lang: Lang, done: number, total: number): string {
+  if (lang === 'es') return `${done} de ${total} ${total === 1 ? 'tarea lista' : 'tareas listas'}`;
+  return `${done} of ${total} ${total === 1 ? 'task' : 'tasks'} done`;
 }
