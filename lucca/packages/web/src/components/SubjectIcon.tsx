@@ -13,38 +13,38 @@ const COMMON = {
 } as const;
 
 /** Iconos del tablero Bento. Son decorativos: el nombre de la materia va en texto. */
-export function SubjectIcon({ subject }: { subject: Subject }) {
+export function SubjectIcon({ subject, size = 30 }: { subject: Subject; size?: number }) {
   switch (subject) {
     case 'math':
       return (
-        <svg {...COMMON}>
+        <svg {...COMMON} width={size} height={size}>
           <path d="M7 4v6M4 7h6M14 7h6M4.5 14.5l5 5M9.5 14.5l-5 5M14 15.5h6M14 18.5h6" />
         </svg>
       );
     case 'spanish':
       return (
-        <svg {...COMMON}>
+        <svg {...COMMON} width={size} height={size}>
           <path d="M12 6.5C10 5 7 4.5 4 5v13c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V5c-3-.5-6 0-8 1.5Z" />
           <path d="M12 6.5v13" />
         </svg>
       );
     case 'english':
       return (
-        <svg {...COMMON}>
+        <svg {...COMMON} width={size} height={size}>
           <path d="M4 5h16v11H9l-5 4V5Z" />
           <path d="M8 9h8M8 12h5" />
         </svg>
       );
     case 'science':
       return (
-        <svg {...COMMON}>
+        <svg {...COMMON} width={size} height={size}>
           <path d="M5 19c0-8 5-14 14-14 0 9-6 14-14 14Z" />
           <path d="M5 19l8-8" />
         </svg>
       );
     case 'art':
       return (
-        <svg {...COMMON}>
+        <svg {...COMMON} width={size} height={size}>
           <path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2s-1-1.5-1-2.5 1-1.5 2-1.5h2a4 4 0 0 0 4-4c0-4.5-4-8-9-8Z" />
           <circle cx="7.5" cy="11" r="1.2" />
           <circle cx="10" cy="7" r="1.2" />
@@ -53,7 +53,7 @@ export function SubjectIcon({ subject }: { subject: Subject }) {
       );
     default:
       return (
-        <svg {...COMMON}>
+        <svg {...COMMON} width={size} height={size}>
           <path d="M12 3l2.4 5.2 5.6.7-4.1 3.9 1 5.6L12 15.6 7.1 18.4l1-5.6L4 8.9l5.6-.7L12 3Z" />
         </svg>
       );

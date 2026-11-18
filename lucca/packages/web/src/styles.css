@@ -345,6 +345,125 @@ h3 {
   background: var(--bar);
 }
 
+/* ---------- Plan de la semana ---------- */
+.plan-open { flex: none; }
+.plan {
+  max-width: 960px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+.plan-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+.plan-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: none;
+}
+.plan-head h1 { font-size: 40px; font-weight: 800; letter-spacing: -0.02em; }
+.plan-head h1:focus { outline: none; }
+.plan-range {
+  margin: 0;
+  color: var(--muted);
+  font: 700 22px var(--font-display);
+}
+.plan-start {
+  margin: 0;
+  font: 800 28px/1.15 var(--font-display);
+}
+.plan-progress {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.plan-days {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.plan-day {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 16px 20px;
+  border-radius: 28px;
+  background: var(--tile);
+  color: var(--ink);
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  text-align: left;
+}
+.plan-day-head {
+  flex: none;
+  min-width: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: var(--font-display);
+}
+.plan-day-name { font-size: 16px; font-weight: 700; }
+.plan-day-num { font-size: 32px; font-weight: 800; line-height: 1; }
+.plan-chips {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  align-self: center;
+  gap: 8px;
+}
+.chip {
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px 6px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--c);
+  color: var(--on-accent);
+  font-size: 17px;
+  font-weight: 700;
+}
+.chip-icon {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--on-accent);
+  color: var(--c);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chip-title { overflow-wrap: anywhere; }
+.chip-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(16, 24, 40, 0.14);
+  font-size: 15px;
+}
+.chip-empty {
+  color: var(--muted);
+  font-weight: 700;
+}
+
 /* ---------- Tareas ---------- */
 .tasks {
   display: grid;
@@ -521,6 +640,7 @@ h3 {
   .tasks { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
   .task-card:nth-child(n) { border-radius: var(--radius-tile); }
   .task-card:nth-child(2n) { border-top-left-radius: 80px; }
+  .plan { padding: 16px; }
   .side { flex-direction: row; flex-wrap: wrap; }
   .side > * { flex: 1 1 320px; }
 }

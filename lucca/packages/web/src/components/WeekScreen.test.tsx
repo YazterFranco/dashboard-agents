@@ -379,3 +379,103 @@ describe('WeekScreen week selection and summary', () => {
     expect(screen.getByText('This week')).toBeTruthy();
   });
 });
+
+describe('WeekScreen week plan', () => {
+  const openPlan = () => fireEvent.click(screen.getByRole('button', { name: 'Plan de la semana' }));
+  const finishedTuesday = () => {
+    const state = demoState();
+    state.tasks = state.tasks.map((t) => (t.id.startsWith('tue') ? { ...t, status: 'done' as const } : t));
+    return state;
+  };
+
+  it('opens the week plan with every school day', () => {
+    setup();
+    openPlan();
+    expect(screen.getByRole('heading', { level: 1, name: 'Plan de la semana' })).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: /^Ir a / })).toHaveLength(5);
+    expect(screen.getByText('16 – 20 de noviembre')).toBeTruthy();
+  });
+
+  it('says where to start: today when it has pending tasks', () => {
+    setup();
+    openPlan();
+    expect(screen.getByText('Empieza por hoy')).toBeTruthy();
+  });
+
+  it('says where to start: the next day with pending tasks when today is complete', () => {
+    setup({ state: finishedTuesday() });
+    openPlan();
+    expect(screen.getByText('Empieza por el miércoles')).toBeTruthy();
+  });
+
+  it('says everything is done when nothing is pending', () => {
+    const state = demoState();
+    state.tasks = state.tasks.map((t) => ({ ...t, status: 'done' as const }));
+    setup({ state });
+    openPlan();
+    expect(screen.getByText('¡Todo listo esta semana!')).toBeTruthy();
+  });
+
+  it('shows each task with its title and status', () => {
+    setup();
+    openPlan();
+    const tuesday = screen.getByRole('button', { name: 'Ir a Martes 17' });
+    expect(within(tuesday).getByText('Las partes de la planta')).toBeTruthy();
+    expect(within(tuesday).getByText('A medias')).toBeTruthy();
+    expect(within(tuesday).getByText('Restas sin llevar, pág. 26')).toBeTruthy();
+    const monday = screen.getByRole('button', { name: 'Ir a Lunes 16' });
+    expect(within(monday).getAllByText('¡Lista!')).toHaveLength(2);
+  });
+
+  it('shows the weekly progress inside the plan', () => {
+    setup();
+    openPlan();
+    expect(screen.getByRole('progressbar', { name: '2 de 7 tareas listas' })).toBeTruthy();
+  });
+
+  it('marks the days without tasks', () => {
+    setup();
+    openPlan();
+    expect(within(screen.getByRole('button', { name: 'Ir a Jueves 19' })).getByText('Día libre')).toBeTruthy();
+  });
+
+  it('tapping a day goes back to the week with that day selected', () => {
+    setup();
+    openPlan();
+    fireEvent.click(screen.getByRole('button', { name: 'Ir a Miércoles 18' }));
+    expect(screen.getByRole('heading', { level: 2, name: 'Mi semana' })).toBeTruthy();
+    expect(day(/Miércoles 18/).getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('back returns to the week with the same day selected and the focus on the button that opened it', () => {
+    setup();
+    fireEvent.click(day(/Miércoles 18/));
+    openPlan();
+    fireEvent.click(screen.getByRole('button', { name: 'Volver a mi semana' }));
+    expect(day(/Miércoles 18/).getAttribute('aria-pressed')).toBe('true');
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Plan de la semana' }));
+  });
+
+  it('moves the focus to the heading when the plan opens', () => {
+    setup();
+    openPlan();
+    expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1, name: 'Plan de la semana' }));
+  });
+
+  it('shows the plan of the week being viewed', () => {
+    setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Semana siguiente' }));
+    openPlan();
+    expect(screen.getByText('23 – 27 de noviembre')).toBeTruthy();
+    expect(screen.getAllByText('Sin tareas esta semana').length).toBeGreaterThan(0);
+  });
+
+  it('works in English', () => {
+    setup({ prefs: { ...ES, lang: 'en' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Week plan' }));
+    expect(screen.getByRole('heading', { level: 1, name: 'Week plan' })).toBeTruthy();
+    expect(screen.getByText('Start with today')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Go to Tuesday 17' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Back to my week' })).toBeTruthy();
+  });
+});

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   dayTasks,
   defaultDayOf,
@@ -20,10 +20,12 @@ import { shouldAutoSpeak, showSpeakerButtons, type Speaker } from '../speaker';
 import { Controls } from './Controls';
 import { DayStrip } from './DayStrip';
 import { Mascot } from './Mascot';
+import { ProgressBar } from './ProgressBar';
 import { StarsTile } from './StarsTile';
 import { SpeakerIcon } from './SubjectIcon';
 import { TaskCard, subjectLabelOf } from './TaskCard';
 import { WeekNav } from './WeekNav';
+import { WeekPlan } from './WeekPlan';
 
 interface WeekScreenProps {
   state: KidState;
@@ -48,6 +50,10 @@ export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask }: WeekS
   const today = plannerToday(state.today);
   const [weekStart, setWeekStart] = useState<IsoDate>(mondayOf(today));
   const [selected, setSelected] = useState<IsoDate>(today);
+  const [view, setView] = useState<'week' | 'plan'>('week');
+  const planButton = useRef<HTMLButtonElement>(null);
+  /** Al volver de una vista, el foco regresa al botón que la abrió. */
+  const returnFocus = useRef<'plan' | null>(null);
   const days = weekDays(weekStart);
   const summaries = weekSummary(state.tasks, days, today);
   const totals = weekTotals(summaries);
@@ -95,6 +101,18 @@ export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask }: WeekS
     return sentences([summary.replace(' · ', '. '), suggestion]);
   };
 
+  useEffect(() => {
+    if (view === 'week' && returnFocus.current === 'plan') {
+      planButton.current?.focus();
+      returnFocus.current = null;
+    }
+  }, [view]);
+
+  const openPlan = () => {
+    returnFocus.current = 'plan';
+    setView('plan');
+  };
+
   const goToWeek = (monday: IsoDate) => {
     setWeekStart(monday);
     setSelected(defaultDayOf(monday, state.tasks, today));
@@ -114,6 +132,24 @@ export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask }: WeekS
   const { items, summary, suggestion } = describe(selected);
   const speakers = showSpeakerButtons(prefs.voiceMode);
   const hasAgenda = state.tasks.length > 0;
+
+  if (view === 'plan') {
+    return (
+      <WeekPlan
+        lang={lang}
+        days={days}
+        tasks={state.tasks}
+        today={today}
+        realToday={state.today}
+        range={range}
+        onGoToDay={(date) => {
+          setSelected(date);
+          setView('week');
+        }}
+        onBack={() => setView('week')}
+      />
+    );
+  }
 
   return (
     <main className={`bento${hasAgenda ? '' : ' bento-empty'}`} onPointerDownCapture={onFirstTouch}>
@@ -157,9 +193,7 @@ export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask }: WeekS
             ) : (
               <>
                 <p className="week-progress-text">{progressText}</p>
-                <div className="bar" role="progressbar" aria-label={progressText} aria-valuemin={0} aria-valuemax={totals.total} aria-valuenow={totals.done}>
-                  <span style={{ width: `${Math.round((totals.done / totals.total) * 100)}%` }} />
-                </div>
+                <ProgressBar label={progressText} done={totals.done} total={totals.total} />
                 {speakers ? (
                   <button
                     type="button"
@@ -172,6 +206,9 @@ export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask }: WeekS
                 ) : null}
               </>
             )}
+            <button ref={planButton} type="button" className="seg-btn plan-open" onClick={openPlan}>
+              {t(lang, 'planOpen')}
+            </button>
           </div>
         </section>
       ) : null}
