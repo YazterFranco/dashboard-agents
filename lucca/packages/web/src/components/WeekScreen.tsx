@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react';
-import { dayTasks, plannerToday, taskTitle, weekDays, weekSummary, type IsoDate, type KidState } from '@lucca/shared';
+import { dayTasks, plannerToday, taskTitle, weekDays, weekSummary, type IsoDate, type KidState, type ProgressKind } from '@lucca/shared';
 import { subjectName, summaryLine, t } from '../i18n';
 import type { Prefs } from '../prefs';
+import type { ProgressResult } from '../progress';
 import { shouldAutoSpeak, showSpeakerButtons, type Speaker } from '../speaker';
 import { Controls } from './Controls';
 import { DayStrip } from './DayStrip';
@@ -16,6 +17,8 @@ interface WeekScreenProps {
   speaker: Speaker;
   onPrefs(p: Prefs): void;
   onOpenTask(id: string): void;
+  /** Envía un avance al servidor; la guía del día lo usa para marcar tareas. */
+  onProgress(taskId: string, kind: ProgressKind): Promise<ProgressResult>;
 }
 
 /** Une frases para leerlas en voz alta: cada una termina en un signo de puntuación. */

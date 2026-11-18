@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { SettingsSchema, type KidState, type Settings } from '@lucca/shared';
-import { fetchState } from './api';
+import { SettingsSchema, type KidState, type ProgressKind, type Settings } from '@lucca/shared';
+import { fetchState, postProgress } from './api';
 import { Mascot } from './components/Mascot';
 import { WeekScreen } from './components/WeekScreen';
 import { t } from './i18n';
 import { loadPrefs, savePrefs, type Prefs } from './prefs';
+import type { ProgressResult } from './progress';
 import { createSpeaker } from './speaker';
 
 const FALLBACK: Prefs = { lang: SettingsSchema.parse({}).lang, voiceMode: 'both', theme: 'dark' };
@@ -17,11 +18,18 @@ export function App() {
   const [prefs, setPrefs] = useState<Prefs>(() => loadPrefs(FALLBACK));
   const speaker = useMemo(() => createSpeaker(typeof speechSynthesis === 'undefined' ? undefined : speechSynthesis), []);
   const firstLoad = useRef(true);
+  /** El último estado, para calcular cuántas estrellas ganó un avance sin depender del orden de los renders. */
+  const stateRef = useRef<KidState | null>(null);
+
+  const commit = useCallback((next: KidState) => {
+    stateRef.current = next;
+    setState(next);
+  }, []);
 
   const load = useCallback(() => {
     fetchState()
       .then((s) => {
-        setState(s);
+        commit(s);
         setFailed(false);
         // Lo que Lucca eligió en este dispositivo manda; si no eligió nada, valen los ajustes de papá.
         if (firstLoad.current) {
@@ -30,7 +38,27 @@ export function App() {
         }
       })
       .catch(() => setFailed(true));
-  }, []);
+  }, [commit]);
+
+  /** Envía un avance. Solo si el servidor lo acepta cambia el estado y las estrellas; si falla, nada cambia. */
+  const onProgress = useCallback(
+    async (taskId: string, kind: ProgressKind): Promise<ProgressResult> => {
+      try {
+        const answer = await postProgress(taskId, kind);
+        const prev = stateRef.current;
+        if (!prev) return { ok: true, starsGained: 0 };
+        commit({
+          ...prev,
+          starsThisWeek: answer.starsThisWeek,
+          tasks: prev.tasks.map((t) => (t.id === taskId ? { ...t, status: answer.status } : t)),
+        });
+        return { ok: true, starsGained: Math.max(0, answer.starsThisWeek - prev.starsThisWeek) };
+      } catch {
+        return { ok: false };
+      }
+    },
+    [commit],
+  );
 
   useEffect(load, [load]);
 
@@ -55,7 +83,7 @@ export function App() {
   };
 
   if (state) {
-    return <WeekScreen key={state.today} state={state} prefs={prefs} speaker={speaker} onPrefs={onPrefs} onOpenTask={() => undefined} />;
+    return <WeekScreen key={state.today} state={state} prefs={prefs} speaker={speaker} onPrefs={onPrefs} onOpenTask={() => undefined} onProgress={onProgress} />;
   }
 
   return (

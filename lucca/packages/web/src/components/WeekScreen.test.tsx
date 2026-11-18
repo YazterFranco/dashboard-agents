@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import type { KidState } from '@lucca/shared';
 import type { Prefs } from '../prefs';
+import type { ProgressResult } from '../progress';
 import type { Segment, SpeakHandlers, Speaker } from '../speaker';
 import { demoState, task } from '../testFixtures';
 import { WeekScreen } from './WeekScreen';
@@ -39,10 +40,18 @@ function setup(opts: { state?: KidState; prefs?: Prefs } = {}) {
   const speaker = fakeSpeaker();
   const onPrefs = vi.fn();
   const onOpenTask = vi.fn();
+  const onProgress = vi.fn(async (): Promise<ProgressResult> => ({ ok: true, starsGained: 0 }));
   const utils = render(
-    <WeekScreen state={opts.state ?? demoState()} prefs={opts.prefs ?? ES} speaker={speaker} onPrefs={onPrefs} onOpenTask={onOpenTask} />,
+    <WeekScreen
+      state={opts.state ?? demoState()}
+      prefs={opts.prefs ?? ES}
+      speaker={speaker}
+      onPrefs={onPrefs}
+      onOpenTask={onOpenTask}
+      onProgress={onProgress}
+    />,
   );
-  return { speaker, onPrefs, onOpenTask, ...utils };
+  return { speaker, onPrefs, onOpenTask, onProgress, ...utils };
 }
 
 const day = (name: RegExp) => screen.getByRole('button', { name });
