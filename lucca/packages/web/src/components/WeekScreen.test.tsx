@@ -427,6 +427,13 @@ describe('WeekScreen week plan', () => {
     expect(within(monday).getAllByText('¡Lista!')).toHaveLength(2);
   });
 
+  it('marks today in the plan and no other day', () => {
+    setup();
+    openPlan();
+    expect(within(screen.getByRole('button', { name: 'Ir a Martes 17' })).getByText('Hoy')).toBeTruthy();
+    expect(screen.getAllByText('Hoy')).toHaveLength(1);
+  });
+
   it('shows the weekly progress inside the plan', () => {
     setup();
     openPlan();

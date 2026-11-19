@@ -13,6 +13,11 @@ La propuesta completa (por qué, qué, cómo y las tareas) está en
   estado (por hacer, a medias, lista), estrellas de la semana y la mascota Nova.
 - **Español e inglés** en toda la interfaz y **lectura en voz alta** con las voces del dispositivo.
 - Servidor en tu computadora (Node + SQLite) que solo acepta peticiones de tu red de casa.
+- **Elegir la semana**: botones «Semana anterior», «Semana siguiente» y «Esta semana», con el rango de fechas y
+  el avance de la semana («2 de 10 tareas listas»).
+- **Plan de la semana**: todos los días con sus tareas y por dónde empezar.
+- **Guíame**: recorre las tareas pendientes del día de una en una, con «¡Ya la hice!» (marca la tarea y da la
+  estrella) y «Más tarde», leyendo cada paso en voz alta según el modo.
 - Tareas de ejemplo con `LUCCA_DEMO=1`.
 
 Todavía **no** están: la lectura automática de Mereb, el área de papá con PIN, las lecciones con IA, la ayuda con fotos
@@ -101,7 +106,8 @@ npm run build && npm run e2e
 
 `npm run e2e` abre el asistente en un navegador real a 1366×768, 1024×768 y 768×1024, en oscuro y claro, y comprueba
 que no hay desplazamiento horizontal, que todos los botones miden al menos 60 px (76 px las acciones principales),
-que el texto de lectura mide al menos 19 px y que no se pide nada fuera de casa. Deja capturas en `e2e/out/`.
+que el texto de lectura mide al menos 19 px, que el texto tiene contraste 4,5:1 y que no se pide nada fuera de casa.
+También recorre el plan de la semana y la guía, y termina un día completo con el servidor real. Deja capturas en `e2e/out/`.
 
 ## Estructura
 

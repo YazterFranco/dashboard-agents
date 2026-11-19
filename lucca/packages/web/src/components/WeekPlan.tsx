@@ -74,6 +74,7 @@ export function WeekPlan({ lang, days, tasks, today, realToday, range, onGoToDay
                 <span className="plan-day-head" aria-hidden="true">
                   <span className="plan-day-name">{dayShort(lang, wd)}</span>
                   <span className="plan-day-num">{dayNumber(date)}</span>
+                  {date === realToday ? <span className="plan-today">{t(lang, 'today')}</span> : null}
                 </span>
                 <span className="plan-chips">
                   {items.length === 0 ? <span className="chip-empty">{t(lang, 'planFreeDay')}</span> : null}

@@ -29,13 +29,13 @@
 
 ## 2b. Elegir la semana y guías por semana y por día (petición de papá)
 
-- [ ] 2b.1 Añadir en `shared` la lógica pura (`shiftWeek`, `weekTotals`, `guideOrder`, `defaultDayOf`) y verificar con pruebas los escenarios de elegir semana, resumen y orden de la guía
-- [ ] 2b.2 Añadir los textos ES/EN (rango de fechas, resumen, plan, guía) y verificar con pruebas que no falta ninguna clave y que el rango cruza bien de mes
-- [ ] 2b.3 Enviar el progreso desde la pantalla con actualización optimista y verificar con pruebas que se deshace si el servidor falla
-- [ ] 2b.4 Implementar los botones de semana y el resumen con barra de progreso, y verificar con Testing Library los escenarios de elegir la semana
-- [ ] 2b.5 Implementar "Plan de la semana" y verificar con Testing Library sus escenarios
-- [ ] 2b.6 Implementar "Guíame" (orden, "¡Ya la hice!", "Más tarde", cierre, voz) y verificar con Testing Library sus escenarios
-- [ ] 2b.7 Verificar en navegador real que las tres vistas no desbordan a 1024×768 y 768×1024, en oscuro y claro
+- [x] 2b.1 Añadir en `shared` la lógica pura (`shiftWeek`, `weekTotals`, `guideOrder`, `defaultDayOf`) y verificar con pruebas los escenarios de elegir semana, resumen y orden de la guía
+- [x] 2b.2 Añadir los textos ES/EN (rango de fechas, resumen, plan, guía) y verificar con pruebas que no falta ninguna clave y que el rango cruza bien de mes
+- [x] 2b.3 Enviar el progreso desde la pantalla y verificar con pruebas que no cambia nada si el servidor falla _(sin actualización optimista: la estrella la decide el servidor)_
+- [x] 2b.4 Implementar los botones de semana y el resumen con barra de progreso, y verificar con Testing Library los escenarios de elegir la semana
+- [x] 2b.5 Implementar "Plan de la semana" y verificar con Testing Library sus escenarios
+- [x] 2b.6 Implementar "Guíame" (orden, "¡Ya la hice!", "Más tarde", cierre, voz) y verificar con Testing Library sus escenarios _(la guía no muestra la marca «¡Para hoy!»; sí la fecha de entrega)_
+- [x] 2b.7 Verificar en navegador real que las tres vistas no desbordan a 1024×768 y 768×1024, en oscuro y claro
 
 ## 3. Área del padre y agenda
 

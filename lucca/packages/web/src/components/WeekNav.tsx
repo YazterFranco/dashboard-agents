@@ -22,16 +22,18 @@ interface WeekNavProps {
 export function WeekNav({ lang, range, isCurrent, onPrev, onNext, onCurrent }: WeekNavProps) {
   return (
     <div className="week-nav">
-      <button type="button" className="btn-icon btn-chip" aria-label={t(lang, 'weekPrev')} onClick={onPrev}>
-        <Chevron direction="left" />
-      </button>
-      <p className="week-range">
-        <span>{range}</span>
-        {isCurrent ? <span className="pill pill-this">{t(lang, 'thisWeek')}</span> : null}
-      </p>
-      <button type="button" className="btn-icon btn-chip" aria-label={t(lang, 'weekNext')} onClick={onNext}>
-        <Chevron direction="right" />
-      </button>
+      <div className="week-nav-row">
+        <button type="button" className="btn-icon btn-chip" aria-label={t(lang, 'weekPrev')} onClick={onPrev}>
+          <Chevron direction="left" />
+        </button>
+        <p className="week-range">
+          <span>{range}</span>
+          {isCurrent ? <span className="pill pill-this">{t(lang, 'thisWeek')}</span> : null}
+        </p>
+        <button type="button" className="btn-icon btn-chip" aria-label={t(lang, 'weekNext')} onClick={onNext}>
+          <Chevron direction="right" />
+        </button>
+      </div>
       {isCurrent ? null : (
         <button type="button" className="seg-btn week-current" onClick={onCurrent}>
           {t(lang, 'thisWeek')}

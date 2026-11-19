@@ -297,7 +297,12 @@ h3 {
 }
 .week-nav {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.week-nav-row {
+  display: flex;
   align-items: center;
   gap: 8px;
 }
@@ -309,12 +314,13 @@ h3 {
 .week-range {
   margin: 0;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   font: 700 20px var(--font-display);
 }
-.pill-this {
+/* .pill se declara más abajo: sin la doble clase pisaría este fondo y el texto se vería apagado. */
+.pill.pill-this {
   background: var(--accent);
   color: var(--on-accent);
   font-family: var(--font-body);
@@ -518,6 +524,15 @@ h3 {
   font-family: var(--font-display);
 }
 .plan-day-name { font-size: 16px; font-weight: 700; }
+.plan-today {
+  margin-top: 4px;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  background: #e11d48;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+}
 .plan-day-num { font-size: 32px; font-weight: 800; line-height: 1; }
 .plan-chips {
   flex: 1;
@@ -537,7 +552,7 @@ h3 {
   border-radius: var(--radius-pill);
   background: var(--c);
   color: var(--on-accent);
-  font-size: 17px;
+  font-size: 19px;
   font-weight: 700;
 }
 .chip-icon {
