@@ -1,0 +1,261 @@
+/* Área de papá. Usa los tokens Bento de styles.css; es una pantalla de adulto: más densa, pero con controles de al menos 44 px. */
+:root {
+  --danger: #ff9b8f;
+  --ok: #8be28b;
+  --warn: #ffd15c;
+}
+:root[data-theme='light'] {
+  --danger: #b42318;
+  --ok: #166534;
+  --warn: #8a5a00;
+}
+
+.p-shell {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.p-narrow {
+  max-width: 520px;
+}
+.p-shell h1 {
+  margin: 0;
+  font: 800 30px/1.15 var(--font-display);
+}
+.p-shell h2 {
+  margin: 0 0 8px;
+  font: 700 20px/1.2 var(--font-display);
+}
+.p-lead {
+  margin: 0;
+  color: var(--muted);
+}
+.p-card {
+  background: var(--tile);
+  border-radius: 24px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.p-card p {
+  margin: 0;
+}
+.p-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.p-top-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ---------- Botones ---------- */
+.p-btn {
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: var(--radius-pill);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font: 700 17px var(--font-body);
+  text-decoration: none;
+  border: 2px solid transparent;
+}
+.p-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.p-btn-primary {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.p-btn-ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line);
+}
+.p-btn-danger {
+  background: transparent;
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+/* ---------- Formularios ---------- */
+.p-form {
+  gap: 18px;
+}
+.p-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.p-field label,
+.p-choice legend {
+  font-weight: 700;
+  font-size: 17px;
+}
+.p-field input,
+.p-field select,
+.p-field textarea {
+  min-height: 48px;
+  padding: 8px 14px;
+  border-radius: 14px;
+  border: 2px solid var(--line);
+  background: var(--chip);
+  color: var(--ink);
+  font: inherit;
+  width: 100%;
+}
+.p-field textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+.p-field input[aria-invalid='true'],
+.p-field select[aria-invalid='true'],
+.p-field textarea[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+.p-field input:disabled {
+  opacity: 0.6;
+}
+.p-hint {
+  margin: 0;
+  font-size: 16px;
+  color: var(--muted);
+}
+.p-error,
+.p-form-error {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--danger);
+}
+.p-notice {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: var(--chip);
+  border: 2px solid var(--line);
+}
+.p-lock {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: var(--chip);
+  color: var(--warn);
+  font-weight: 700;
+}
+.p-timer {
+  font-variant-numeric: tabular-nums;
+  font-size: 22px;
+}
+
+.p-choice {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.p-choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.p-choice-opt {
+  position: relative;
+  flex: 1 1 120px;
+}
+.p-choice-opt input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.p-choice-opt span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  background: var(--chip);
+  border: 2px solid var(--line);
+  font-weight: 700;
+}
+.p-choice-opt input:checked + span {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: transparent;
+}
+.p-choice-opt input:focus-visible + span {
+  outline: 4px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* ---------- Conexiones, datos y etiquetas ---------- */
+.p-connections {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 6px;
+  border-top: 2px solid var(--line);
+}
+.p-conn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.p-conn-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.p-conn-name {
+  font-weight: 700;
+}
+.p-badge {
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--chip);
+  font-size: 16px;
+  font-weight: 700;
+}
+.p-badge-ok {
+  color: var(--ok);
+}
+.p-badge-warn {
+  color: var(--warn);
+}
+.p-facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+.p-facts dt {
+  font-size: 16px;
+  color: var(--muted);
+}
+.p-facts dd {
+  margin: 0;
+  font: 700 22px var(--font-display);
+}
+code {
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: var(--chip);
+  font-size: 0.92em;
+}
