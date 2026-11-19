@@ -39,16 +39,16 @@
 
 ## 3. Área del padre y agenda
 
-- [ ] 3.1 Implementar el PIN (hash scrypt, bloqueo tras 5 intentos, sesión de 15 min, cookie httpOnly SameSite=Strict) y verificar con pruebas los escenarios de parent-area
-- [ ] 3.2 Implementar la primera configuración (PIN, comprobación de API key, Mereb, nombre, grado, idioma, tema y `LUCCA_PUBLIC_URL`) y verificar con e2e que sin API key avisa pero deja terminar _(decisión de papá: el `.env` se completa al final, así que la clave no bloquea)_
-- [ ] 3.3 Implementar la gestión de tareas del padre (crear, editar, mover de día, ocultar, marcar lista, ver 3 semanas) y verificar con e2e que una tarea movida aparece en el nuevo día para Lucca
+- [x] 3.1 Implementar el PIN (hash scrypt, bloqueo tras 5 intentos, sesión de 15 min, cookie httpOnly SameSite=Strict) y verificar con pruebas los escenarios de parent-area
+- [x] 3.2 Implementar la primera configuración (PIN, comprobación de API key, Mereb, nombre, grado, idioma, tema y `LUCCA_PUBLIC_URL`) y verificar con e2e que sin API key avisa pero deja terminar _(decisión de papá: el `.env` se completa al final, así que la clave no bloquea; queda pendiente mostrar/ajustar `LUCCA_PUBLIC_URL` en el asistente)_
+- [x] 3.3 Implementar la gestión de tareas del padre (crear, editar, mover de día, ocultar, marcar lista, ver 3 semanas) y verificar con e2e que una tarea movida aparece en el nuevo día para Lucca
 - [ ] 3.4 Implementar la normalización e idempotencia de tareas (`source_id`, actualización, "retirada" con progreso) y verificar con pruebas los escenarios de agenda-sync
 - [ ] 3.5 Implementar el lector de Mereb con Playwright (inicio de sesión, `storageState` con permisos 600, máximo 6 inicios de sesión al día y 1 sincronización cada 15 min) contra un Mereb falso servido con la muestra de 0.3, y verificar con pruebas que lee las tareas de la muestra
 - [ ] 3.6 Implementar la extracción asistida por IA (texto visible con nombres eliminados → tareas "por confirmar") con la IA simulada, y verificar con pruebas que los nombres configurados no salen en la petición
 - [ ] 3.7 Implementar la foto de la agenda (P1) con confirmación del padre, y verificar con e2e (IA simulada) que no se añade nada hasta pulsar "Añadir tareas"
 - [ ] 3.8 Implementar el planificador (al arrancar, cada 3 h, manual), el estado de sincronización y los avisos al padre, y verificar con pruebas usando un reloj simulado
 - [ ] 3.9 Descargar los adjuntos de Mereb y verificar con el Mereb falso que una ficha PDF queda guardada en la tarea
-- [ ] 3.10 Implementar el progreso semanal, los ajustes y el medidor de gasto de IA con tope (aviso al 80 %, corte al 100 %), y verificar con pruebas el escenario "Tope alcanzado"
+- [ ] 3.10 Implementar el progreso semanal, los ajustes y el medidor de gasto de IA con tope (aviso al 80 %, corte al 100 %), y verificar con pruebas el escenario "Tope alcanzado" _(hecho: progreso semanal —tareas listas, estrellas, pistas y «Necesita ayuda»— y ajustes de nombre, grado, idioma, voz, tema y velocidad, con pruebas unitarias y 45 escenarios funcionales en `lucca/docs/pruebas-funcionales/`; pendiente: tiempo de uso por día, voz por idioma, recordatorio de pausa, plazo de borrado de fotos y el medidor de gasto de IA, que llegan con el cliente de IA)_
 - [ ] 3.11 Documentar en `lucca/README.md` cómo conectar Mereb y qué hacer si falla, y verificar que los pasos coinciden con la primera configuración
 
 ## 4. Cliente de IA y controles de contenido

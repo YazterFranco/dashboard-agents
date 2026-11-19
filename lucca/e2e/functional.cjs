@@ -237,6 +237,32 @@ async function accessGroup() {
   });
 }
 
+async function expiredSessionGroup() {
+  await withServer({ LUCCA_DEMO: '1' }, async (s) => {
+    const cookie = await H.setupParent(s);
+    await run('P14', 'negativo', 'Sesión caducada a mitad de uso: la siguiente acción vuelve al PIN con un aviso, sin mostrar datos', async () => {
+      const { page, context } = await open(s, { cookie });
+      await goParent(page, s);
+      await parentHeading(page).waitFor();
+      await page.getByRole('button', { name: /^Marcar lista: Restas sin llevar/ }).waitFor();
+      // Se simula el paso de 15 minutos cerrando la sesión en el servidor (con el reloj fijo no pasa el tiempo).
+      const closed = await H.api(s, 'POST', '/api/parent/logout', { cookie });
+      expect(closed.status === 204, 'la sesión se cierra en el servidor');
+      await page.getByRole('button', { name: /^Marcar lista: Restas sin llevar/ }).click();
+      await page.getByRole('heading', { name: 'Entra con tu PIN' }).waitFor();
+      expect((await text(page.getByRole('status'))) === 'Tu sesión terminó por inactividad. Escribe tu PIN para seguir.', 'debía avisar que la sesión terminó');
+      expect((await page.getByRole('button', { name: /Marcar lista/ }).count()) === 0, 'no debe quedar ningún dato en pantalla');
+      expect(taskByTitle((await kidState(s)).tasks, /Restas/).status === 'todo', 'la acción de una sesión caducada no debe aplicarse');
+      await shot(page, 'sesion-caducada');
+      await login(page);
+      await page.getByRole('button', { name: /^Marcar lista: Restas sin llevar/ }).waitFor();
+      await shot(page, 'de-vuelta-en-el-panel');
+      const cookies = await context.cookies();
+      expect(cookies.some((c) => c.name === 'lucca_parent' && c.value !== cookie), 'tras entrar de nuevo hay una sesión nueva');
+    });
+  });
+}
+
 async function setupAndLock(s) {
   await H.setupParent(s);
   await run('P11', 'borde', 'Cinco fallos seguidos bloquean: cuenta atrás en pantalla y el PIN correcto no entra', async () => {
@@ -492,6 +518,27 @@ async function tasksGroup() {
 
   await withServer({ LUCCA_DEMO: '1' }, async (s) => {
     const cookie = await H.setupParent(s);
+    await run('P31', 'negativo', 'Se cae la conexión al guardar en el panel: mensaje amable junto a la tarea, nada cambia y al volver se puede repetir', async () => {
+      const { page } = await open(s, { cookie });
+      await goParent(page, s);
+      await parentHeading(page).waitFor();
+      const target = /^Marcar lista: Restas sin llevar/;
+      await page.getByRole('button', { name: target }).waitFor();
+      await page.route('**/api/parent/tasks/**', (route) => route.abort());
+      await page.getByRole('button', { name: target }).click();
+      const alert = weekGroup(page, 'Martes 17').getByRole('alert');
+      await alert.waitFor();
+      expect((await text(alert)) === 'No se pudo guardar. Revisa que el asistente siga encendido e inténtalo otra vez.', 'debía decir que no se pudo guardar');
+      expect((await page.getByText(/failed|TypeError|fetch/i).count()) === 0, 'no debe mostrar mensajes técnicos');
+      expect(taskByTitle(await overviewTasks(s, cookie), /Restas/).status === 'todo', 'la tarea no debe haber cambiado');
+      await shot(page, 'sin-conexion-al-guardar', { scrollTo: alert });
+      await page.unroute('**/api/parent/tasks/**');
+      await page.getByRole('button', { name: target }).click();
+      await page.getByRole('button', { name: /^Marcar por hacer: Restas sin llevar/ }).waitFor();
+      expect(taskByTitle(await overviewTasks(s, cookie), /Restas/).status === 'done', 'al volver la conexión se guarda');
+      expect((await weekGroup(page, 'Martes 17').getByRole('alert').count()) === 0, 'el mensaje de error desaparece');
+    });
+
     await run('P30', 'borde', '30 tareas en un día: papá y Lucca las muestran todas sin romper el diseño', async () => {
       for (let i = 1; i <= 30; i++) {
         const res = await H.api(s, 'POST', '/api/parent/tasks', {
@@ -1068,6 +1115,7 @@ async function kidGroup() {
   let code = 1;
   try {
     await accessGroup();
+    await expiredSessionGroup();
     await tasksGroup();
     await progressGroup();
     await settingsGroup();

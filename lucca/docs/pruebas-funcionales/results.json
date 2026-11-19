@@ -1,7 +1,7 @@
 {
   "clock": "2026-11-18T17:00:00Z",
-  "total": 43,
-  "passed": 43,
+  "total": 45,
+  "passed": 45,
   "failed": 0,
   "results": [
     {
@@ -33,7 +33,7 @@
       ],
       "checks": 13,
       "problems": [],
-      "ms": 1130
+      "ms": 1021
     },
     {
       "id": "K02",
@@ -52,7 +52,7 @@
       ],
       "checks": 6,
       "problems": [],
-      "ms": 415
+      "ms": 366
     },
     {
       "id": "K03",
@@ -71,7 +71,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 423
+      "ms": 428
     },
     {
       "id": "K04",
@@ -90,7 +90,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 570
+      "ms": 530
     },
     {
       "id": "K05",
@@ -105,7 +105,7 @@
       ],
       "checks": 4,
       "problems": [],
-      "ms": 256
+      "ms": 248
     },
     {
       "id": "K06",
@@ -120,7 +120,7 @@
       ],
       "checks": 5,
       "problems": [],
-      "ms": 278
+      "ms": 262
     },
     {
       "id": "K07",
@@ -139,7 +139,7 @@
       ],
       "checks": 9,
       "problems": [],
-      "ms": 638
+      "ms": 605
     },
     {
       "id": "K08",
@@ -158,7 +158,7 @@
       ],
       "checks": 8,
       "problems": [],
-      "ms": 585
+      "ms": 611
     },
     {
       "id": "P01",
@@ -173,7 +173,7 @@
       ],
       "checks": 5,
       "problems": [],
-      "ms": 335
+      "ms": 331
     },
     {
       "id": "P02",
@@ -188,7 +188,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 381
+      "ms": 364
     },
     {
       "id": "P03",
@@ -203,7 +203,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 386
+      "ms": 362
     },
     {
       "id": "P04",
@@ -218,7 +218,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 373
+      "ms": 346
     },
     {
       "id": "P05",
@@ -233,7 +233,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 363
+      "ms": 344
     },
     {
       "id": "P06",
@@ -248,7 +248,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 361
+      "ms": 366
     },
     {
       "id": "P06b",
@@ -263,7 +263,7 @@
       ],
       "checks": 3,
       "problems": [],
-      "ms": 345
+      "ms": 372
     },
     {
       "id": "P07",
@@ -282,7 +282,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 480
+      "ms": 563
     },
     {
       "id": "P08",
@@ -301,7 +301,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 565
+      "ms": 587
     },
     {
       "id": "P09",
@@ -316,7 +316,7 @@
       ],
       "checks": 5,
       "problems": [],
-      "ms": 379
+      "ms": 359
     },
     {
       "id": "P10",
@@ -335,7 +335,7 @@
       ],
       "checks": 6,
       "problems": [],
-      "ms": 485
+      "ms": 471
     },
     {
       "id": "P11",
@@ -354,7 +354,7 @@
       ],
       "checks": 10,
       "problems": [],
-      "ms": 948
+      "ms": 935
     },
     {
       "id": "P12",
@@ -369,7 +369,7 @@
       ],
       "checks": 13,
       "problems": [],
-      "ms": 256
+      "ms": 225
     },
     {
       "id": "P13",
@@ -388,7 +388,26 @@
       ],
       "checks": 4,
       "problems": [],
-      "ms": 874
+      "ms": 834
+    },
+    {
+      "id": "P14",
+      "kind": "negativo",
+      "title": "Sesión caducada a mitad de uso: la siguiente acción vuelve al PIN con un aviso, sin mostrar datos",
+      "ok": true,
+      "shots": [
+        {
+          "name": "sesion-caducada",
+          "file": "P14-sesion-caducada.jpg"
+        },
+        {
+          "name": "de-vuelta-en-el-panel",
+          "file": "P14-de-vuelta-en-el-panel.jpg"
+        }
+      ],
+      "checks": 9,
+      "problems": [],
+      "ms": 569
     },
     {
       "id": "P20",
@@ -415,7 +434,7 @@
       ],
       "checks": 10,
       "problems": [],
-      "ms": 1087
+      "ms": 1016
     },
     {
       "id": "P21",
@@ -430,7 +449,7 @@
       ],
       "checks": 8,
       "problems": [],
-      "ms": 563
+      "ms": 493
     },
     {
       "id": "P22",
@@ -449,7 +468,7 @@
       ],
       "checks": 10,
       "problems": [],
-      "ms": 804
+      "ms": 837
     },
     {
       "id": "P23",
@@ -468,7 +487,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 719
+      "ms": 693
     },
     {
       "id": "P24",
@@ -487,7 +506,7 @@
       ],
       "checks": 6,
       "problems": [],
-      "ms": 978
+      "ms": 916
     },
     {
       "id": "P25",
@@ -502,7 +521,7 @@
       ],
       "checks": 5,
       "problems": [],
-      "ms": 417
+      "ms": 429
     },
     {
       "id": "P26",
@@ -517,7 +536,7 @@
       ],
       "checks": 4,
       "problems": [],
-      "ms": 655
+      "ms": 567
     },
     {
       "id": "P27",
@@ -536,7 +555,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 627
+      "ms": 574
     },
     {
       "id": "P28",
@@ -559,7 +578,7 @@
       ],
       "checks": 9,
       "problems": [],
-      "ms": 949
+      "ms": 878
     },
     {
       "id": "P29",
@@ -578,7 +597,7 @@
       ],
       "checks": 6,
       "problems": [],
-      "ms": 878
+      "ms": 740
     },
     {
       "id": "P30",
@@ -601,7 +620,22 @@
       ],
       "checks": 38,
       "problems": [],
-      "ms": 1102
+      "ms": 974
+    },
+    {
+      "id": "P31",
+      "kind": "negativo",
+      "title": "Se cae la conexión al guardar en el panel: mensaje amable junto a la tarea, nada cambia y al volver se puede repetir",
+      "ok": true,
+      "shots": [
+        {
+          "name": "sin-conexion-al-guardar",
+          "file": "P31-sin-conexion-al-guardar.jpg"
+        }
+      ],
+      "checks": 7,
+      "problems": [],
+      "ms": 460
     },
     {
       "id": "P40",
@@ -616,7 +650,7 @@
       ],
       "checks": 2,
       "problems": [],
-      "ms": 335
+      "ms": 326
     },
     {
       "id": "P41",
@@ -631,7 +665,7 @@
       ],
       "checks": 9,
       "problems": [],
-      "ms": 379
+      "ms": 354
     },
     {
       "id": "P50",
@@ -650,7 +684,7 @@
       ],
       "checks": 4,
       "problems": [],
-      "ms": 687
+      "ms": 644
     },
     {
       "id": "P51",
@@ -669,7 +703,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 791
+      "ms": 789
     },
     {
       "id": "P51b",
@@ -684,7 +718,7 @@
       ],
       "checks": 6,
       "problems": [],
-      "ms": 444
+      "ms": 379
     },
     {
       "id": "P52",
@@ -699,7 +733,7 @@
       ],
       "checks": 8,
       "problems": [],
-      "ms": 380
+      "ms": 372
     },
     {
       "id": "P53",
@@ -718,7 +752,7 @@
       ],
       "checks": 8,
       "problems": [],
-      "ms": 1110
+      "ms": 1094
     },
     {
       "id": "P54",
@@ -733,7 +767,7 @@
       ],
       "checks": 5,
       "problems": [],
-      "ms": 624
+      "ms": 597
     },
     {
       "id": "P60",
@@ -800,7 +834,7 @@
       ],
       "checks": 35,
       "problems": [],
-      "ms": 6645
+      "ms": 6602
     },
     {
       "id": "P61",
@@ -823,7 +857,7 @@
       ],
       "checks": 10,
       "problems": [],
-      "ms": 691
+      "ms": 652
     }
   ]
 }

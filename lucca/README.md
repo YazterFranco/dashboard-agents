@@ -19,9 +19,11 @@ La propuesta completa (por qué, qué, cómo y las tareas) está en
 - **Guíame**: recorre las tareas pendientes del día de una en una, con «¡Ya la hice!» (marca la tarea y da la
   estrella) y «Más tarde», leyendo cada paso en voz alta según el modo.
 - Tareas de ejemplo con `LUCCA_DEMO=1`.
+- **Área de papá** (`/papa`) con PIN: crear y editar tareas a mano, moverlas de día, ocultarlas, marcarlas listas,
+  ver el progreso de Lucca y cambiar los ajustes (nombre, grado, idioma, voz, tema y velocidad de lectura).
 
-Todavía **no** están: la lectura automática de Mereb, el área de papá con PIN, las lecciones con IA, la ayuda con fotos
-de la tarea, los juegos de práctica ni el contenedor Docker. Llegan en las siguientes fases del plan.
+Todavía **no** están: la lectura automática de Mereb, las lecciones con IA, la ayuda con fotos de la tarea, los juegos
+de práctica, el control del gasto de IA ni el contenedor Docker. Llegan en las siguientes fases del plan.
 
 ## Requisitos
 
@@ -91,6 +93,44 @@ Copia `.env.example` a `.env` y completa lo que necesites. **Nunca subas `.env` 
 `ANTHROPIC_API_KEY`, `MEREB_*` y `LUCCA_PUBLIC_URL` ya están en `.env.example` porque se usarán en las
 fases siguientes; en esta fase no se leen.
 
+## Área de papá
+
+Se abre desde el candado «Área de papá» de la pantalla de Lucca, o directamente en `http://<tu-computadora>:4830/papa`.
+
+**Primera vez.** El asistente de configuración pide un PIN de 4 a 6 números (y su repetición), el nombre del niño, el
+grado, el idioma y el tema. Muestra si la IA y Mereb están conectados; si falta alguno explica qué añadir al archivo
+`.env` (`ANTHROPIC_API_KEY`, `MEREB_URL`, `MEREB_USER`, `MEREB_PASSWORD`), pero **nunca impide terminar**: puedes
+completar el `.env` después. La configuración se hace una sola vez; mientras no exista un PIN, cualquiera de tu red de
+casa podría hacerla, así que conviene hacerla justo después del primer arranque.
+
+**Entrar y salir.** Se entra con el PIN. Cinco fallos seguidos bloquean el acceso 5 minutos (hay cuenta atrás en pantalla,
+y un PIN correcto durante el bloqueo no entra). Un PIN con formato inválido no cuenta como fallo. La sesión se cierra sola tras
+15 minutos sin actividad y con «Salir»; la cookie es `HttpOnly` y `SameSite=Strict`.
+
+**Qué se puede hacer.**
+
+| Pestaña | Para qué |
+| --- | --- |
+| **Tareas** | Semana anterior, actual y siguiente. Crear tareas (con título en inglés opcional), editar, mover de día, ocultar y mostrar, marcar lista (sin dar estrella) y borrar. Una tarea manual se borra del todo; una que venga de otro origen se retira para que no vuelva. |
+| **Progreso** | Las últimas 4 semanas: tareas listas, estrellas, pistas usadas y las tareas donde Lucca pidió ayuda. |
+| **Ajustes** | Nombre, grado, idioma, modo de voz, tema y velocidad de la voz (0,7 a 1,2; se acepta «1,1» o «1.1»). También el estado de las conexiones y el cambio de PIN. |
+
+Los ajustes de papá son los valores por defecto: si Lucca elige idioma, voz o tema en su tablet, lo suyo manda para esa
+opción, y lo que nunca eligió sigue los cambios de papá desde la siguiente carga.
+
+**Si olvidas el PIN.** Apaga el asistente y, desde esta carpeta, ejecuta:
+
+```bash
+npm run reset-pin
+```
+
+Borra el PIN y cierra todas las sesiones (no toca las tareas ni el progreso). Enciende el asistente y abre `/papa`
+enseguida para crear uno nuevo. Si la base de datos no está en `./data/lucca.db`, indícala con
+`LUCCA_DB=/ruta/lucca.db npm run reset-pin`.
+
+**Todavía no incluye:** la conexión con Mereb y su sincronización, subir la foto de la agenda, la revisión de lecciones,
+el tiempo de uso por día y el tope de gasto de IA; llegan con las funciones que los necesitan.
+
 ## Pruebas
 
 ```bash
@@ -110,11 +150,25 @@ que no hay desplazamiento horizontal, que todos los botones miden al menos 60 px
 que el texto de lectura mide al menos 19 px, que el texto tiene contraste 4,5:1 y que no se pide nada fuera de casa.
 También recorre el plan de la semana y la guía, y termina un día completo con el servidor real. Deja capturas en `e2e/out/`.
 
+```bash
+npm run build && npm run e2e:functional
+```
+
+`npm run e2e:functional` son las **pruebas funcionales**: 45 escenarios en un navegador real contra el servidor real,
+con el reloj fijo en el miércoles 18 de noviembre de 2026 (`LUCCA_FAKE_NOW`) para que se repitan igual cualquier día.
+Cada escenario es **positivo**, **negativo** o de **borde** (acceso y bloqueo con PIN, crear/mover/ocultar/borrar tareas,
+progreso, ajustes, cambio de PIN, móvil/tablet/escritorio en oscuro y claro, uso solo con teclado, y la pantalla de
+Lucca: guía, sin conexión, errores al marcar, domingo y cambio de día en Panamá). Las capturas y el informe quedan en
+[`docs/pruebas-funcionales/`](docs/pruebas-funcionales/index.html) (`index.html`, `results.json` y un JPEG por momento clave).
+Para repetir solo algunos: `ONLY=P60,K03 npm run e2e:functional`.
+
 ## Estructura
 
 ```
 packages/shared   esquemas y lógica compartida (semana, día de trabajo, estrellas)
 packages/server   servidor Fastify + SQLite, solo red privada
 packages/web      pantalla de Lucca (React + Vite)
-e2e/              verificación de layout en navegador real
+e2e/              verificación de layout y pruebas funcionales en navegador real
+scripts/          utilidades (reset-pin)
+docs/pruebas-funcionales/   capturas e informe de las pruebas funcionales
 ```
