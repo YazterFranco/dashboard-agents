@@ -40,7 +40,7 @@
 ## 3. Área del padre y agenda
 
 - [ ] 3.1 Implementar el PIN (hash scrypt, bloqueo tras 5 intentos, sesión de 15 min, cookie httpOnly SameSite=Strict) y verificar con pruebas los escenarios de parent-area
-- [ ] 3.2 Implementar la primera configuración (PIN, comprobación de API key, Mereb, nombre, grado, idioma, tema y `LUCCA_PUBLIC_URL`) y verificar con e2e que no deja terminar sin API key
+- [ ] 3.2 Implementar la primera configuración (PIN, comprobación de API key, Mereb, nombre, grado, idioma, tema y `LUCCA_PUBLIC_URL`) y verificar con e2e que sin API key avisa pero deja terminar _(decisión de papá: el `.env` se completa al final, así que la clave no bloquea)_
 - [ ] 3.3 Implementar la gestión de tareas del padre (crear, editar, mover de día, ocultar, marcar lista, ver 3 semanas) y verificar con e2e que una tarea movida aparece en el nuevo día para Lucca
 - [ ] 3.4 Implementar la normalización e idempotencia de tareas (`source_id`, actualización, "retirada" con progreso) y verificar con pruebas los escenarios de agenda-sync
 - [ ] 3.5 Implementar el lector de Mereb con Playwright (inicio de sesión, `storageState` con permisos 600, máximo 6 inicios de sesión al día y 1 sincronización cada 15 min) contra un Mereb falso servido con la muestra de 0.3, y verificar con pruebas que lee las tareas de la muestra
