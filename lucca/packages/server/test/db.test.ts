@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { createRequire } from 'node:module';
 import { TaskSchema, type ProgressEvent, type Task } from '@lucca/shared';
 import { LuccaDb } from '../src/db.js';
 
@@ -85,7 +86,7 @@ describe('LuccaDb', () => {
   it('settings default, patch and persist', () => {
     const file = tempFile();
     const a = open(file);
-    expect(a.getSettings()).toEqual({ childName: 'Lucca', lang: 'es', voiceMode: 'both', theme: 'dark', tz: 'America/Panama' });
+    expect(a.getSettings()).toEqual({ childName: 'Lucca', grade: 2, lang: 'es', voiceMode: 'both', theme: 'dark', speechRate: 0.9, tz: 'America/Panama' });
     expect(a.setSettings({ lang: 'en' })).toMatchObject({ lang: 'en', childName: 'Lucca' });
     a.close();
     opened.pop();
@@ -98,5 +99,74 @@ describe('LuccaDb', () => {
     expect(db.hasProgress('t1', 'task_done')).toBe(true);
     expect(db.hasProgress('t1', 'lesson_done')).toBe(false);
     expect(db.hasProgress('t2', 'task_done')).toBe(false);
+  });
+
+  it('deleteTask removes the task and ignores an unknown id', () => {
+    const db = open();
+    db.upsertTask(task({ id: 'a' }));
+    db.upsertTask(task({ id: 'b' }));
+    db.deleteTask('a');
+    db.deleteTask('no-existe');
+    expect(db.listTasks().map((t) => t.id)).toEqual(['b']);
+  });
+
+  it('keeps the PIN record: none at first, persisted and overwritten', () => {
+    const file = tempFile();
+    const a = open(file);
+    expect(a.getPinRecord()).toBeNull();
+    a.setPinRecord('scrypt$aa$bb');
+    a.setPinRecord('scrypt$cc$dd');
+    a.close();
+    opened.pop();
+    expect(open(file).getPinRecord()).toBe('scrypt$cc$dd');
+  });
+
+  it('the PIN record never shows up in the settings', () => {
+    const db = open();
+    db.setPinRecord('scrypt$aa$bb');
+    expect(JSON.stringify(db.getSettings())).not.toContain('scrypt');
+  });
+
+  it('creates, reads, touches and deletes sessions', () => {
+    const db = open();
+    expect(db.getSession('s1')).toBeNull();
+    db.createSession('s1', '2026-11-18T10:00:00.000Z');
+    expect(db.getSession('s1')).toEqual({ id: 's1', createdAt: '2026-11-18T10:00:00.000Z', lastSeen: '2026-11-18T10:00:00.000Z' });
+    db.touchSession('s1', '2026-11-18T10:05:00.000Z');
+    expect(db.getSession('s1')!.lastSeen).toBe('2026-11-18T10:05:00.000Z');
+    expect(db.getSession('s1')!.createdAt).toBe('2026-11-18T10:00:00.000Z');
+    db.deleteSession('s1');
+    db.deleteSession('s1');
+    expect(db.getSession('s1')).toBeNull();
+  });
+
+  it('deletes only the sessions idle since before the given moment, and says how many', () => {
+    const db = open();
+    db.createSession('old', '2026-11-18T09:00:00.000Z');
+    db.createSession('recent', '2026-11-18T10:00:00.000Z');
+    expect(db.deleteSessionsIdleSince('2026-11-18T09:30:00.000Z')).toBe(1);
+    expect(db.getSession('old')).toBeNull();
+    expect(db.getSession('recent')).not.toBeNull();
+    expect(db.deleteSessionsIdleSince('2026-11-18T09:30:00.000Z')).toBe(0);
+  });
+
+  it('deleteAllSessions empties the table', () => {
+    const db = open();
+    db.createSession('a', '2026-11-18T10:00:00.000Z');
+    db.createSession('b', '2026-11-18T10:00:00.000Z');
+    db.deleteAllSessions();
+    expect(db.getSession('a')).toBeNull();
+    expect(db.getSession('b')).toBeNull();
+  });
+
+  it('reads settings saved before the grade and the speech rate existed with their defaults', () => {
+    const file = tempFile();
+    open(file).close();
+    opened.pop();
+    const sqlite = createRequire(import.meta.url)('node:sqlite') as typeof import('node:sqlite');
+    const raw = new sqlite.DatabaseSync(file);
+    raw.prepare("INSERT INTO settings (key, value) VALUES ('settings', ?)").run(JSON.stringify({ childName: 'Lucca', lang: 'en', voiceMode: 'text', theme: 'light', tz: 'America/Panama' }));
+    raw.close();
+    expect(open(file).getSettings()).toMatchObject({ lang: 'en', voiceMode: 'text', theme: 'light', grade: 2, speechRate: 0.9 });
   });
 });

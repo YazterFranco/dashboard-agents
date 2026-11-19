@@ -4,13 +4,13 @@ import { z } from 'zod';
 export type IsoDate = string;
 
 export const IsoDateSchema = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .string({ error: 'Escribe una fecha válida' })
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Escribe una fecha válida')
   .refine((s) => {
     const [y, m, d] = s.split('-').map(Number);
     const date = new Date(Date.UTC(y, m - 1, d));
     return date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d;
-  }, 'fecha inexistente');
+  }, 'Esa fecha no existe');
 
 export const SUBJECTS = ['math', 'spanish', 'english', 'science', 'social', 'art', 'music', 'pe', 'religion', 'other'] as const;
 export type Subject = (typeof SUBJECTS)[number];
@@ -43,12 +43,25 @@ export const TaskSchema = z.object({
 });
 export type Task = z.infer<typeof TaskSchema>;
 
+/** Cada ajuste por separado y sin valor por defecto: sirven para validar un parche sin reponer lo que no se tocó. */
+export const SettingsFields = {
+  childName: z.string({ error: 'Escribe el nombre' }).trim().min(1, 'Escribe el nombre').max(30, 'El nombre puede tener hasta 30 letras'),
+  grade: z.number({ error: 'Elige el grado' }).int('Elige el grado').min(1, 'El grado va de 1 a 6').max(6, 'El grado va de 1 a 6'),
+  lang: z.enum(LANGS, { error: 'Elige el idioma' }),
+  voiceMode: z.enum(VOICE_MODES, { error: 'Elige cómo quiere aprender' }),
+  theme: z.enum(THEMES, { error: 'Elige el tema' }),
+  speechRate: z.number({ error: 'La velocidad va de 0,7 a 1,2' }).min(0.7, 'La velocidad va de 0,7 a 1,2').max(1.2, 'La velocidad va de 0,7 a 1,2'),
+  tz: z.string().min(1),
+};
+
 export const SettingsSchema = z.object({
-  childName: z.string().min(1).default('Lucca'),
-  lang: z.enum(LANGS).default('es'),
-  voiceMode: z.enum(VOICE_MODES).default('both'),
-  theme: z.enum(THEMES).default('dark'),
-  tz: z.string().min(1).default('America/Panama'),
+  childName: SettingsFields.childName.default('Lucca'),
+  grade: SettingsFields.grade.default(2),
+  lang: SettingsFields.lang.default('es'),
+  voiceMode: SettingsFields.voiceMode.default('both'),
+  theme: SettingsFields.theme.default('dark'),
+  speechRate: SettingsFields.speechRate.default(0.9),
+  tz: SettingsFields.tz.default('America/Panama'),
 });
 export type Settings = z.infer<typeof SettingsSchema>;
 

@@ -40,9 +40,11 @@ describe('schemas', () => {
   it('settings defaults', () => {
     expect(SettingsSchema.parse({})).toEqual({
       childName: 'Lucca',
+      grade: 2,
       lang: 'es',
       voiceMode: 'both',
       theme: 'dark',
+      speechRate: 0.9,
       tz: 'America/Panama',
     });
   });
@@ -58,5 +60,26 @@ describe('schemas', () => {
     expect(s.tasks).toHaveLength(1);
     expect(s.starsThisWeek).toBe(2);
     expect(KidStateSchema.safeParse({ ...s, starsThisWeek: -1 }).success).toBe(false);
+  });
+
+  it('rejects a child name that is empty, only spaces or longer than 30', () => {
+    expect(SettingsSchema.safeParse({ childName: '' }).success).toBe(false);
+    expect(SettingsSchema.safeParse({ childName: '   ' }).success).toBe(false);
+    expect(SettingsSchema.safeParse({ childName: 'a'.repeat(31) }).success).toBe(false);
+  });
+
+  it('accepts a name of exactly 30 characters and trims it', () => {
+    expect(SettingsSchema.parse({ childName: 'a'.repeat(30) }).childName).toHaveLength(30);
+    expect(SettingsSchema.parse({ childName: '  Lucca ' }).childName).toBe('Lucca');
+  });
+
+  it('limits the grade to 1 to 6 whole numbers', () => {
+    for (const grade of [1, 6]) expect(SettingsSchema.safeParse({ grade }).success).toBe(true);
+    for (const grade of [0, 7, 2.5, -1, '2']) expect(SettingsSchema.safeParse({ grade }).success).toBe(false);
+  });
+
+  it('limits the speech rate to 0.7 to 1.2, borders included', () => {
+    for (const speechRate of [0.7, 0.9, 1.2]) expect(SettingsSchema.safeParse({ speechRate }).success).toBe(true);
+    for (const speechRate of [0.69, 1.21, 0, -1, 'rápido']) expect(SettingsSchema.safeParse({ speechRate }).success).toBe(false);
   });
 });

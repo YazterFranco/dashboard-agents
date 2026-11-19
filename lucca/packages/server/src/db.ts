@@ -130,6 +130,10 @@ export class LuccaDb {
     return (this.db.prepare('SELECT * FROM tasks ORDER BY rowid').all() as Row[]).map(taskFromRow);
   }
 
+  deleteTask(id: string): void {
+    this.db.prepare('DELETE FROM tasks WHERE id = ?').run(id);
+  }
+
   setTaskStatus(id: string, status: TaskStatus): void {
     this.db.prepare('UPDATE tasks SET status = ? WHERE id = ?').run(status, id);
   }
@@ -159,5 +163,41 @@ export class LuccaDb {
       .prepare("INSERT INTO settings (key, value) VALUES ('settings', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value")
       .run(JSON.stringify(next));
     return next;
+  }
+
+  /** El PIN del padre, ya con hash (nunca en claro). Vive en la tabla de ajustes con su propia clave, aparte de los ajustes del niño. */
+  getPinRecord(): string | null {
+    const row = this.db.prepare("SELECT value FROM settings WHERE key = 'pin'").get() as Row | undefined;
+    return row ? String(row.value) : null;
+  }
+
+  setPinRecord(record: string): void {
+    this.db.prepare("INSERT INTO settings (key, value) VALUES ('pin', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(record);
+  }
+
+  createSession(id: string, at: string): void {
+    this.db.prepare('INSERT INTO parent_sessions (id, created_at, last_seen) VALUES (?, ?, ?)').run(id, at, at);
+  }
+
+  getSession(id: string): { id: string; createdAt: string; lastSeen: string } | null {
+    const row = this.db.prepare('SELECT id, created_at, last_seen FROM parent_sessions WHERE id = ?').get(id) as Row | undefined;
+    return row ? { id: String(row.id), createdAt: String(row.created_at), lastSeen: String(row.last_seen) } : null;
+  }
+
+  touchSession(id: string, at: string): void {
+    this.db.prepare('UPDATE parent_sessions SET last_seen = ? WHERE id = ?').run(at, id);
+  }
+
+  deleteSession(id: string): void {
+    this.db.prepare('DELETE FROM parent_sessions WHERE id = ?').run(id);
+  }
+
+  /** Borra las sesiones sin actividad desde antes de `before` y devuelve cuántas eran. */
+  deleteSessionsIdleSince(before: string): number {
+    return Number(this.db.prepare('DELETE FROM parent_sessions WHERE last_seen < ?').run(before).changes);
+  }
+
+  deleteAllSessions(): void {
+    this.db.exec('DELETE FROM parent_sessions');
   }
 }
