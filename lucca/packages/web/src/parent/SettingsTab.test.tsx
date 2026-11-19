@@ -241,3 +241,50 @@ describe('SettingsTab change PIN', () => {
     await screen.findByText('PIN cambiado. Usa el nuevo la próxima vez.');
   });
 });
+
+describe('SettingsTab AI', () => {
+  const ai = (over: Record<string, unknown> = {}) => ({ mode: 'live' as const, monthCostUsd: 1.4, capUsd: 20, alerts: [], ...over });
+  const renderAi = (summary: ReturnType<typeof ai>, over: Record<string, unknown> = {}) => {
+    const api = { saveSettings: vi.fn(async () => settings), changePin: vi.fn(), ...over } as unknown as ParentApi;
+    render(<SettingsTab settings={settings} connections={{ ai: true, mereb: false }} ai={summary} onSaved={vi.fn()} api={api} />);
+    return api.saveSettings as unknown as ReturnType<typeof vi.fn>;
+  };
+
+  it('shows the mode and the month spending against the cap', () => {
+    renderAi(ai());
+    expect(screen.getByText(/Con IA \(Claude\)/)).toBeTruthy();
+    expect(screen.getByText('US$ 1,40')).toBeTruthy();
+    expect(screen.getByRole('progressbar', { name: 'Gasto de IA: 7 % del tope' })).toBeTruthy();
+  });
+
+  it('warns at 80 % and says when the cap is reached', () => {
+    renderAi(ai({ monthCostUsd: 16.5 }));
+    expect(screen.getByText('Ya va el 83 % del tope del mes.')).toBeTruthy();
+    cleanup();
+    renderAi(ai({ monthCostUsd: 20 }));
+    expect(screen.getByText(/Tope de IA alcanzado/)).toBeTruthy();
+  });
+
+  it('explains how to turn it on when there is no key', () => {
+    renderAi(ai({ mode: 'off', monthCostUsd: 0 }));
+    expect(screen.getByText(/falta ANTHROPIC_API_KEY/)).toBeTruthy();
+  });
+
+  it('lists the lessons that ended in the fallback', () => {
+    renderAi(ai({ alerts: [{ taskId: 't', title: 'Restas', variant: 'default', issues: ['intento 3: la IA no respondió'], createdAt: '' }] }));
+    expect(screen.getByText('Lecciones de respaldo')).toBeTruthy();
+    expect(screen.getByText('Restas')).toBeTruthy();
+  });
+
+  it('changes the cap; out of range is rejected', async () => {
+    const save = renderAi(ai());
+    type('Tope mensual de IA (dólares)', '300');
+    saveSettings();
+    expect(errorOf('Tope mensual de IA (dólares)')!.textContent).toBe('El tope va de 1 a 200 dólares');
+    expect(save).not.toHaveBeenCalled();
+    type('Tope mensual de IA (dólares)', '35');
+    saveSettings();
+    await waitFor(() => expect(save).toHaveBeenCalledWith({ aiMonthlyCapUsd: 35 }));
+  });
+});
+

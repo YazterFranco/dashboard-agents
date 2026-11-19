@@ -16,6 +16,7 @@ export interface RowActions {
   toggleDone(): void;
   toggleHidden(): void;
   edit(): void;
+  preview?(): void;
   move(date: IsoDate): void;
   askDelete(): void;
   confirmDelete(): void;
@@ -61,6 +62,11 @@ export function TaskRow({ task, days, busy, confirming, message, actions }: Prop
         <button id={`edit-${task.id}`} type="button" className="p-btn p-btn-ghost p-btn-sm" disabled={busy} aria-label={`Editar: ${title}`} onClick={actions.edit}>
           Editar
         </button>
+        {actions.preview ? (
+          <button type="button" className="p-btn p-btn-ghost p-btn-sm" aria-label={`Ver lección: ${title}`} onClick={actions.preview}>
+            Ver lección
+          </button>
+        ) : null}
         <select
           className="p-move"
           aria-label={`Mover a otro día: ${title}`}

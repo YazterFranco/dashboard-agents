@@ -471,3 +471,15 @@ code {
   flex: none;
   width: 100%;
 }
+
+/* Vista previa de una lección dentro del panel: el mismo reproductor que ve Lucca. */
+.p-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.p-preview .lesson {
+  min-height: auto;
+  padding: 0;
+  max-width: none;
+}

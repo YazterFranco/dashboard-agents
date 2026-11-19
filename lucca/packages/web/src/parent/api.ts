@@ -1,4 +1,5 @@
 import type { Lang, Settings, Task, Theme, WeekProgress } from '@lucca/shared';
+import { fetchLesson, type LessonAnswer } from '../lesson/api';
 
 /** Respuesta no 2xx del servidor. Un fallo de red NO es un `ApiError`: llega como el `TypeError` del navegador. */
 export class ApiError extends Error {
@@ -31,12 +32,21 @@ export interface ParentStatus {
   connections: Connections;
 }
 
+export interface AiSummary {
+  mode: 'live' | 'recorded' | 'off';
+  monthCostUsd: number;
+  capUsd: number;
+  /** Lecciones de respaldo: la IA no pudo preparar una buena. */
+  alerts: { taskId: string; title: string; variant: string; issues: string[]; createdAt: string }[];
+}
+
 export interface Overview {
   today: string;
   weekStart: string;
   settings: Settings;
   tasks: Task[];
   connections: Connections;
+  ai: AiSummary;
 }
 
 export interface ParentProgress {
@@ -99,6 +109,9 @@ export const parentApi = {
   deleteTask: (id: string) => request<{ result: 'removed' | 'retired' }>('DELETE', `/api/parent/tasks/${encodeURIComponent(id)}`),
   saveSettings: (patch: Partial<Omit<Settings, 'tz'>>) => request<Settings>('PUT', '/api/parent/settings', patch),
   progress: (weeks: number) => request<ParentProgress>('GET', `/api/parent/progress?weeks=${weeks}`),
+  /** La lección tal como la ve Lucca (vista previa: no cuenta como progreso). */
+  lesson: (taskId: string): Promise<LessonAnswer> => fetchLesson(taskId, 'default', '/api/parent/lessons'),
+  regenerateLesson: (taskId: string) => request<LessonAnswer>('POST', `/api/parent/lessons/${encodeURIComponent(taskId)}/regenerate`),
 };
 export type ParentApi = typeof parentApi;
 

@@ -352,3 +352,16 @@ describe('TasksTab keyboard focus', () => {
   });
 });
 
+describe('TasksTab lesson preview', () => {
+  it('"Ver lección" asks to preview that task', () => {
+    const onPreview = vi.fn();
+    render(<TasksTab tasks={week} today={TODAY} onChanged={vi.fn()} api={{} as ParentApi} onPreview={onPreview} />);
+    click('Ver lección: Las partes de la planta');
+    expect(onPreview).toHaveBeenCalledWith(expect.objectContaining({ id: 'tue-sci' }));
+  });
+  it('without a preview handler there is no button', () => {
+    setup(week);
+    expect(screen.queryByRole('button', { name: /^Ver lección/ })).toBeNull();
+  });
+});
+

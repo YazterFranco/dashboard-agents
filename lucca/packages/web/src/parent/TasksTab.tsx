@@ -11,6 +11,8 @@ interface Props {
   today: IsoDate;
   onChanged(): void;
   api: ParentApi;
+  /** Abrir la lección «Entender» de una tarea en vista previa. */
+  onPreview?(task: Task): void;
 }
 
 interface Group {
@@ -62,7 +64,7 @@ function Chevron({ direction }: { direction: 'left' | 'right' }) {
   );
 }
 
-export function TasksTab({ tasks, today, onChanged, api }: Props) {
+export function TasksTab({ tasks, today, onChanged, api, onPreview }: Props) {
   const [offset, setOffset] = useState(0);
   const [editing, setEditing] = useState<Task | 'new' | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
@@ -120,6 +122,7 @@ export function TasksTab({ tasks, today, onChanged, api }: Props) {
       if (t.dueDate !== null && t.dueDate < date) patch.dueDate = date;
       void run(t.id, () => api.patchTask(t.id, patch));
     },
+    preview: onPreview ? () => onPreview(t) : undefined,
     askDelete: () => setConfirming(t.id),
     confirmDelete: () => void run(t.id, () => api.deleteTask(t.id), true),
     cancelDelete: () => {

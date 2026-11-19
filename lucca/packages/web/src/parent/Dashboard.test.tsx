@@ -16,6 +16,7 @@ const overview = (over: Partial<Overview> = {}): Overview => ({
   settings: { childName: 'Lucca', grade: 2, lang: 'es', voiceMode: 'both', theme: 'dark', speechRate: 0.9, tz: 'America/Panama', aiMonthlyCapUsd: 20 },
   tasks: [task({ id: 'a', title: 'Sumas con llevadas', assignedDate: '2026-11-17', dueDate: '2026-11-18' })],
   connections: { ai: false, mereb: false },
+  ai: { mode: 'recorded', monthCostUsd: 0, capUsd: 20, alerts: [] },
   ...over,
 });
 
@@ -110,3 +111,42 @@ describe('Dashboard', () => {
     expect(screen.getByRole('link', { name: 'Ver la pantalla de Lucca' }).getAttribute('href')).toBe('/');
   });
 });
+
+describe('Dashboard lesson preview', () => {
+  const lessonDoc = {
+    title: { es: [{ text: 'Sumas' }], en: [{ text: 'Sums' }] },
+    screens: [1, 2, 3, 4].map((n) => ({ blocks: [{ type: 'explain' as const, text: { es: [{ text: `Pantalla ${n}.` }], en: [{ text: `Screen ${n}.` }] } }] })),
+    quiz: [{ type: 'trueFalse' as const, statement: { es: [{ text: 'Sumar junta.' }], en: [{ text: 'Adding.' }] }, answer: true }],
+  };
+  const ready = { status: 'ready' as const, lesson: { doc: lessonDoc, variant: 'default' as const, source: 'recorded' as const } };
+
+  it('"Ver lección" opens the lesson as Lucca sees it, without progress, and closes back to the tasks', async () => {
+    const lesson = vi.fn(async () => ready);
+    setup({ lesson });
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver lección: Sumas con llevadas' }));
+    expect(await screen.findByText('Pantalla 1.')).toBeTruthy();
+    expect(screen.getByText(/Nada de lo que hagas aquí cuenta como progreso/)).toBeTruthy();
+    expect(lesson).toHaveBeenCalledWith('a');
+    fireEvent.click(screen.getByRole('button', { name: /Cerrar la vista previa/ }));
+    expect(await screen.findByText('Sumas con llevadas')).toBeTruthy();
+  });
+
+  it('"Regenerar lección" asks for a new one and shows it', async () => {
+    const lesson = vi.fn(async () => ready);
+    const regenerateLesson = vi.fn(async () => ready);
+    setup({ lesson, regenerateLesson });
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver lección: Sumas con llevadas' }));
+    await screen.findByText('Pantalla 1.');
+    fireEvent.click(screen.getByRole('button', { name: 'Regenerar lección' }));
+    expect(await screen.findByText('Lección nueva lista.')).toBeTruthy();
+    expect(regenerateLesson).toHaveBeenCalledWith('a');
+    await waitFor(() => expect(lesson).toHaveBeenCalledTimes(2));
+  });
+
+  it('without AI the preview says what Lucca would see', async () => {
+    setup({ lesson: vi.fn(async () => ({ status: 'unavailable', reason: 'no-ai' })) });
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver lección: Sumas con llevadas' }));
+    expect(await screen.findByText('Esta tarea la vemos con papá.')).toBeTruthy();
+  });
+});
+

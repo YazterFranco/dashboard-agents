@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { PinSchema, SettingsFields, type Lang, type Settings, type Theme, type VoiceMode } from '@lucca/shared';
-import { ApiError, type Connections, type ParentApi } from './api';
+import { ApiError, type AiSummary, type Connections, type ParentApi } from './api';
 import { Choice, ConnectionsPanel, Field, FormError, GENERIC_ERROR, NETWORK_SAVE_ERROR } from './fields';
 import { clock } from './LoginForm';
 
@@ -13,23 +13,69 @@ function parseRate(text: string): number | null {
   return /^\d+(\.\d+)?$/.test(clean) ? Number(clean) : null;
 }
 
-type Key = 'childName' | 'speechRate';
-const IDS: Record<Key, string> = { childName: 'set-name', speechRate: 'set-rate' };
+type Key = 'childName' | 'speechRate' | 'aiMonthlyCapUsd';
+const IDS: Record<Key, string> = { childName: 'set-name', speechRate: 'set-rate', aiMonthlyCapUsd: 'set-cap' };
+const CAP_MESSAGE = 'El tope va de 1 a 200 dólares';
 
 interface Props {
   settings: Settings;
   connections: Connections;
+  ai?: AiSummary;
   onSaved(): void;
   api: ParentApi;
 }
 
-export function SettingsTab({ settings, connections, onSaved, api }: Props) {
+const usd = (n: number) => `US$ ${n.toFixed(2).replace('.', ',')}`;
+const MODE: Record<AiSummary['mode'], string> = {
+  live: 'Con IA (Claude). Las lecciones nuevas se preparan al abrirlas.',
+  recorded: 'Lecciones grabadas (modo de prueba, sin coste).',
+  off: 'Sin IA: falta ANTHROPIC_API_KEY en el archivo .env. Lucca verá «Esta tarea la vemos con papá».',
+};
+
+/** Modo de la IA, gasto del mes frente al tope y lecciones que salieron de respaldo. */
+function AiPanel({ ai }: { ai: AiSummary }) {
+  const pct = ai.capUsd > 0 ? Math.min(100, Math.round((ai.monthCostUsd / ai.capUsd) * 100)) : 0;
+  return (
+    <section className="p-card" aria-labelledby="ai-title">
+      <h2 id="ai-title">Inteligencia artificial</h2>
+      <p>{MODE[ai.mode]}</p>
+      <p>
+        Gasto de este mes: <strong>{usd(ai.monthCostUsd)}</strong> de {usd(ai.capUsd)}
+      </p>
+      <div className="bar" role="progressbar" aria-label={`Gasto de IA: ${pct} % del tope`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
+        <span style={{ width: `${pct}%` }} />
+      </div>
+      {pct >= 100 ? (
+        <p className="p-error">Tope de IA alcanzado: Lucca usa solo las lecciones guardadas hasta el mes que viene o hasta que subas el tope.</p>
+      ) : pct >= 80 ? (
+        <p className="p-lock">Ya va el {pct} % del tope del mes.</p>
+      ) : null}
+      {ai.alerts.length ? (
+        <>
+          <h3 className="p-day">Lecciones de respaldo</h3>
+          <p className="p-hint">La IA no pudo preparar una buena lección y Lucca ve una sencilla. Puedes regenerarla desde «Ver lección» en Tareas.</p>
+          <ul className="p-help">
+            {ai.alerts.map((a) => (
+              <li key={`${a.taskId}-${a.variant}`}>
+                <p className="p-task-title">{a.title}</p>
+                {a.issues[0] ? <p className="p-hint">{a.issues[0]}</p> : null}
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+    </section>
+  );
+}
+
+export function SettingsTab({ settings, connections, ai, onSaved, api }: Props) {
   return (
     <div className="p-tab">
       <SettingsForm settings={settings} onSaved={onSaved} api={api} />
       <div className="p-card">
         <ConnectionsPanel connections={connections} />
       </div>
+      {ai ? <AiPanel ai={ai} /> : null}
       <PinForm api={api} />
     </div>
   );
@@ -43,6 +89,7 @@ function SettingsForm({ settings, onSaved, api }: Omit<Props, 'connections'>) {
   const [voiceMode, setVoiceMode] = useState<VoiceMode>(settings.voiceMode);
   const [theme, setTheme] = useState<Theme>(settings.theme);
   const [rate, setRate] = useState(asText(settings.speechRate));
+  const [cap, setCap] = useState(String(settings.aiMonthlyCapUsd));
   const [errors, setErrors] = useState<Partial<Record<Key, string>>>({});
   const [general, setGeneral] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -65,8 +112,11 @@ function SettingsForm({ settings, onSaved, api }: Omit<Props, 'connections'>) {
     const rateNumber = parseRate(rate);
     const rateResult = rateNumber === null ? null : SettingsFields.speechRate.safeParse(rateNumber);
     if (!rateResult?.success) found.speechRate = RATE_MESSAGE;
+    const capNumber = parseRate(cap);
+    const capResult = capNumber === null ? null : SettingsFields.aiMonthlyCapUsd.safeParse(capNumber);
+    if (!capResult?.success) found.aiMonthlyCapUsd = CAP_MESSAGE;
     setErrors(found);
-    const first = (['childName', 'speechRate'] as Key[]).find((k) => found[k]);
+    const first = (['childName', 'speechRate', 'aiMonthlyCapUsd'] as Key[]).find((k) => found[k]);
     if (first) return void document.getElementById(IDS[first])?.focus();
 
     const patch: Partial<Omit<Settings, 'tz'>> = {};
@@ -76,6 +126,7 @@ function SettingsForm({ settings, onSaved, api }: Omit<Props, 'connections'>) {
     if (voiceMode !== baseline.voiceMode) patch.voiceMode = voiceMode;
     if (theme !== baseline.theme) patch.theme = theme;
     if (rateResult?.success && rateResult.data !== baseline.speechRate) patch.speechRate = rateResult.data;
+    if (capResult?.success && capResult.data !== baseline.aiMonthlyCapUsd) patch.aiMonthlyCapUsd = capResult.data;
     if (Object.keys(patch).length === 0) return void setStatus('No hay cambios que guardar');
 
     sending.current = true;
@@ -91,11 +142,11 @@ function SettingsForm({ settings, onSaved, api }: Omit<Props, 'connections'>) {
         const mapped: Partial<Record<Key, string>> = {};
         let rest: string | null = null;
         for (const [key, message] of Object.entries(err.fields)) {
-          if (key === 'childName' || key === 'speechRate') mapped[key] = message;
+          if (key === 'childName' || key === 'speechRate' || key === 'aiMonthlyCapUsd') mapped[key] = message;
           else rest ??= message;
         }
         setErrors(mapped);
-        const firstField = (['childName', 'speechRate'] as Key[]).find((k) => mapped[k]);
+        const firstField = (['childName', 'speechRate', 'aiMonthlyCapUsd'] as Key[]).find((k) => mapped[k]);
         if (firstField) document.getElementById(IDS[firstField])?.focus();
         setGeneral(firstField ? rest : (rest ?? GENERIC_ERROR));
       } else {
@@ -195,6 +246,22 @@ function SettingsForm({ settings, onSaved, api }: Omit<Props, 'connections'>) {
               setRate(e.target.value);
               touch();
               if (errors.speechRate) setErrors(({ speechRate: _gone, ...rest }) => rest);
+            }}
+          />
+        )}
+      </Field>
+      <Field id={IDS.aiMonthlyCapUsd} label="Tope mensual de IA (dólares)" hint="De 1 a 200. Al llegar al tope no se preparan lecciones nuevas; las guardadas siguen funcionando." error={errors.aiMonthlyCapUsd}>
+        {(c) => (
+          <input
+            {...c}
+            type="text"
+            inputMode="decimal"
+            autoComplete="off"
+            value={cap}
+            onChange={(e) => {
+              setCap(e.target.value);
+              touch();
+              if (errors.aiMonthlyCapUsd) setErrors(({ aiMonthlyCapUsd: _gone, ...rest }) => rest);
             }}
           />
         )}

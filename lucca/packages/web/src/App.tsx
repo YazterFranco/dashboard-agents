@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { LessonPlayer } from './lesson/LessonPlayer';
+import { fetchLesson } from './lesson/api';
 import { SettingsSchema, type KidState, type ProgressKind, type Settings } from '@lucca/shared';
 import { fetchState, postProgress } from './api';
 import { Mascot } from './components/Mascot';
@@ -15,6 +17,9 @@ const fromSettings = (s: Settings): Prefs => ({ lang: s.lang, voiceMode: s.voice
 export function App() {
   const [state, setState] = useState<KidState | null>(null);
   const [failed, setFailed] = useState(false);
+  /** Tarea abierta en «Entender»; la semana sigue montada (oculta) para volver al mismo día. */
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
+  const opener = useRef<HTMLElement | null>(null);
   const [prefs, setPrefs] = useState<Prefs>(() => loadPrefs(FALLBACK));
   // La velocidad de la voz la elige papá (0,7 a 1,2); mientras no llegan los ajustes se usa 0,9.
   const speechRate = state?.settings.speechRate ?? 0.9;
@@ -84,8 +89,38 @@ export function App() {
     savePrefs(changedPrefs(prefs, next));
   };
 
+  const openTask = state && openTaskId ? state.tasks.find((t) => t.id === openTaskId) : undefined;
+  const openLesson = (id: string) => {
+    opener.current = document.activeElement as HTMLElement | null;
+    speaker.stop();
+    setOpenTaskId(id);
+  };
+  const closeLesson = () => {
+    setOpenTaskId(null);
+    // Al volver, el foco regresa al botón que abrió la lección.
+    requestAnimationFrame(() => opener.current?.focus());
+  };
+
   if (state) {
-    return <WeekScreen key={state.today} state={state} prefs={prefs} speaker={speaker} onPrefs={onPrefs} onOpenTask={() => undefined} onProgress={onProgress} />;
+    return (
+      <>
+        <div className="week-wrap" hidden={Boolean(openTask)}>
+          <WeekScreen key={state.today} state={state} prefs={prefs} speaker={speaker} onPrefs={onPrefs} onOpenTask={openLesson} onProgress={onProgress} />
+        </div>
+        {openTask ? (
+          <LessonPlayer
+            key={openTask.id}
+            task={openTask}
+            lang={prefs.lang}
+            voiceMode={prefs.voiceMode}
+            speaker={speaker}
+            load={(variant) => fetchLesson(openTask.id, variant)}
+            onProgress={onProgress}
+            onClose={closeLesson}
+          />
+        ) : null}
+      </>
+    );
   }
 
   return (

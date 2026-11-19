@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import type { Task } from '@lucca/shared';
 import { ApiError, type Overview, type ParentApi } from './api';
+import { LessonPreview } from './LessonPreview';
 import { NETWORK_ERROR } from './fields';
 import { ProgressTab } from './ProgressTab';
 import { SettingsTab } from './SettingsTab';
@@ -22,6 +24,7 @@ export function Dashboard({ api, onLogout }: Props) {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('tasks');
+  const [preview, setPreview] = useState<Task | null>(null);
 
   const load = useCallback(async () => {
     setProblem(null);
@@ -74,7 +77,8 @@ export function Dashboard({ api, onLogout }: Props) {
         </section>
       ) : null}
 
-      {overview ? (
+      {overview && preview ? <LessonPreview task={preview} api={api} onClose={() => setPreview(null)} /> : null}
+      {overview && !preview ? (
         <>
           <nav className="p-tabs" aria-label="Secciones">
             {TABS.map((t) => (
@@ -83,13 +87,12 @@ export function Dashboard({ api, onLogout }: Props) {
               </button>
             ))}
           </nav>
-          {tab === 'tasks' ? <TasksTab tasks={overview.tasks} today={overview.today} onChanged={() => void load()} api={api} /> : null}
+          {tab === 'tasks' ? <TasksTab tasks={overview.tasks} today={overview.today} onChanged={() => void load()} api={api} onPreview={setPreview} /> : null}
           {tab === 'progress' ? <ProgressTab api={api} /> : null}
-          {tab === 'settings' ? <SettingsTab settings={overview.settings} connections={overview.connections} onSaved={() => void load()} api={api} /> : null}
+          {tab === 'settings' ? <SettingsTab settings={overview.settings} connections={overview.connections} ai={overview.ai} onSaved={() => void load()} api={api} /> : null}
         </>
-      ) : problem ? null : (
-        <p className="p-lead">Un momento…</p>
-      )}
+      ) : null}
+      {!overview && !problem ? <p className="p-lead">Un momento…</p> : null}
     </main>
   );
 }

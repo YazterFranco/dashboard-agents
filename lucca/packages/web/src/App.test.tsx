@@ -121,3 +121,33 @@ describe('App', () => {
     });
   });
 });
+
+describe('App opens a lesson from a task card', () => {
+  const lessonDoc = {
+    title: { es: [{ text: 'Restas' }], en: [{ text: 'Subtraction' }] },
+    screens: [1, 2, 3, 4].map((n) => ({ blocks: [{ type: 'explain', text: { es: [{ text: `Pantalla ${n}.` }], en: [{ text: `Screen ${n}.` }] } }] })),
+    quiz: [{ type: 'trueFalse', statement: { es: [{ text: 'Restar es quitar.' }], en: [{ text: 'Subtract.' }] }, answer: true }],
+  };
+  function routedFetch() {
+    return vi.fn(async (url: string) => {
+      if (url.startsWith('/api/kid/lessons/')) return { ok: true, json: async () => ({ status: 'ready', lesson: { doc: lessonDoc, variant: 'default', source: 'recorded' } }) };
+      return okResponse();
+    });
+  }
+
+  it('"Empezar" opens the lesson of that task and "Volver a mi semana" comes back to the same day', async () => {
+    const fetchMock = routedFetch();
+    vi.stubGlobal('fetch', fetchMock);
+    render(<App />);
+    await screen.findByText('¡Hola, Lucca!');
+    fireEvent.click(screen.getByRole('button', { name: /^Miércoles 18/ }));
+    const start = screen.getByRole('button', { name: 'Empezar: Lectura: “My Pet”' });
+    start.focus();
+    fireEvent.click(start);
+    await screen.findByText('Paso 1 de 5');
+    expect(fetchMock).toHaveBeenCalledWith('/api/kid/lessons/wed-eng', expect.anything());
+    fireEvent.click(screen.getByRole('button', { name: /Volver a mi semana/ }));
+    expect(screen.getByRole('button', { name: /^Miércoles 18/ }).getAttribute('aria-pressed')).toBe('true');
+    await waitFor(() => expect((document.activeElement as HTMLElement).getAttribute('aria-label')).toBe('Empezar: Lectura: “My Pet”'));
+  });
+});
