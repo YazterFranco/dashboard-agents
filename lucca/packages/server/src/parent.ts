@@ -1,5 +1,25 @@
+import { randomUUID } from 'node:crypto';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { ChangePinBodySchema, LoginBodySchema, PinSchema, SetupBodySchema, fieldErrors } from '@lucca/shared';
+import {
+  ChangePinBodySchema,
+  DATES_MESSAGE,
+  LoginBodySchema,
+  PinSchema,
+  SettingsPatchSchema,
+  SetupBodySchema,
+  TaskInputSchema,
+  TaskPatchSchema,
+  TaskSchema,
+  datesInOrder,
+  fieldErrors,
+  localDate,
+  mondayOf,
+  needsHelp,
+  plannerToday,
+  shiftWeek,
+  weeklyProgress,
+  type WeekProgress,
+} from '@lucca/shared';
 import {
   COOKIE_NAME,
   SESSION_IDLE_MS,
@@ -139,6 +159,99 @@ export function registerParentRoutes(app: FastifyInstance, deps: ParentDeps): vo
       db.deleteAllSessions();
       openSession(reply);
       return { ok: true };
+    });
+
+    scope.get('/api/parent/overview', async () => {
+      const today = localDate(now(), config.tz);
+      return {
+        today,
+        weekStart: mondayOf(today),
+        settings: { ...db.getSettings(), tz: config.tz },
+        tasks: db.listTasks(),
+        connections: connections(),
+      };
+    });
+
+    scope.post('/api/parent/tasks', async (req, reply) => {
+      const body = TaskInputSchema.safeParse(req.body);
+      if (!body.success) return reply.code(400).send({ error: 'Datos inválidos', fields: fieldErrors(body.error) });
+      const { titleEn, subjectLabel, ...fields } = body.data;
+      const task = TaskSchema.parse({
+        ...fields,
+        ...(subjectLabel ? { subjectLabel } : {}),
+        id: `manual-${randomUUID()}`,
+        titleTranslations: titleEn ? { en: titleEn } : {},
+        source: 'manual',
+        status: 'todo',
+      });
+      db.upsertTask(task);
+      return reply.code(201).send(task);
+    });
+
+    scope.patch<{ Params: { id: string } }>('/api/parent/tasks/:id', async (req, reply) => {
+      const task = db.getTask(req.params.id);
+      if (!task) return reply.code(404).send({ error: 'Tarea no encontrada' });
+      const body = TaskPatchSchema.safeParse(req.body);
+      if (!body.success) return reply.code(400).send({ error: 'Datos inválidos', fields: fieldErrors(body.error) });
+      if (Object.keys(body.data).length === 0) return reply.code(400).send({ error: 'Nada que cambiar' });
+
+      const { titleEn, subjectLabel, ...fields } = body.data;
+      const titleTranslations = { ...task.titleTranslations };
+      if (titleEn !== undefined) {
+        if (titleEn === '') delete titleTranslations.en;
+        else titleTranslations.en = titleEn;
+      }
+      const next = TaskSchema.parse({
+        ...task,
+        ...fields,
+        subjectLabel: subjectLabel === undefined ? task.subjectLabel : subjectLabel || undefined,
+        titleTranslations,
+      });
+      // El resultado combinado también tiene que cumplir el orden de las fechas (mover un solo día puede romperlo).
+      if (!datesInOrder(next.assignedDate, next.dueDate)) {
+        return reply.code(400).send({ error: 'Datos inválidos', fields: { dueDate: DATES_MESSAGE } });
+      }
+      db.upsertTask(next);
+      return next;
+    });
+
+    // Una tarea manual se borra del todo; una que vino de otro origen se retira, para que la sincronización no la recree.
+    scope.delete<{ Params: { id: string } }>('/api/parent/tasks/:id', async (req, reply) => {
+      const task = db.getTask(req.params.id);
+      if (!task) return reply.code(404).send({ error: 'Tarea no encontrada' });
+      if (task.source === 'manual') {
+        db.deleteTask(task.id);
+        return { result: 'removed' };
+      }
+      db.upsertTask({ ...task, retired: true });
+      return { result: 'retired' };
+    });
+
+    scope.put('/api/parent/settings', async (req, reply) => {
+      const body = SettingsPatchSchema.safeParse(req.body ?? {});
+      if (!body.success) return reply.code(400).send({ error: 'Datos inválidos', fields: fieldErrors(body.error) });
+      return { ...db.setSettings(body.data), tz: config.tz };
+    });
+
+    scope.get('/api/parent/progress', async (req, reply) => {
+      const raw = (req.query as { weeks?: string }).weeks;
+      const count = raw === undefined ? 4 : Number(raw);
+      if (!Number.isInteger(count) || count < 1 || count > 12) {
+        return reply.code(400).send({ error: 'Datos inválidos', fields: { weeks: 'Pide de 1 a 12 semanas' } });
+      }
+      const today = localDate(now(), config.tz);
+      const current = mondayOf(today);
+      const asLucaSeesIt = plannerToday(today);
+      const tasks = db.listTasks();
+      const events = db.listProgress();
+      const weeks: WeekProgress[] = [];
+      const help: { weekStart: string; taskId: string; title: string; count: number }[] = [];
+      for (let i = 0; i < count; i++) {
+        const weekStart = shiftWeek(current, -i);
+        weeks.push(weeklyProgress(tasks, events, weekStart, asLucaSeesIt, config.tz));
+        for (const h of needsHelp(tasks, events, weekStart, config.tz)) help.push({ weekStart, ...h });
+      }
+      return { weeks, needsHelp: help };
     });
   });
 }

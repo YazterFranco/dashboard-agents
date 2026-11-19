@@ -79,6 +79,10 @@ export type SettingsPatch = z.infer<typeof SettingsPatchSchema>;
 export function fieldErrors(error: z.ZodError, fallbackKey = '_'): Record<string, string> {
   const out: Record<string, string> = {};
   for (const issue of error.issues) {
+    if (issue.code === 'unrecognized_keys') {
+      for (const key of issue.keys) if (!(key in out)) out[key] = 'Este ajuste no se puede cambiar';
+      continue;
+    }
     const key = issue.path.length ? issue.path.join('.') : fallbackKey;
     if (!(key in out)) out[key] = issue.message;
   }

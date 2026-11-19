@@ -130,6 +130,10 @@ describe('body schemas', () => {
     const r = SetupBodySchema.safeParse({ ...setup, pin: '123' });
     expect(fieldErrors(r.error!)).toEqual({ pin: 'El PIN debe tener de 4 a 6 dígitos' });
   });
+  it('fieldErrors names the unknown keys of a strict schema', () => {
+    const r = SettingsPatchSchema.safeParse({ tz: 'America/Bogota', colorFavorito: 'azul' });
+    expect(Object.keys(fieldErrors(r.error!)).sort()).toEqual(['colorFavorito', 'tz']);
+  });
   it('SetupBodySchema reports every wrong field at once', () => {
     const r = SetupBodySchema.safeParse({ ...setup, pin: 'x', childName: '', grade: 9 });
     expect(Object.keys(fieldErrors(r.error!)).sort()).toEqual(['childName', 'grade', 'pin']);
