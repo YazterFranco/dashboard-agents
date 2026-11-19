@@ -25,7 +25,7 @@ import { DayStrip } from './DayStrip';
 import { Mascot } from './Mascot';
 import { ProgressBar } from './ProgressBar';
 import { StarsTile } from './StarsTile';
-import { SpeakerIcon } from './SubjectIcon';
+import { LockIcon, SpeakerIcon } from './SubjectIcon';
 import { TaskCard, subjectLabelOf } from './TaskCard';
 import { WeekNav } from './WeekNav';
 import { WeekPlan } from './WeekPlan';
@@ -262,6 +262,10 @@ export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask, onProgr
       <aside className="side">
         <StarsTile count={state.starsThisWeek} lang={lang} />
         <Controls prefs={prefs} onPrefs={onPrefs} />
+        <a className="seg-btn parent-link" href="/papa">
+          <LockIcon />
+          <span>{t(lang, 'parentArea')}</span>
+        </a>
       </aside>
     </main>
   );

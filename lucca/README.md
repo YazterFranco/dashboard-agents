@@ -86,6 +86,7 @@ Copia `.env.example` a `.env` y completa lo que necesites. **Nunca subas `.env` 
 | `LUCCA_DEMO` | `1` carga tareas de ejemplo | `0` |
 | `LUCCA_WEB_DIR` | Carpeta de la web ya construida | la que va junto al servidor |
 | `TZ` | Zona horaria (define "hoy" y la semana de las estrellas) | `America/Panama` |
+| `LUCCA_FAKE_NOW` | **Solo para pruebas**: fija el "ahora" del servidor (instante ISO, p. ej. `2026-11-18T17:00:00Z`) | el reloj real |
 
 `ANTHROPIC_API_KEY`, `MEREB_*` y `LUCCA_PUBLIC_URL` ya están en `.env.example` porque se usarán en las
 fases siguientes; en esta fase no se leen.

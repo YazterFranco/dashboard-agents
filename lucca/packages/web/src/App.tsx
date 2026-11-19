@@ -16,7 +16,9 @@ export function App() {
   const [state, setState] = useState<KidState | null>(null);
   const [failed, setFailed] = useState(false);
   const [prefs, setPrefs] = useState<Prefs>(() => loadPrefs(FALLBACK));
-  const speaker = useMemo(() => createSpeaker(typeof speechSynthesis === 'undefined' ? undefined : speechSynthesis), []);
+  // La velocidad de la voz la elige papá (0,7 a 1,2); mientras no llegan los ajustes se usa 0,9.
+  const speechRate = state?.settings.speechRate ?? 0.9;
+  const speaker = useMemo(() => createSpeaker(typeof speechSynthesis === 'undefined' ? undefined : speechSynthesis, speechRate), [speechRate]);
   const firstLoad = useRef(true);
   /** El último estado, para calcular cuántas estrellas ganó un avance sin depender del orden de los renders. */
   const stateRef = useRef<KidState | null>(null);

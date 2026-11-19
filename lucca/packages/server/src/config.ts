@@ -44,3 +44,16 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
     merebConfigured: Boolean(env.MEREB_URL && env.MEREB_USER && env.MEREB_PASSWORD),
   };
 }
+
+/**
+ * `LUCCA_FAKE_NOW`: fija el "ahora" del servidor (instante ISO). Solo para pruebas: así las capturas y los
+ * escenarios de borde (domingo, medianoche en UTC) se repiten igual cualquier día. Si está mal escrita, falla.
+ */
+export function parseFakeNow(value: string | undefined): Date | null {
+  if (!value) return null;
+  const at = new Date(value);
+  if (Number.isNaN(at.getTime())) {
+    throw new Error(`LUCCA_FAKE_NOW inválida: "${value}" (usa un instante ISO, por ejemplo 2026-11-18T17:00:00Z)`);
+  }
+  return at;
+}

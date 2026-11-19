@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { SettingsSchema } from '@lucca/shared';
 import { demoState } from './testFixtures';
 import { App } from './App';
 
@@ -72,5 +73,51 @@ describe('App', () => {
     document.dispatchEvent(new Event('visibilitychange'));
     await waitFor(() => expect(screen.getByRole('button', { name: /Miércoles 18/ }).getAttribute('aria-pressed')).toBe('true'));
     expect(screen.getByRole('button', { name: /Martes 17/ }).getAttribute('aria-pressed')).toBe('false');
+  });
+
+  describe('read-aloud speed', () => {
+    class FakeUtterance {
+      lang = '';
+      rate = 1;
+      voice = null;
+      onboundary = null;
+      onend = null;
+      onerror = null;
+      constructor(public text: string) {}
+    }
+    const fakeSynth = () => {
+      const spoken: FakeUtterance[] = [];
+      return { spoken, speak: (u: FakeUtterance) => void spoken.push(u), cancel: vi.fn(), getVoices: () => [] };
+    };
+
+    it('uses the speed the parent chose', async () => {
+      const synth = fakeSynth();
+      vi.stubGlobal('speechSynthesis', synth);
+      vi.stubGlobal('SpeechSynthesisUtterance', FakeUtterance);
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => demoState({ settings: SettingsSchema.parse({ speechRate: 1.1 }) }) }));
+      render(<App />);
+      fireEvent.click(await screen.findByRole('button', { name: 'Escuchar a Nova' }));
+      expect(synth.spoken[0].rate).toBe(1.1);
+    });
+
+    it('keeps 0.9 when the parent did not change it', async () => {
+      const synth = fakeSynth();
+      vi.stubGlobal('speechSynthesis', synth);
+      vi.stubGlobal('SpeechSynthesisUtterance', FakeUtterance);
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(okResponse()));
+      render(<App />);
+      fireEvent.click(await screen.findByRole('button', { name: 'Escuchar a Nova' }));
+      expect(synth.spoken[0].rate).toBe(0.9);
+    });
+
+    it('takes the slowest allowed speed', async () => {
+      const synth = fakeSynth();
+      vi.stubGlobal('speechSynthesis', synth);
+      vi.stubGlobal('SpeechSynthesisUtterance', FakeUtterance);
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => demoState({ settings: SettingsSchema.parse({ speechRate: 0.7 }) }) }));
+      render(<App />);
+      fireEvent.click(await screen.findByRole('button', { name: 'Escuchar a Nova' }));
+      expect(synth.spoken[0].rate).toBe(0.7);
+    });
   });
 });

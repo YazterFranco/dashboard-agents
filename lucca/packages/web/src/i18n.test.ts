@@ -78,6 +78,11 @@ describe('week texts', () => {
     expect(weekProgressText('en', 0, 1)).toBe('0 of 1 task done');
   });
 
+  it('names the parents area in both languages', () => {
+    expect(t('es', 'parentArea')).toBe('Área de papá');
+    expect(t('en', 'parentArea')).toBe("Parents' area");
+  });
+
   it('has the exact texts from the spec', () => {
     expect(t('es', 'weekPrev')).toBe('Semana anterior');
     expect(t('es', 'weekNext')).toBe('Semana siguiente');

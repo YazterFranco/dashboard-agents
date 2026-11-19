@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { localDate } from '@lucca/shared';
 import { buildApp } from './app.js';
-import { loadConfig, type Config } from './config.js';
+import { loadConfig, parseFakeNow, type Config } from './config.js';
 import { LuccaDb } from './db.js';
 import { loadDotEnv } from './env.js';
 import { seedDemo } from './seed.js';
@@ -13,8 +13,10 @@ async function main(): Promise<void> {
   loadDotEnv(join(process.cwd(), '.env'));
 
   let config: Config;
+  let fakeNow: Date | null;
   try {
     config = loadConfig(process.env);
+    fakeNow = parseFakeNow(process.env.LUCCA_FAKE_NOW);
   } catch (err) {
     console.error(`[lucca] ${(err as Error).message}`);
     process.exit(1);
@@ -25,9 +27,10 @@ async function main(): Promise<void> {
   if (!config.webDir && existsSync(bundledWeb)) config = { ...config, webDir: bundledWeb };
 
   const db = new LuccaDb(config.dbPath);
-  if (config.demo) seedDemo(db, localDate(new Date(), config.tz));
+  const now = fakeNow ? () => fakeNow : () => new Date();
+  if (config.demo) seedDemo(db, localDate(now(), config.tz));
 
-  const app = await buildApp({ db, config, logger: true });
+  const app = await buildApp({ db, config, now, logger: true });
   await app.listen({ host: config.host, port: config.port });
 
   const shutdown = async () => {

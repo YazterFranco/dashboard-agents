@@ -745,6 +745,18 @@ h3 {
   color: var(--on-accent);
 }
 
+/* El enlace al área de papá es discreto pero cumple el tamaño táctil. */
+.parent-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  background: transparent;
+  color: var(--muted);
+  box-shadow: inset 0 0 0 2px var(--line);
+}
+
 /* ---------- Tablet vertical y pantallas estrechas ---------- */
 @media (max-width: 1023px) {
   .bento,

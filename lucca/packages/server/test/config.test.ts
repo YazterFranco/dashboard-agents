@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { loadConfig } from '../src/config.js';
+import { loadConfig, parseFakeNow } from '../src/config.js';
 
 describe('loadConfig', () => {
   it('has safe defaults', () => {
@@ -63,5 +63,21 @@ describe('loadConfig', () => {
     expect(loadConfig({ ...full, [missing]: '' }).merebConfigured).toBe(false);
     delete full[missing];
     expect(loadConfig(full).merebConfigured).toBe(false);
+  });
+});
+
+describe('parseFakeNow', () => {
+  it('is null when the variable is not set or empty', () => {
+    expect(parseFakeNow(undefined)).toBeNull();
+    expect(parseFakeNow('')).toBeNull();
+  });
+
+  it('reads an ISO instant', () => {
+    expect(parseFakeNow('2026-11-18T17:00:00Z')!.toISOString()).toBe('2026-11-18T17:00:00.000Z');
+  });
+
+  it('says which variable is wrong when it is not a date', () => {
+    expect(() => parseFakeNow('ayer')).toThrow(/LUCCA_FAKE_NOW/);
+    expect(() => parseFakeNow('2026-13-45')).toThrow(/LUCCA_FAKE_NOW/);
   });
 });

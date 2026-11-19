@@ -717,3 +717,23 @@ describe('WeekScreen carry-over of unfinished tasks', () => {
     expect(screen.getByText('Tarea 1 de 4')).toBeTruthy();
   });
 });
+
+describe('WeekScreen link to the parents area', () => {
+  it('has a link to /papa that is always there', () => {
+    setup();
+    expect(screen.getByRole('link', { name: 'Área de papá' }).getAttribute('href')).toBe('/papa');
+  });
+
+  it('is there in text mode too and in English', () => {
+    setup({ prefs: { ...ES, voiceMode: 'text' } });
+    expect(screen.getByRole('link', { name: 'Área de papá' })).toBeTruthy();
+    cleanup();
+    setup({ prefs: { ...ES, lang: 'en' } });
+    expect(screen.getByRole('link', { name: "Parents' area" }).getAttribute('href')).toBe('/papa');
+  });
+
+  it('is there even before the agenda has any task', () => {
+    setup({ state: demoState({ tasks: [] }) });
+    expect(screen.getByRole('link', { name: 'Área de papá' })).toBeTruthy();
+  });
+});
