@@ -58,6 +58,10 @@ El sistema SHALL ofrecer una vista "Plan de la semana" que lista cada día escol
 - **WHEN** todas las tareas de hoy están listas y el miércoles tiene tareas por hacer
 - **THEN** el plan dice "Empieza por el miércoles"
 
+#### Scenario: Plan con lector de pantalla
+- **WHEN** un lector de pantalla recorre el plan de la semana
+- **THEN** cada día se anuncia con su nombre y la lista de sus tareas con su estado
+
 #### Scenario: Ir a un día desde el plan
 - **WHEN** Lucca toca el miércoles en el plan
 - **THEN** vuelve a "Mi semana" con el miércoles seleccionado
@@ -94,7 +98,7 @@ El sistema SHALL ofrecer "Guíame" para recorrer las tareas pendientes del día 
 - **THEN** vuelve a "Mi semana" con el mismo día seleccionado
 
 ### Requirement: Día de trabajo de cada tarea
-El sistema SHALL colocar cada tarea en su "día de trabajo": la fecha asignada si Mereb la da, o si no, el día escolar anterior a la entrega. Cada tarea SHALL mostrar su día de entrega ("Entregar: mié 18"). El padre puede mover una tarea a otro día.
+El sistema SHALL colocar cada tarea en su "día de trabajo": la fecha asignada si Mereb la da, o si no, el día escolar anterior a la entrega. Una tarea sin terminar cuyo día de trabajo ya pasó SHALL aparecer hoy. Cada tarea SHALL mostrar su día de entrega ("Entregar: mié 18"). El padre puede mover una tarea a otro día.
 
 #### Scenario: Tarea con entrega el miércoles
 - **WHEN** una tarea sin fecha asignada se entrega el miércoles 18
@@ -103,6 +107,10 @@ El sistema SHALL colocar cada tarea en su "día de trabajo": la fecha asignada s
 #### Scenario: Tarea atrasada
 - **WHEN** una tarea no está lista y su entrega es hoy o ya pasó
 - **THEN** aparece en el día de hoy con la etiqueta "¡Para hoy!" sin mensajes de regaño
+
+#### Scenario: Tarea pendiente de un día anterior
+- **WHEN** una tarea sin terminar tenía su día de trabajo el lunes, hoy es miércoles y su entrega es la semana siguiente
+- **THEN** aparece hoy sin la marca "¡Para hoy!" y cuenta en el avance de esta semana, no en el de la semana anterior
 
 ### Requirement: Tarjetas de tarea
 Cada tarea del día seleccionado SHALL mostrarse como una tarjeta con icono y color de su materia, título, estado y una acción principal ("Empezar", "Seguir" o "Repasar"). Al tocarla se abre la tarea con sus tres opciones: Entender, Hacer la tarea y Practicar.

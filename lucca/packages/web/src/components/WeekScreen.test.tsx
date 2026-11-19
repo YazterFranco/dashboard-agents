@@ -419,18 +419,27 @@ describe('WeekScreen week plan', () => {
   it('shows each task with its title and status', () => {
     setup();
     openPlan();
-    const tuesday = screen.getByRole('button', { name: 'Ir a Martes 17' });
+    const tuesday = screen.getByRole('button', { name: /^Ir a Martes 17/ });
     expect(within(tuesday).getByText('Las partes de la planta')).toBeTruthy();
     expect(within(tuesday).getByText('A medias')).toBeTruthy();
     expect(within(tuesday).getByText('Restas sin llevar, pág. 26')).toBeTruthy();
-    const monday = screen.getByRole('button', { name: 'Ir a Lunes 16' });
+    const monday = screen.getByRole('button', { name: /^Ir a Lunes 16/ });
     expect(within(monday).getAllByText('¡Lista!')).toHaveLength(2);
+  });
+
+  it('exposes each day with its tasks and their status to assistive technology', () => {
+    setup();
+    openPlan();
+    // Sin depender del orden en que se listan las tareas del día.
+    expect(screen.getByRole('button', { name: /^Ir a Martes 17\.(?=.*Las partes de la planta)(?=.*A medias)(?=.*Restas sin llevar, pág\. 26)/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^Ir a Lunes 16\.(?=.*Sumas con llevadas, pág\. 24)(?=.*¡Lista!)/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^Ir a Jueves 19\..*Día libre/ })).toBeTruthy();
   });
 
   it('marks today in the plan and no other day', () => {
     setup();
     openPlan();
-    expect(within(screen.getByRole('button', { name: 'Ir a Martes 17' })).getByText('Hoy')).toBeTruthy();
+    expect(within(screen.getByRole('button', { name: /^Ir a Martes 17/ })).getByText('Hoy')).toBeTruthy();
     expect(screen.getAllByText('Hoy')).toHaveLength(1);
   });
 
@@ -443,13 +452,13 @@ describe('WeekScreen week plan', () => {
   it('marks the days without tasks', () => {
     setup();
     openPlan();
-    expect(within(screen.getByRole('button', { name: 'Ir a Jueves 19' })).getByText('Día libre')).toBeTruthy();
+    expect(within(screen.getByRole('button', { name: /^Ir a Jueves 19/ })).getByText('Día libre')).toBeTruthy();
   });
 
   it('tapping a day goes back to the week with that day selected', () => {
     setup();
     openPlan();
-    fireEvent.click(screen.getByRole('button', { name: 'Ir a Miércoles 18' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Ir a Miércoles 18/ }));
     expect(screen.getByRole('heading', { level: 2, name: 'Mi semana' })).toBeTruthy();
     expect(day(/Miércoles 18/).getAttribute('aria-pressed')).toBe('true');
   });
@@ -482,7 +491,7 @@ describe('WeekScreen week plan', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Week plan' }));
     expect(screen.getByRole('heading', { level: 1, name: 'Week plan' })).toBeTruthy();
     expect(screen.getByText('Start with today')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Go to Tuesday 17' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^Go to Tuesday 17/ })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Back to my week' })).toBeTruthy();
   });
 });
@@ -657,15 +666,15 @@ describe('WeekScreen day guide', () => {
     expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1 }));
   });
 
-  it('works on a day of a past week', () => {
+  it('a day of a past week only holds finished tasks, so its guide says everything is done', () => {
     const state = demoState();
-    state.tasks.push(task({ id: 'past', title: 'Tarea de la semana pasada', assignedDate: '2026-11-10', dueDate: '2026-11-20' }));
+    state.tasks.push(task({ id: 'past', title: 'Tarea de la semana pasada', assignedDate: '2026-11-10', dueDate: '2026-11-11', status: 'done' }));
     setup({ state });
     fireEvent.click(screen.getByRole('button', { name: 'Semana anterior' }));
-    expect(day(/Martes 10/).getAttribute('aria-pressed')).toBe('true');
+    fireEvent.click(day(/Martes 10/));
+    expect(screen.getByText('Tarea de la semana pasada')).toBeTruthy();
     guideMe();
-    expect(title()).toBe('Tarea de la semana pasada');
-    expect(screen.getByText('Tarea 1 de 1')).toBeTruthy();
+    expect(screen.getByText('¡Lo hiciste todo! ¡Buen trabajo!')).toBeTruthy();
   });
 
   it('works in English', () => {
@@ -676,5 +685,35 @@ describe('WeekScreen day guide', () => {
     expect(screen.getByRole('button', { name: 'I did it!' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Later' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Back to my week' })).toBeTruthy();
+  });
+});
+
+describe('WeekScreen carry-over of unfinished tasks', () => {
+  it('shows an unfinished task from an earlier day today, without "¡Para hoy!", and counts it', () => {
+    const state = demoState();
+    state.tasks.push(task({ id: 'carry', title: 'Tarea pendiente de antes', assignedDate: '2026-11-10', dueDate: '2026-11-27' }));
+    setup({ state });
+    const card = screen.getByText('Tarea pendiente de antes').closest('article')!;
+    expect(within(card).queryByText('¡Para hoy!')).toBeNull();
+    expect(screen.getByText('2 de 8 tareas listas')).toBeTruthy();
+    expect(screen.getByText('Hoy, martes 17 · Te faltan 4 tareas')).toBeTruthy();
+  });
+
+  it('the plan does not say everything is done while an earlier task is pending', () => {
+    const state = demoState();
+    state.tasks = state.tasks.map((t) => ({ ...t, status: 'done' as const }));
+    state.tasks.push(task({ id: 'carry', title: 'Tarea pendiente de antes', assignedDate: '2026-11-10' }));
+    setup({ state });
+    fireEvent.click(screen.getByRole('button', { name: 'Plan de la semana' }));
+    expect(screen.queryByText('¡Todo listo esta semana!')).toBeNull();
+    expect(screen.getByText('Empieza por hoy')).toBeTruthy();
+  });
+
+  it('the guide of today offers the carried-over task', () => {
+    const state = demoState();
+    state.tasks.push(task({ id: 'carry', title: 'Tarea pendiente de antes', assignedDate: '2026-11-10' }));
+    setup({ state });
+    fireEvent.click(screen.getByRole('button', { name: 'Guíame' }));
+    expect(screen.getByText('Tarea 1 de 4')).toBeTruthy();
   });
 });

@@ -87,6 +87,23 @@ describe('dayTasks', () => {
     expect(dayTasks([t], '2026-11-13', '2026-11-17')).toHaveLength(1);
   });
 
+  it('carries an unfinished task from an earlier day to today without marking it urgent', () => {
+    const withDue = task({ id: 'a', assignedDate: '2026-11-10', dueDate: '2026-11-20' });
+    const noDue = task({ id: 'b', assignedDate: '2026-11-10' });
+    for (const t of [withDue, noDue]) {
+      const today = dayTasks([t], '2026-11-17', '2026-11-17');
+      expect(today).toHaveLength(1);
+      expect(today[0].urgent).toBe(false);
+      expect(dayTasks([t], '2026-11-10', '2026-11-17')).toEqual([]);
+    }
+  });
+
+  it('keeps a finished task from an earlier day on its own day', () => {
+    const t = task({ id: 'a', assignedDate: '2026-11-10', dueDate: '2026-11-20', status: 'done' });
+    expect(dayTasks([t], '2026-11-10', '2026-11-17')).toHaveLength(1);
+    expect(dayTasks([t], '2026-11-17', '2026-11-17')).toEqual([]);
+  });
+
   it('weekend rollover: a task due on Monday shows on Monday as urgent', () => {
     const today = plannerToday('2026-11-22');
     expect(today).toBe('2026-11-23');
@@ -111,6 +128,13 @@ describe('dayTasks', () => {
 });
 
 describe('weekSummary', () => {
+  it('counts a carried-over task in the week of today and not in the past week', () => {
+    const tasks = [task({ id: 'a', assignedDate: '2026-11-10', dueDate: '2026-11-27' })];
+    expect(weekSummary(tasks, weekDays('2026-11-10'), '2026-11-17').every((d) => d.total === 0)).toBe(true);
+    const thisWeek = weekSummary(tasks, weekDays('2026-11-17'), '2026-11-17');
+    expect(thisWeek.find((d) => d.date === '2026-11-17')).toEqual({ date: '2026-11-17', total: 1, pending: 1, allDone: false });
+  });
+
   it('counts total, pending and allDone per day', () => {
     const tasks = [
       task({ id: 'a', assignedDate: '2026-11-16', status: 'done' }),

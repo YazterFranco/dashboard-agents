@@ -65,12 +65,9 @@ export function WeekPlan({ lang, days, tasks, today, realToday, range, onGoToDay
           const items = dayTasks(tasks, date, today);
           return (
             <li key={date}>
-              <button
-                type="button"
-                className="plan-day"
-                aria-label={t(lang, 'planGoToDay', { day: `${capitalize(dayLong(lang, wd))} ${dayNumber(date)}` })}
-                onClick={() => onGoToDay(date)}
-              >
+              <button type="button" className="plan-day" onClick={() => onGoToDay(date)}>
+                {/* El nombre del botón es este texto más sus tareas: un aria-label las ocultaría a los lectores de pantalla. */}
+                <span className="visually-hidden">{t(lang, 'planGoToDay', { day: `${capitalize(dayLong(lang, wd))} ${dayNumber(date)}` })}. </span>
                 <span className="plan-day-head" aria-hidden="true">
                   <span className="plan-day-name">{dayShort(lang, wd)}</span>
                   <span className="plan-day-num">{dayNumber(date)}</span>

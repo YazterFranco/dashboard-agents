@@ -59,10 +59,16 @@ export interface DayTask {
   urgent: boolean;
 }
 
-/** Una tarea sin terminar cuya entrega es hoy o ya pasó se muestra hoy, como urgente. */
+/**
+ * Una tarea sin terminar no se queda atrás: si su día de trabajo ya pasó, aparece hoy. Es "urgente" solo si ya
+ * venció (entrega hoy o antes); si todavía no vence, aparece hoy sin marca. Las terminadas se quedan en su día.
+ */
 function placement(t: Task, today: IsoDate): { date: IsoDate; urgent: boolean } {
-  if (t.status !== 'done' && t.dueDate !== null && t.dueDate <= today) return { date: today, urgent: true };
-  return { date: workDateOf(t, today), urgent: false };
+  const work = workDateOf(t, today);
+  if (t.status === 'done') return { date: work, urgent: false };
+  const overdue = t.dueDate !== null && t.dueDate <= today;
+  if (overdue) return { date: today, urgent: true };
+  return { date: work < today ? today : work, urgent: false };
 }
 
 export function dayTasks(tasks: Task[], day: IsoDate, today: IsoDate): DayTask[] {
