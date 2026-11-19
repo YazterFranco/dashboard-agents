@@ -12,6 +12,7 @@ describe('loadConfig', () => {
       webDir: null,
       publicUrl: null,
       aiConfigured: false,
+      merebConfigured: false,
     });
   });
 
@@ -49,5 +50,18 @@ describe('loadConfig', () => {
 
   it('strips trailing slashes from the public url', () => {
     expect(loadConfig({ LUCCA_PUBLIC_URL: 'http://192.168.1.50:4830//' }).publicUrl).toBe('http://192.168.1.50:4830');
+  });
+
+  it('knows when Mereb is fully configured, without keeping any value', () => {
+    const full = { MEREB_URL: 'https://mereb.example', MEREB_USER: 'papa', MEREB_PASSWORD: 'secreto' };
+    expect(loadConfig(full).merebConfigured).toBe(true);
+    expect(JSON.stringify(loadConfig(full))).not.toMatch(/secreto|papa|mereb\.example/);
+  });
+
+  it.each(['MEREB_URL', 'MEREB_USER', 'MEREB_PASSWORD'])('Mereb is not configured when %s is missing or empty', (missing) => {
+    const full: Record<string, string> = { MEREB_URL: 'https://mereb.example', MEREB_USER: 'papa', MEREB_PASSWORD: 'secreto' };
+    expect(loadConfig({ ...full, [missing]: '' }).merebConfigured).toBe(false);
+    delete full[missing];
+    expect(loadConfig(full).merebConfigured).toBe(false);
   });
 });

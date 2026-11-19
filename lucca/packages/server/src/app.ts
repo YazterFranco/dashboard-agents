@@ -15,6 +15,8 @@ import {
 } from '@lucca/shared';
 import type { Config } from './config.js';
 import type { LuccaDb } from './db.js';
+import { LoginThrottle } from './auth.js';
+import { registerParentRoutes } from './parent.js';
 import { isPrivateAddress } from './privateNet.js';
 
 export const VERSION = '0.1.0';
@@ -76,6 +78,8 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
     if (status !== task.status) db.setTaskStatus(task.id, status);
     return { status, starsThisWeek: starsNow() };
   });
+
+  registerParentRoutes(app, { db, config, now, throttle: new LoginThrottle() });
 
   if (config.webDir && existsSync(config.webDir)) {
     await app.register(fastifyStatic, { root: config.webDir });

@@ -76,10 +76,10 @@ export const SettingsPatchSchema = z
 export type SettingsPatch = z.infer<typeof SettingsPatchSchema>;
 
 /** Primer mensaje de error de cada campo (clave `dueDate`, `title`, `pin`…); los errores sin campo van en `_`. */
-export function fieldErrors(error: z.ZodError): Record<string, string> {
+export function fieldErrors(error: z.ZodError, fallbackKey = '_'): Record<string, string> {
   const out: Record<string, string> = {};
   for (const issue of error.issues) {
-    const key = issue.path.length ? issue.path.join('.') : '_';
+    const key = issue.path.length ? issue.path.join('.') : fallbackKey;
     if (!(key in out)) out[key] = issue.message;
   }
   return out;

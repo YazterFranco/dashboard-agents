@@ -8,6 +8,8 @@ export interface Config {
   publicUrl: string | null;
   /** Solo si hay clave de IA; el valor de la clave nunca se guarda aquí. */
   aiConfigured: boolean;
+  /** Solo si están los tres datos de Mereb; los valores nunca se guardan aquí. */
+  merebConfigured: boolean;
 }
 
 function parsePort(raw: string | undefined): number {
@@ -39,5 +41,6 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
     webDir: env.LUCCA_WEB_DIR || null,
     publicUrl: env.LUCCA_PUBLIC_URL ? env.LUCCA_PUBLIC_URL.replace(/\/+$/, '') : null,
     aiConfigured: Boolean(env.ANTHROPIC_API_KEY),
+    merebConfigured: Boolean(env.MEREB_URL && env.MEREB_USER && env.MEREB_PASSWORD),
   };
 }
