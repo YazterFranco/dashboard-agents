@@ -292,11 +292,17 @@ code {
   justify-content: space-between;
   gap: 12px;
 }
+/* Flechas y rango siempre en una fila (también en móvil); «Esta semana» baja a la suya cuando hace falta. */
 .p-weeknav {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
   align-items: center;
   gap: 8px;
+  width: 100%;
+  max-width: 460px;
+}
+.p-weeknav > .p-btn:not(.p-btn-icon) {
+  grid-column: 1 / -1;
 }
 .p-btn-icon {
   width: 48px;
@@ -312,7 +318,9 @@ code {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 4px 8px;
+  text-align: center;
   font: 700 19px var(--font-display);
 }
 .p-day {
@@ -347,8 +355,9 @@ code {
   border-radius: 18px;
   background: var(--chip);
 }
+/* Una tarea oculta se distingue por el borde punteado y la etiqueta «Oculta», no por bajarle la opacidad: eso restaría contraste al texto. */
 .p-task-hidden {
-  opacity: 0.7;
+  background: transparent;
   border: 2px dashed var(--line);
 }
 .p-task-main {
@@ -455,4 +464,10 @@ code {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 16px;
+}
+
+/* La barra de avance viene de la pantalla de Lucca (flex: 1 1 160px): en una tarjeta en columna eso la haría de 160 px de alto. */
+.p-card .bar {
+  flex: none;
+  width: 100%;
 }

@@ -191,3 +191,11 @@ describe('SetupForm edge', () => {
     expect(document.body.textContent).not.toContain('482913');
   });
 });
+
+describe('SetupForm button does not steal focus', () => {
+  it('pressing "Terminar configuración" does not move the focus away from the field, so an error line cannot shift the button before the click lands', () => {
+    setup();
+    expect(fireEvent.mouseDown(screen.getByRole('button', { name: 'Terminar configuración' }))).toBe(false);
+  });
+});
+

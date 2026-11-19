@@ -36,11 +36,24 @@ export function loadPrefs(defaults: Prefs, storage: Pick<Storage, 'getItem'> | u
   };
 }
 
-export function savePrefs(p: Prefs, storage: Pick<Storage, 'setItem'> | undefined = defaultStorage()): void {
+/** Lo que cambió entre dos juegos de preferencias: solo eso lo eligió Lucca en este dispositivo. */
+export function changedPrefs(before: Prefs, after: Prefs): Partial<Prefs> {
+  const out: Partial<Prefs> = {};
+  if (after.lang !== before.lang) out.lang = after.lang;
+  if (after.voiceMode !== before.voiceMode) out.voiceMode = after.voiceMode;
+  if (after.theme !== before.theme) out.theme = after.theme;
+  return out;
+}
+
+/**
+ * Guarda solo las preferencias que se le pasan. Si Lucca toca el idioma, el tema no se guarda: así un cambio
+ * posterior de papá (tema por defecto) sigue valiendo en esta tablet para lo que Lucca nunca eligió.
+ */
+export function savePrefs(p: Partial<Prefs>, storage: Pick<Storage, 'setItem'> | undefined = defaultStorage()): void {
   try {
-    storage?.setItem(KEYS.lang, p.lang);
-    storage?.setItem(KEYS.voiceMode, p.voiceMode);
-    storage?.setItem(KEYS.theme, p.theme);
+    if (p.lang !== undefined) storage?.setItem(KEYS.lang, p.lang);
+    if (p.voiceMode !== undefined) storage?.setItem(KEYS.voiceMode, p.voiceMode);
+    if (p.theme !== undefined) storage?.setItem(KEYS.theme, p.theme);
   } catch {
     /* sin almacenamiento: la preferencia vale solo para esta visita */
   }

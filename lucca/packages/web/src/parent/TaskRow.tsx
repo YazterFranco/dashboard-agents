@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type { IsoDate, Task } from '@lucca/shared';
 import { dayLong, dueLabel, subjectName } from '../i18n';
 
@@ -33,6 +34,11 @@ interface Props {
 export function TaskRow({ task, days, busy, confirming, message, actions }: Props) {
   const done = task.status === 'done';
   const title = task.title;
+  const cancel = useRef<HTMLButtonElement>(null);
+  // Al abrir la pregunta de borrado el foco va a la opción segura ("Cancelar"): con el teclado, Enter no borra por accidente.
+  useEffect(() => {
+    if (confirming) cancel.current?.focus();
+  }, [confirming]);
   return (
     <li className={task.hidden ? 'p-task p-task-hidden' : 'p-task'}>
       <div className="p-task-main">
@@ -52,7 +58,7 @@ export function TaskRow({ task, days, busy, confirming, message, actions }: Prop
         <button type="button" className="p-btn p-btn-ghost p-btn-sm" disabled={busy} aria-label={`${task.hidden ? 'Mostrar' : 'Ocultar'}: ${title}`} onClick={actions.toggleHidden}>
           {task.hidden ? 'Mostrar' : 'Ocultar'}
         </button>
-        <button type="button" className="p-btn p-btn-ghost p-btn-sm" disabled={busy} aria-label={`Editar: ${title}`} onClick={actions.edit}>
+        <button id={`edit-${task.id}`} type="button" className="p-btn p-btn-ghost p-btn-sm" disabled={busy} aria-label={`Editar: ${title}`} onClick={actions.edit}>
           Editar
         </button>
         <select
@@ -69,7 +75,7 @@ export function TaskRow({ task, days, busy, confirming, message, actions }: Prop
             </option>
           ))}
         </select>
-        <button type="button" className="p-btn p-btn-danger p-btn-sm" disabled={busy} aria-label={`Borrar: ${title}`} onClick={actions.askDelete}>
+        <button id={`delete-${task.id}`} type="button" className="p-btn p-btn-danger p-btn-sm" disabled={busy} aria-label={`Borrar: ${title}`} onClick={actions.askDelete}>
           Borrar
         </button>
       </div>
@@ -84,7 +90,7 @@ export function TaskRow({ task, days, busy, confirming, message, actions }: Prop
             <button type="button" className="p-btn p-btn-danger" disabled={busy} onClick={actions.confirmDelete}>
               Sí, borrar
             </button>
-            <button type="button" className="p-btn p-btn-ghost" onClick={actions.cancelDelete}>
+            <button ref={cancel} type="button" className="p-btn p-btn-ghost" onClick={actions.cancelDelete}>
               Cancelar
             </button>
           </div>

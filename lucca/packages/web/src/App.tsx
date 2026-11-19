@@ -4,7 +4,7 @@ import { fetchState, postProgress } from './api';
 import { Mascot } from './components/Mascot';
 import { WeekScreen } from './components/WeekScreen';
 import { t } from './i18n';
-import { loadPrefs, savePrefs, type Prefs } from './prefs';
+import { changedPrefs, loadPrefs, savePrefs, type Prefs } from './prefs';
 import type { ProgressResult } from './progress';
 import { createSpeaker } from './speaker';
 
@@ -81,7 +81,7 @@ export function App() {
   const onPrefs = (next: Prefs) => {
     speaker.stop();
     setPrefs(next);
-    savePrefs(next);
+    savePrefs(changedPrefs(prefs, next));
   };
 
   if (state) {

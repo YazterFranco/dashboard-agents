@@ -242,3 +242,14 @@ describe('TaskForm edge', () => {
     expect(document.querySelector('script')).toBeNull();
   });
 });
+
+describe('TaskForm buttons do not steal focus', () => {
+  // Al salir de un campo con error aparece el mensaje y desplaza el botón: si el botón le quita el foco al campo
+  // en el mousedown, el desplazamiento ocurre antes de soltar y el primer clic se pierde.
+  it.each(['Guardar tarea', 'Cancelar'])('pressing "%s" does not move the focus away from the field (mousedown is cancelled)', (name) => {
+    setup();
+    const notCancelled = fireEvent.mouseDown(screen.getByRole('button', { name }));
+    expect(notCancelled).toBe(false);
+  });
+});
+

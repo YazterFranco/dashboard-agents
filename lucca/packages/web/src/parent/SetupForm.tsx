@@ -1,7 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { PinSchema, SettingsFields, type Lang, type Theme } from '@lucca/shared';
 import { ApiError, type Connections, type ParentApi } from './api';
-import { Choice, ConnectionsPanel, Field, FormError, GENERIC_ERROR, NETWORK_SAVE_ERROR } from './fields';
+import { Choice, ConnectionsPanel, Field, FormError, GENERIC_ERROR, NETWORK_SAVE_ERROR, keepFocus } from './fields';
 
 type FieldName = 'pin' | 'pin2' | 'childName';
 type Errors = Partial<Record<FieldName, string>>;
@@ -164,7 +164,7 @@ export function SetupForm({ api, connections, onDone }: Props) {
         <ConnectionsPanel connections={connections} footer={<p className="p-hint">Puedes terminar la configuración ahora y completar esto después.</p>} />
 
         {general ? <FormError>{general}</FormError> : null}
-        <button type="submit" className="p-btn p-btn-primary" disabled={busy} aria-busy={busy || undefined}>
+        <button type="submit" className="p-btn p-btn-primary" disabled={busy} aria-busy={busy || undefined} {...keepFocus}>
           Terminar configuración
         </button>
       </form>

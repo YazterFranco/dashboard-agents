@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { DATES_MESSAGE, SUBJECTS, TaskInputSchema, datesInOrder, fieldErrors, type IsoDate, type Task } from '@lucca/shared';
 import { subjectName } from '../i18n';
 import { ApiError, type TaskBody } from './api';
-import { Field, FormError, GENERIC_ERROR, NETWORK_SAVE_ERROR } from './fields';
+import { Field, FormError, GENERIC_ERROR, NETWORK_SAVE_ERROR, keepFocus } from './fields';
 
 type Key = 'subject' | 'title' | 'titleEn' | 'assignedDate' | 'dueDate' | 'description';
 type Errors = Partial<Record<Key, string>>;
@@ -184,10 +184,10 @@ export function TaskForm({ initial, defaultDate, onSubmit, onCancel }: Props) {
       </Field>
       {general ? <FormError>{general}</FormError> : null}
       <div className="p-actions">
-        <button type="submit" className="p-btn p-btn-primary" disabled={busy} aria-busy={busy || undefined}>
+        <button type="submit" className="p-btn p-btn-primary" disabled={busy} aria-busy={busy || undefined} {...keepFocus}>
           Guardar tarea
         </button>
-        <button type="button" className="p-btn p-btn-ghost" onClick={onCancel}>
+        <button type="button" className="p-btn p-btn-ghost" onClick={onCancel} {...keepFocus}>
           Cancelar
         </button>
       </div>

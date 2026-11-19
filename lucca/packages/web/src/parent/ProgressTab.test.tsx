@@ -75,6 +75,11 @@ describe('ProgressTab edge', () => {
     expect(await screen.findByText('Todavía no hay actividad de Lucca esta semana')).toBeTruthy();
   });
 
+  it('tasks marked done by papá or the agenda are not Lucca\'s activity', async () => {
+    setup({ weeks: [week('2026-11-16', { total: 10, done: 2, pending: 8 })], needsHelp: [] });
+    expect(await screen.findByText('Todavía no hay actividad de Lucca esta semana')).toBeTruthy();
+  });
+
   it('no activity message when this week has some', async () => {
     setup(data);
     await screen.findByText('16 – 20 de noviembre');

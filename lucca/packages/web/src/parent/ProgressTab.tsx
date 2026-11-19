@@ -63,7 +63,7 @@ export function ProgressTab({ api }: { api: ParentApi }) {
       </section>
 
       {weeks.map((w, index) => {
-        const quiet = index === 0 && w.done === 0 && w.stars === 0 && w.hints === 0 && w.helpRequests === 0;
+        const quiet = index === 0 && w.stars === 0 && w.hints === 0 && w.helpRequests === 0;
         const range = weekRange('es', w.weekStart);
         return (
           <section key={w.weekStart} className="p-card" aria-label={range}>

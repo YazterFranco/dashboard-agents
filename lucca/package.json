@@ -17,7 +17,8 @@
     "dev:web": "npm run dev -w @lucca/web",
     "build": "npm run build -w @lucca/web && npm run build -w @lucca/server",
     "start": "NODE_OPTIONS=--disable-warning=ExperimentalWarning node packages/server/dist/lucca.mjs",
-    "e2e": "node e2e/layout.cjs"
+    "e2e": "node e2e/layout.cjs",
+    "e2e:functional": "node e2e/functional.cjs"
   },
   "devDependencies": {
     "@types/node": "^22.19.0",

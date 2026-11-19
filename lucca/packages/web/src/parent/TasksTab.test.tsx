@@ -292,3 +292,63 @@ describe('TasksTab edge', () => {
     expect((screen.getByLabelText('Título') as HTMLInputElement).value).toBe('Lectura: My Pet');
   });
 });
+
+describe('TasksTab keyboard focus', () => {
+  const focusedName = () => (document.activeElement?.getAttribute('aria-label') || document.activeElement?.textContent || '').trim();
+
+  it('after saving a new task the focus goes back to "Nueva tarea"', async () => {
+    const { onChanged } = setup([]);
+    click('Nueva tarea');
+    fireEvent.change(screen.getByLabelText('Materia'), { target: { value: 'math' } });
+    fireEvent.change(screen.getByLabelText('Título'), { target: { value: 'Algo' } });
+    click('Guardar tarea');
+    await waitFor(() => expect(onChanged).toHaveBeenCalled());
+    await waitFor(() => expect(focusedName()).toBe('Nueva tarea'));
+  });
+
+  it('cancelling the new-task form puts the focus back on "Nueva tarea"', () => {
+    setup(week);
+    click('Nueva tarea');
+    click('Cancelar');
+    expect(focusedName()).toBe('Nueva tarea');
+  });
+
+  it('Escape closes the form and also returns the focus', () => {
+    setup(week);
+    click('Nueva tarea');
+    fireEvent.keyDown(screen.getByLabelText('Título'), { key: 'Escape' });
+    expect(screen.queryByRole('heading', { name: 'Nueva tarea' })).toBeNull();
+    expect(focusedName()).toBe('Nueva tarea');
+  });
+
+  it('closing the edit form returns the focus to that task\'s "Editar" button', () => {
+    setup(week);
+    click('Editar: Lectura: My Pet');
+    click('Cancelar');
+    expect(focusedName()).toBe('Editar: Lectura: My Pet');
+  });
+
+  it('when the deletion question opens the focus goes to the safe choice, "Cancelar"; cancelling returns it to "Borrar"', () => {
+    setup(week);
+    click('Borrar: Las partes de la planta');
+    expect(focusedName()).toBe('Cancelar');
+    click('Cancelar');
+    expect(focusedName()).toBe('Borrar: Las partes de la planta');
+  });
+
+  it('Escape on the deletion question also returns the focus to "Borrar"', () => {
+    setup(week);
+    click('Borrar: Las partes de la planta');
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Sí, borrar' }), { key: 'Escape' });
+    expect(focusedName()).toBe('Borrar: Las partes de la planta');
+  });
+
+  it('after deleting a task (its row disappears) the focus goes to "Nueva tarea", not to nowhere', async () => {
+    const { onChanged } = setup(week);
+    click('Borrar: Las partes de la planta');
+    click('Sí, borrar');
+    await waitFor(() => expect(onChanged).toHaveBeenCalled());
+    expect(focusedName()).toBe('Nueva tarea');
+  });
+});
+

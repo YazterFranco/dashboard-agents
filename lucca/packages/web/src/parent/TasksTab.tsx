@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SUBJECTS, addDays, mondayOf, weekDays, weekdayOf, workDateOf, type IsoDate, type Task } from '@lucca/shared';
 import { weekRange } from '../i18n';
 import { ApiError, type ParentApi, type TaskBody } from './api';
@@ -69,13 +69,23 @@ export function TasksTab({ tasks, today, onChanged, api }: Props) {
   const [busy, setBusy] = useState<string | null>(null);
   const [messages, setMessages] = useState<Record<string, string>>({});
   const inFlight = useRef(false);
+  const newButton = useRef<HTMLButtonElement>(null);
+  /** Qué botón abrió el formulario ('new' o `edit-<id>`): al cerrarlo, el foco vuelve ahí en vez de perderse. */
+  const returnFocus = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (editing !== null || returnFocus.current === null) return;
+    const target = returnFocus.current === 'new' ? null : document.getElementById(returnFocus.current);
+    (target ?? newButton.current)?.focus();
+    returnFocus.current = null;
+  }, [editing]);
 
   const weekStart = addDays(mondayOf(today), offset * 7);
   const isCurrent = offset === 0;
   const days = weekDays(weekStart);
   const groups = groupWeek(tasks, weekStart, today, isCurrent);
 
-  async function run(id: string, call: () => Promise<unknown>) {
+  async function run(id: string, call: () => Promise<unknown>, deleting = false) {
     if (inFlight.current) return;
     inFlight.current = true;
     setBusy(id);
@@ -84,6 +94,7 @@ export function TasksTab({ tasks, today, onChanged, api }: Props) {
       await call();
       setConfirming(null);
       onChanged();
+      if (deleting) newButton.current?.focus();
     } catch (err) {
       const message = describe(err);
       if (message) setMessages((m) => ({ ...m, [id]: message }));
@@ -99,6 +110,7 @@ export function TasksTab({ tasks, today, onChanged, api }: Props) {
     toggleHidden: () => void run(t.id, () => api.patchTask(t.id, { hidden: !t.hidden })),
     edit: () => {
       setConfirming(null);
+      returnFocus.current = `edit-${t.id}`;
       setEditing(t);
     },
     move: (date: IsoDate) => {
@@ -109,8 +121,11 @@ export function TasksTab({ tasks, today, onChanged, api }: Props) {
       void run(t.id, () => api.patchTask(t.id, patch));
     },
     askDelete: () => setConfirming(t.id),
-    confirmDelete: () => void run(t.id, () => api.deleteTask(t.id)),
-    cancelDelete: () => setConfirming(null),
+    confirmDelete: () => void run(t.id, () => api.deleteTask(t.id), true),
+    cancelDelete: () => {
+      setConfirming(null);
+      document.getElementById(`delete-${t.id}`)?.focus();
+    },
   });
 
   async function saveForm(values: TaskBody) {
@@ -141,7 +156,15 @@ export function TasksTab({ tasks, today, onChanged, api }: Props) {
           )}
         </div>
         {editing === null ? (
-          <button type="button" className="p-btn p-btn-primary" onClick={() => setEditing('new')}>
+          <button
+            ref={newButton}
+            type="button"
+            className="p-btn p-btn-primary"
+            onClick={() => {
+              returnFocus.current = 'new';
+              setEditing('new');
+            }}
+          >
             Nueva tarea
           </button>
         ) : null}

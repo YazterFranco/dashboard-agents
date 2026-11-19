@@ -40,6 +40,13 @@ function measure({ MIN_TAP, MIN_PRIMARY, MIN_FONT }) {
     const s = getComputedStyle(el);
     return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none';
   };
+  // El enlace al área de papá también es un control táctil, y no debe estirarse llenando la columna.
+  for (const a of document.querySelectorAll('a.parent-link')) {
+    if (!visible(a)) continue;
+    const r = a.getBoundingClientRect();
+    if (r.height < MIN_TAP - 0.5) problems.push(`enlace a papá bajo (${Math.round(r.height)}px)`);
+    if (r.height > MIN_TAP * 1.6) problems.push(`enlace a papá estirado (${Math.round(r.height)}px)`);
+  }
   for (const b of document.querySelectorAll('button')) {
     if (!visible(b)) continue;
     const r = b.getBoundingClientRect();

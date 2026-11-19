@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 import type { Connections } from './api';
 
 export interface ControlProps {
@@ -106,3 +106,9 @@ export function ConnectionsPanel({ connections, footer }: { connections: Connect
     </section>
   );
 }
+
+/**
+ * Para los botones de un formulario que valida al salir de cada campo: al pulsarlos no quitan el foco al campo.
+ * Si lo quitaran, el mensaje de error aparecería al apretar, el botón se movería y el clic se perdería.
+ */
+export const keepFocus = { onMouseDown: (event: MouseEvent) => event.preventDefault() };
