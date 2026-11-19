@@ -13,7 +13,16 @@ describe('loadConfig', () => {
       publicUrl: null,
       aiConfigured: false,
       merebConfigured: false,
+      aiMode: 'off',
     });
+  });
+
+  it('chooses where lessons come from: real AI with a key, recorded on request, none otherwise', () => {
+    expect(loadConfig({ ANTHROPIC_API_KEY: 'sk-x' }).aiMode).toBe('live');
+    expect(loadConfig({ LUCCA_AI: 'recorded' }).aiMode).toBe('recorded');
+    expect(loadConfig({ ANTHROPIC_API_KEY: 'sk-x', LUCCA_AI: 'recorded' }).aiMode).toBe('recorded');
+    expect(loadConfig({ ANTHROPIC_API_KEY: 'sk-x', LUCCA_AI: 'off' }).aiMode).toBe('off');
+    expect(loadConfig({}).aiMode).toBe('off');
   });
 
   it('reads overrides', () => {

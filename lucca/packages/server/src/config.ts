@@ -10,6 +10,8 @@ export interface Config {
   aiConfigured: boolean;
   /** Solo si están los tres datos de Mereb; los valores nunca se guardan aquí. */
   merebConfigured: boolean;
+  /** De dónde salen las lecciones: la IA real (hay clave), las grabadas (`LUCCA_AI=recorded`) o ninguna. */
+  aiMode: 'live' | 'recorded' | 'off';
 }
 
 function parsePort(raw: string | undefined): number {
@@ -42,6 +44,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
     publicUrl: env.LUCCA_PUBLIC_URL ? env.LUCCA_PUBLIC_URL.replace(/\/+$/, '') : null,
     aiConfigured: Boolean(env.ANTHROPIC_API_KEY),
     merebConfigured: Boolean(env.MEREB_URL && env.MEREB_USER && env.MEREB_PASSWORD),
+    aiMode: env.LUCCA_AI === 'recorded' ? 'recorded' : env.LUCCA_AI === 'off' || !env.ANTHROPIC_API_KEY ? 'off' : 'live',
   };
 }
 

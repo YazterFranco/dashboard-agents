@@ -71,6 +71,7 @@ export const SettingsPatchSchema = z
     voiceMode: SettingsFields.voiceMode,
     theme: SettingsFields.theme,
     speechRate: SettingsFields.speechRate,
+    aiMonthlyCapUsd: SettingsFields.aiMonthlyCapUsd,
   })
   .partial();
 export type SettingsPatch = z.infer<typeof SettingsPatchSchema>;

@@ -46,6 +46,7 @@ describe('schemas', () => {
       theme: 'dark',
       speechRate: 0.9,
       tz: 'America/Panama',
+      aiMonthlyCapUsd: 20,
     });
   });
 

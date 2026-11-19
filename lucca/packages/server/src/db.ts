@@ -2,7 +2,7 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createRequire } from 'node:module';
 import type { DatabaseSync } from 'node:sqlite';
-import { SettingsSchema, TaskSchema, type ProgressEvent, type ProgressKind, type Settings, type Task, type TaskStatus } from '@lucca/shared';
+import { LessonDocSchema, SettingsSchema, TaskSchema, type LessonDoc, type ProgressEvent, type ProgressKind, type Settings, type Task, type TaskStatus } from '@lucca/shared';
 
 /** Cada migración sube `PRAGMA user_version` en uno. No se editan las antiguas: se añade una nueva. */
 const MIGRATIONS: string[] = [
@@ -38,7 +38,49 @@ const MIGRATIONS: string[] = [
     last_seen TEXT NOT NULL
   );
   `,
+  `
+  CREATE TABLE lessons (
+    task_id TEXT NOT NULL,
+    variant TEXT NOT NULL,
+    doc TEXT NOT NULL,
+    source TEXT NOT NULL,
+    issues TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL,
+    PRIMARY KEY (task_id, variant)
+  );
+  CREATE TABLE ai_usage (
+    id TEXT PRIMARY KEY,
+    at TEXT NOT NULL,
+    task_id TEXT,
+    purpose TEXT NOT NULL,
+    input_tokens INTEGER NOT NULL,
+    output_tokens INTEGER NOT NULL,
+    cache_read_tokens INTEGER NOT NULL,
+    cache_write_tokens INTEGER NOT NULL,
+    cost_usd REAL NOT NULL
+  );
+  CREATE INDEX ai_usage_at ON ai_usage (at);
+  `,
 ];
+
+export type LessonVariant = 'default' | 'alternative';
+export type LessonSource = 'ai' | 'recorded' | 'fallback';
+export interface StoredLesson {
+  taskId: string;
+  variant: LessonVariant;
+  doc: LessonDoc;
+  source: LessonSource;
+  issues: string[];
+  createdAt: string;
+}
+export interface AiUsageRecord {
+  id: string;
+  at: string;
+  taskId: string | null;
+  purpose: string;
+  usage: { inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number };
+  costUsd: number;
+}
 
 type Row = Record<string, unknown>;
 
@@ -132,6 +174,7 @@ export class LuccaDb {
 
   deleteTask(id: string): void {
     this.db.prepare('DELETE FROM tasks WHERE id = ?').run(id);
+    this.db.prepare('DELETE FROM lessons WHERE task_id = ?').run(id);
   }
 
   setTaskStatus(id: string, status: TaskStatus): void {
@@ -199,5 +242,53 @@ export class LuccaDb {
 
   deleteAllSessions(): void {
     this.db.exec('DELETE FROM parent_sessions');
+  }
+
+  getLesson(taskId: string, variant: LessonVariant): StoredLesson | null {
+    const r = this.db.prepare('SELECT * FROM lessons WHERE task_id = ? AND variant = ?').get(taskId, variant) as Row | undefined;
+    if (!r) return null;
+    return {
+      taskId: String(r.task_id),
+      variant: r.variant as LessonVariant,
+      doc: LessonDocSchema.parse(JSON.parse(String(r.doc))),
+      source: r.source as LessonSource,
+      issues: JSON.parse(String(r.issues)) as string[],
+      createdAt: String(r.created_at),
+    };
+  }
+
+  saveLesson(l: StoredLesson): void {
+    this.db
+      .prepare(
+        `INSERT INTO lessons (task_id, variant, doc, source, issues, created_at) VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT(task_id, variant) DO UPDATE SET doc = excluded.doc, source = excluded.source, issues = excluded.issues, created_at = excluded.created_at`,
+      )
+      .run(l.taskId, l.variant, JSON.stringify(l.doc), l.source, JSON.stringify(l.issues), l.createdAt);
+  }
+
+  deleteLessons(taskId: string): void {
+    this.db.prepare('DELETE FROM lessons WHERE task_id = ?').run(taskId);
+  }
+
+  /** Lecciones de respaldo (la IA falló): papá las ve como aviso. */
+  listFallbackLessons(): { taskId: string; variant: LessonVariant; issues: string[]; createdAt: string }[] {
+    return (this.db.prepare("SELECT task_id, variant, issues, created_at FROM lessons WHERE source = 'fallback' ORDER BY created_at DESC").all() as Row[]).map((r) => ({
+      taskId: String(r.task_id),
+      variant: r.variant as LessonVariant,
+      issues: JSON.parse(String(r.issues)) as string[],
+      createdAt: String(r.created_at),
+    }));
+  }
+
+  addAiUsage(u: AiUsageRecord): void {
+    this.db
+      .prepare('INSERT INTO ai_usage (id, at, task_id, purpose, input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, cost_usd) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .run(u.id, u.at, u.taskId, u.purpose, u.usage.inputTokens, u.usage.outputTokens, u.usage.cacheReadTokens, u.usage.cacheWriteTokens, u.costUsd);
+  }
+
+  /** Gasto de IA desde un instante (ISO), en USD. */
+  aiCostSince(fromIso: string): number {
+    const r = this.db.prepare('SELECT COALESCE(SUM(cost_usd), 0) AS total FROM ai_usage WHERE at >= ?').get(fromIso) as Row;
+    return Number(r.total);
   }
 }

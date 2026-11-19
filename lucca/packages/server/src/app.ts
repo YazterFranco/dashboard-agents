@@ -17,6 +17,11 @@ import type { Config } from './config.js';
 import type { LuccaDb } from './db.js';
 import { LoginThrottle } from './auth.js';
 import { registerParentRoutes } from './parent.js';
+import Anthropic from '@anthropic-ai/sdk';
+import { ClaudeLessonModel } from './ai/claude.js';
+import type { LessonModel } from './ai/generate.js';
+import { RecordedLessonModel } from './ai/recorded.js';
+import { LessonService } from './lessons.js';
 import { isPrivateAddress } from './privateNet.js';
 
 export const VERSION = '0.1.0';
@@ -27,7 +32,19 @@ export interface BuildAppOptions {
   /** Reloj inyectable para las pruebas. */
   now?: () => Date;
   logger?: boolean;
+  /** Fuente de lecciones; si no se da, sale de `config.aiMode`. `null` = sin IA. */
+  lessonModel?: LessonModel | null;
+  lessonTimeoutMs?: number;
 }
+
+/** La fuente de lecciones según la configuración. La clave la lee el SDK del entorno; nunca pasa por aquí. */
+export function lessonModelFor(config: Config): LessonModel | null {
+  if (config.aiMode === 'recorded') return new RecordedLessonModel();
+  if (config.aiMode === 'live') return new ClaudeLessonModel(new Anthropic());
+  return null;
+}
+
+const VariantSchema = z.object({ variant: z.enum(['default', 'alternative']).default('default') });
 
 const ProgressBodySchema = z.object({ taskId: z.string().min(1), kind: ProgressKindSchema });
 
@@ -79,7 +96,25 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
     return { status, starsThisWeek: starsNow() };
   });
 
-  registerParentRoutes(app, { db, config, now, throttle: new LoginThrottle() });
+  const lessons = new LessonService({
+    db,
+    model: opts.lessonModel === undefined ? lessonModelFor(config) : opts.lessonModel,
+    mode: config.aiMode,
+    now,
+    tz: config.tz,
+    timeoutMs: opts.lessonTimeoutMs,
+  });
+
+  // «Entender»: la lección de una tarea (la guardada, o se prepara ahora con una espera máxima).
+  app.get<{ Params: { taskId: string } }>('/api/kid/lessons/:taskId', async (req, reply) => {
+    const q = VariantSchema.safeParse(req.query ?? {});
+    if (!q.success) return reply.code(400).send({ error: 'solicitud inválida' });
+    const answer = await lessons.get(req.params.taskId, q.data.variant);
+    if (answer.status === 'not-found') return reply.code(404).send({ error: 'tarea no encontrada' });
+    return answer;
+  });
+
+  registerParentRoutes(app, { db, config, now, throttle: new LoginThrottle(), lessons });
 
   if (config.webDir && existsSync(config.webDir)) {
     await app.register(fastifyStatic, { root: config.webDir });

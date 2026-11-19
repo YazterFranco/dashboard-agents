@@ -34,6 +34,7 @@ import {
 } from './auth.js';
 import type { Config } from './config.js';
 import type { LuccaDb } from './db.js';
+import type { LessonService } from './lessons.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -47,13 +48,14 @@ export interface ParentDeps {
   config: Config;
   now: () => Date;
   throttle: LoginThrottle;
+  lessons: LessonService;
 }
 
 const NEEDS_PIN = { error: 'Hace falta el PIN' };
 
 /** Rutas del área de papá: acceso (sin sesión) y, dentro de un ámbito propio, todo lo que exige sesión. */
 export function registerParentRoutes(app: FastifyInstance, deps: ParentDeps): void {
-  const { db, config, now, throttle } = deps;
+  const { db, config, now, throttle, lessons } = deps;
   const nowMs = (): number => now().getTime();
   const connections = () => ({ ai: config.aiConfigured, mereb: config.merebConfigured });
 
@@ -81,6 +83,19 @@ export function registerParentRoutes(app: FastifyInstance, deps: ParentDeps): vo
 
   const locked = (reply: FastifyReply, retryAfterSeconds: number) =>
     reply.code(423).header('retry-after', String(retryAfterSeconds)).send({ error: 'Demasiados intentos', retryAfterSeconds });
+
+  const aiSummary = () => {
+    const titles = new Map(db.listTasks().map((t) => [t.id, t.title]));
+    return {
+      mode: config.aiMode,
+      monthCostUsd: Math.round(lessons.monthCostUsd() * 10000) / 10000,
+      capUsd: db.getSettings().aiMonthlyCapUsd,
+      alerts: db
+        .listFallbackLessons()
+        .filter((l) => titles.has(l.taskId))
+        .map((l) => ({ taskId: l.taskId, title: titles.get(l.taskId)!, variant: l.variant, issues: l.issues.slice(0, 5), createdAt: l.createdAt })),
+    };
+  };
 
   app.get('/api/parent/status', async (req) => {
     const t = throttle.status(nowMs());
@@ -169,6 +184,7 @@ export function registerParentRoutes(app: FastifyInstance, deps: ParentDeps): vo
         settings: { ...db.getSettings(), tz: config.tz },
         tasks: db.listTasks(),
         connections: connections(),
+        ai: aiSummary(),
       };
     });
 
@@ -231,6 +247,18 @@ export function registerParentRoutes(app: FastifyInstance, deps: ParentDeps): vo
       const body = SettingsPatchSchema.safeParse(req.body ?? {});
       if (!body.success) return reply.code(400).send({ error: 'Datos inválidos', fields: fieldErrors(body.error) });
       return { ...db.setSettings(body.data), tz: config.tz };
+    });
+
+    scope.get<{ Params: { taskId: string } }>('/api/parent/lessons/:taskId', async (req, reply) => {
+      const answer = await lessons.get(req.params.taskId, 'default', { forParent: true });
+      if (answer.status === 'not-found') return reply.code(404).send({ error: 'Tarea no encontrada' });
+      return answer;
+    });
+
+    scope.post<{ Params: { taskId: string } }>('/api/parent/lessons/:taskId/regenerate', async (req, reply) => {
+      const answer = await lessons.regenerate(req.params.taskId);
+      if (answer.status === 'not-found') return reply.code(404).send({ error: 'Tarea no encontrada' });
+      return answer;
     });
 
     scope.get('/api/parent/progress', async (req, reply) => {

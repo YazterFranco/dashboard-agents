@@ -52,6 +52,7 @@ export const SettingsFields = {
   theme: z.enum(THEMES, { error: 'Elige el tema' }),
   speechRate: z.number({ error: 'La velocidad va de 0,7 a 1,2' }).min(0.7, 'La velocidad va de 0,7 a 1,2').max(1.2, 'La velocidad va de 0,7 a 1,2'),
   tz: z.string().min(1),
+  aiMonthlyCapUsd: z.number({ error: 'El tope va de 1 a 200 dólares' }).min(1, 'El tope va de 1 a 200 dólares').max(200, 'El tope va de 1 a 200 dólares'),
 };
 
 export const SettingsSchema = z.object({
@@ -62,6 +63,7 @@ export const SettingsSchema = z.object({
   theme: SettingsFields.theme.default('dark'),
   speechRate: SettingsFields.speechRate.default(0.9),
   tz: SettingsFields.tz.default('America/Panama'),
+  aiMonthlyCapUsd: SettingsFields.aiMonthlyCapUsd.default(20),
 });
 export type Settings = z.infer<typeof SettingsSchema>;
 

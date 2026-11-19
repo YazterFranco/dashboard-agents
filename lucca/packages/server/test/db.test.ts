@@ -31,11 +31,11 @@ describe('LuccaDb', () => {
   it('migrates an empty db and is idempotent', () => {
     const file = tempFile();
     const a = open(file);
-    expect(a.schemaVersion()).toBe(1);
+    expect(a.schemaVersion()).toBe(2);
     a.close();
     opened.pop();
     const b = open(file);
-    expect(b.schemaVersion()).toBe(1);
+    expect(b.schemaVersion()).toBe(2);
   });
 
   it('roundtrips a task with translations and null dates', () => {
@@ -86,7 +86,7 @@ describe('LuccaDb', () => {
   it('settings default, patch and persist', () => {
     const file = tempFile();
     const a = open(file);
-    expect(a.getSettings()).toEqual({ childName: 'Lucca', grade: 2, lang: 'es', voiceMode: 'both', theme: 'dark', speechRate: 0.9, tz: 'America/Panama' });
+    expect(a.getSettings()).toEqual({ childName: 'Lucca', grade: 2, lang: 'es', voiceMode: 'both', theme: 'dark', speechRate: 0.9, tz: 'America/Panama', aiMonthlyCapUsd: 20 });
     expect(a.setSettings({ lang: 'en' })).toMatchObject({ lang: 'en', childName: 'Lucca' });
     a.close();
     opened.pop();
@@ -168,5 +168,32 @@ describe('LuccaDb', () => {
     raw.prepare("INSERT INTO settings (key, value) VALUES ('settings', ?)").run(JSON.stringify({ childName: 'Lucca', lang: 'en', voiceMode: 'text', theme: 'light', tz: 'America/Panama' }));
     raw.close();
     expect(open(file).getSettings()).toMatchObject({ lang: 'en', voiceMode: 'text', theme: 'light', grade: 2, speechRate: 0.9 });
+  });
+});
+
+describe('LuccaDb lessons and AI usage', () => {
+  it('stores a lesson per task and variant, replaces it, and deleting the task removes them', async () => {
+    const { RecordedLessonModel } = await import('../src/ai/recorded.js');
+    const { TaskSchema } = await import('@lucca/shared');
+    const db = new LuccaDb(':memory:');
+    db.upsertTask(TaskSchema.parse({ id: 't', subject: 'science', title: 'Las partes de la planta', source: 'manual' }));
+    const out = (await new RecordedLessonModel().generate({ task: { subject: 'science', title: 'Las partes de la planta', titleEn: '', description: '' }, grade: 2, variant: 'default' })) as unknown as { doc: never };
+    db.saveLesson({ taskId: 't', variant: 'default', doc: out.doc, source: 'recorded', issues: [], createdAt: '2026-11-18T00:00:00Z' });
+    expect(db.getLesson('t', 'default')?.source).toBe('recorded');
+    expect(db.getLesson('t', 'alternative')).toBeNull();
+    db.saveLesson({ taskId: 't', variant: 'default', doc: out.doc, source: 'fallback', issues: ['x'], createdAt: '2026-11-18T01:00:00Z' });
+    expect(db.getLesson('t', 'default')?.source).toBe('fallback');
+    expect(db.listFallbackLessons()).toHaveLength(1);
+    db.deleteTask('t');
+    expect(db.getLesson('t', 'default')).toBeNull();
+  });
+
+  it('adds up the AI cost from a moment on', () => {
+    const db = new LuccaDb(':memory:');
+    const usage = { inputTokens: 1, outputTokens: 1, cacheReadTokens: 0, cacheWriteTokens: 0 };
+    db.addAiUsage({ id: 'a', at: '2026-10-31T23:00:00.000Z', taskId: null, purpose: 'lesson', usage, costUsd: 3 });
+    db.addAiUsage({ id: 'b', at: '2026-11-02T10:00:00.000Z', taskId: 't', purpose: 'lesson', usage, costUsd: 1.25 });
+    expect(db.aiCostSince('2026-11-01T05:00:00.000Z')).toBeCloseTo(1.25);
+    expect(db.aiCostSince('2026-12-01T05:00:00.000Z')).toBe(0);
   });
 });
