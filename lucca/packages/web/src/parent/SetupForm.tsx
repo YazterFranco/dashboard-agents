@@ -1,7 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { PinSchema, SettingsFields, type Lang, type Theme } from '@lucca/shared';
 import { ApiError, type Connections, type ParentApi } from './api';
-import { Choice, Field, FormError, GENERIC_ERROR, NETWORK_SAVE_ERROR } from './fields';
+import { Choice, ConnectionsPanel, Field, FormError, GENERIC_ERROR, NETWORK_SAVE_ERROR } from './fields';
 
 type FieldName = 'pin' | 'pin2' | 'childName';
 type Errors = Partial<Record<FieldName, string>>;
@@ -161,16 +161,7 @@ export function SetupForm({ api, connections, onDone }: Props) {
           onChange={setTheme}
         />
 
-        <section className="p-connections" aria-label="Conexiones">
-          <h2>Conexiones</h2>
-          <ConnectionRow label="Inteligencia artificial" ok={connections.ai}>
-            Añade <code>ANTHROPIC_API_KEY</code> al archivo <code>.env</code> y reinicia el asistente. Hasta entonces las lecciones con IA no estarán disponibles.
-          </ConnectionRow>
-          <ConnectionRow label="Mereb" ok={connections.mereb}>
-            Añade <code>MEREB_URL</code>, <code>MEREB_USER</code> y <code>MEREB_PASSWORD</code> al archivo <code>.env</code>. Mientras tanto puedes añadir las tareas a mano.
-          </ConnectionRow>
-          <p className="p-hint">Puedes terminar la configuración ahora y completar esto después.</p>
-        </section>
+        <ConnectionsPanel connections={connections} footer={<p className="p-hint">Puedes terminar la configuración ahora y completar esto después.</p>} />
 
         {general ? <FormError>{general}</FormError> : null}
         <button type="submit" className="p-btn p-btn-primary" disabled={busy} aria-busy={busy || undefined}>
@@ -178,17 +169,5 @@ export function SetupForm({ api, connections, onDone }: Props) {
         </button>
       </form>
     </main>
-  );
-}
-
-function ConnectionRow({ label, ok, children }: { label: string; ok: boolean; children: React.ReactNode }) {
-  return (
-    <div className="p-conn">
-      <div className="p-conn-head">
-        <span className="p-conn-name">{label}</span>
-        <span className={ok ? 'p-badge p-badge-ok' : 'p-badge p-badge-warn'}>{ok ? 'Conectada' : 'Falta conectar'}</span>
-      </div>
-      {ok ? null : <p className="p-hint">{children}</p>}
-    </div>
   );
 }

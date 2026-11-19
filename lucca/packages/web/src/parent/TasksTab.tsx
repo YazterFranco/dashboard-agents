@@ -1,0 +1,178 @@
+import { useRef, useState } from 'react';
+import { SUBJECTS, addDays, mondayOf, weekDays, weekdayOf, workDateOf, type IsoDate, type Task } from '@lucca/shared';
+import { weekRange } from '../i18n';
+import { ApiError, type ParentApi, type TaskBody } from './api';
+import { GENERIC_ERROR, NETWORK_SAVE_ERROR } from './fields';
+import { TaskForm } from './TaskForm';
+import { TaskRow, dayHeading } from './TaskRow';
+
+interface Props {
+  tasks: Task[];
+  today: IsoDate;
+  onChanged(): void;
+  api: ParentApi;
+}
+
+interface Group {
+  key: string;
+  title: string;
+  tasks: Task[];
+}
+
+const bySubjectThenTitle = (a: Task, b: Task) => SUBJECTS.indexOf(a.subject) - SUBJECTS.indexOf(b.subject) || a.title.localeCompare(b.title, 'es');
+
+/** Cada tarea en su día de trabajo, sin arrastrar las atrasadas: papá ve lo que hay, no lo que Lucca ve hoy. */
+function groupWeek(tasks: Task[], weekStart: IsoDate, today: IsoDate, isCurrent: boolean): Group[] {
+  const days = weekDays(weekStart);
+  const byDay = new Map<IsoDate, Task[]>(days.map((d) => [d, []]));
+  const weekend: Task[] = [];
+  const undated: Task[] = [];
+  for (const t of tasks) {
+    if (t.retired) continue;
+    if (!t.assignedDate && !t.dueDate) {
+      if (isCurrent) undated.push(t);
+      continue;
+    }
+    const work = workDateOf(t, today);
+    if (mondayOf(work) !== weekStart) continue;
+    const bucket = byDay.get(work);
+    if (bucket) bucket.push(t);
+    else weekend.push(t);
+  }
+  const groups: Group[] = days.map((d) => ({ key: d, title: dayHeading(d), tasks: byDay.get(d)!.sort(bySubjectThenTitle) }));
+  groups.push({ key: 'weekend', title: 'Fin de semana', tasks: weekend.sort(bySubjectThenTitle) });
+  groups.push({ key: 'undated', title: 'Sin fecha', tasks: undated.sort(bySubjectThenTitle) });
+  return groups.filter((g) => g.tasks.length > 0);
+}
+
+/** Un fallo al actuar sobre una tarea, dicho junto a ella. Un 401 no dice nada: la pantalla vuelve sola al PIN. */
+function describe(err: unknown): string | null {
+  if (!(err instanceof ApiError)) return NETWORK_SAVE_ERROR;
+  if (err.status === 401) return null;
+  const field = Object.values(err.fields)[0];
+  if (field) return field;
+  return err.status === 404 || err.status === 409 ? err.message : GENERIC_ERROR;
+}
+
+function Chevron({ direction }: { direction: 'left' | 'right' }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={direction === 'left' ? 'M14.5 5.5 8 12l6.5 6.5' : 'M9.5 5.5 16 12l-6.5 6.5'} />
+    </svg>
+  );
+}
+
+export function TasksTab({ tasks, today, onChanged, api }: Props) {
+  const [offset, setOffset] = useState(0);
+  const [editing, setEditing] = useState<Task | 'new' | null>(null);
+  const [confirming, setConfirming] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Record<string, string>>({});
+  const inFlight = useRef(false);
+
+  const weekStart = addDays(mondayOf(today), offset * 7);
+  const isCurrent = offset === 0;
+  const days = weekDays(weekStart);
+  const groups = groupWeek(tasks, weekStart, today, isCurrent);
+
+  async function run(id: string, call: () => Promise<unknown>) {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setBusy(id);
+    setMessages(({ [id]: _gone, ...rest }) => rest);
+    try {
+      await call();
+      setConfirming(null);
+      onChanged();
+    } catch (err) {
+      const message = describe(err);
+      if (message) setMessages((m) => ({ ...m, [id]: message }));
+      if (err instanceof ApiError && err.status === 404) onChanged();
+    } finally {
+      inFlight.current = false;
+      setBusy(null);
+    }
+  }
+
+  const actionsFor = (t: Task) => ({
+    toggleDone: () => void run(t.id, () => api.patchTask(t.id, { status: t.status === 'done' ? 'todo' : 'done' })),
+    toggleHidden: () => void run(t.id, () => api.patchTask(t.id, { hidden: !t.hidden })),
+    edit: () => {
+      setConfirming(null);
+      setEditing(t);
+    },
+    move: (date: IsoDate) => {
+      if (date === t.assignedDate) return;
+      // Si la entrega queda antes del nuevo día, se mueve con él.
+      const patch: Partial<TaskBody> = { assignedDate: date };
+      if (t.dueDate !== null && t.dueDate < date) patch.dueDate = date;
+      void run(t.id, () => api.patchTask(t.id, patch));
+    },
+    askDelete: () => setConfirming(t.id),
+    confirmDelete: () => void run(t.id, () => api.deleteTask(t.id)),
+    cancelDelete: () => setConfirming(null),
+  });
+
+  async function saveForm(values: TaskBody) {
+    if (editing === 'new') await api.createTask(values);
+    else if (editing) await api.patchTask(editing.id, values);
+    setEditing(null);
+    onChanged();
+  }
+
+  return (
+    <div className="p-tab">
+      <div className="p-toolbar">
+        <div className="p-weeknav">
+          <button type="button" className="p-btn p-btn-ghost p-btn-icon" aria-label="Semana anterior" disabled={offset <= -1} onClick={() => setOffset(offset - 1)}>
+            <Chevron direction="left" />
+          </button>
+          <p className="p-range">
+            <span>{weekRange('es', weekStart)}</span>
+            {isCurrent ? <span className="p-chip p-chip-now">Esta semana</span> : null}
+          </p>
+          <button type="button" className="p-btn p-btn-ghost p-btn-icon" aria-label="Semana siguiente" disabled={offset >= 1} onClick={() => setOffset(offset + 1)}>
+            <Chevron direction="right" />
+          </button>
+          {isCurrent ? null : (
+            <button type="button" className="p-btn p-btn-ghost" onClick={() => setOffset(0)}>
+              Esta semana
+            </button>
+          )}
+        </div>
+        {editing === null ? (
+          <button type="button" className="p-btn p-btn-primary" onClick={() => setEditing('new')}>
+            Nueva tarea
+          </button>
+        ) : null}
+      </div>
+
+      {editing !== null ? (
+        <TaskForm
+          key={editing === 'new' ? 'new' : editing.id}
+          initial={editing === 'new' ? undefined : editing}
+          defaultDate={isCurrent ? today : weekStart}
+          onSubmit={saveForm}
+          onCancel={() => setEditing(null)}
+        />
+      ) : null}
+
+      {groups.length === 0 ? (
+        <p className="p-empty">No hay tareas esta semana</p>
+      ) : (
+        groups.map((g) => (
+          <section key={g.key} className="p-card" aria-labelledby={`group-${g.key}`}>
+            <h3 id={`group-${g.key}`} className="p-day">
+              {g.title}
+            </h3>
+            <ul className="p-tasks">
+              {g.tasks.map((t) => (
+                <TaskRow key={t.id} task={t} days={days} busy={busy === t.id} confirming={confirming === t.id} message={messages[t.id]} actions={actionsFor(t)} />
+              ))}
+            </ul>
+          </section>
+        ))
+      )}
+    </div>
+  );
+}

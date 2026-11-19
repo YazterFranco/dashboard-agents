@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { Connections } from './api';
 
 export interface ControlProps {
   id: string;
@@ -72,3 +73,36 @@ export function FormError({ children }: { children: ReactNode }) {
 export const NETWORK_SAVE_ERROR = 'No se pudo guardar. Revisa que el asistente siga encendido e inténtalo otra vez.';
 export const NETWORK_ERROR = 'No se pudo conectar. Revisa que el asistente siga encendido e inténtalo otra vez.';
 export const GENERIC_ERROR = 'Algo salió mal. Inténtalo otra vez en un momento.';
+
+/** Plural en español: `plural(2, 'estrella', 'estrellas')` → «2 estrellas». */
+export function plural(n: number, one: string, many: string): string {
+  return `${n} ${n === 1 ? one : many}`;
+}
+
+function ConnectionRow({ label, ok, children }: { label: string; ok: boolean; children: ReactNode }) {
+  return (
+    <div className="p-conn">
+      <div className="p-conn-head">
+        <span className="p-conn-name">{label}</span>
+        <span className={ok ? 'p-badge p-badge-ok' : 'p-badge p-badge-warn'}>{ok ? 'Conectada' : 'Falta conectar'}</span>
+      </div>
+      {ok ? null : <p className="p-hint">{children}</p>}
+    </div>
+  );
+}
+
+/** Estado de la IA y de Mereb. Si falta una, explica cómo añadirla en `.env`; nunca bloquea nada. */
+export function ConnectionsPanel({ connections, footer }: { connections: Connections; footer?: ReactNode }) {
+  return (
+    <section className="p-connections" aria-label="Conexiones">
+      <h2>Conexiones</h2>
+      <ConnectionRow label="Inteligencia artificial" ok={connections.ai}>
+        Añade <code>ANTHROPIC_API_KEY</code> al archivo <code>.env</code> y reinicia el asistente. Hasta entonces las lecciones con IA no estarán disponibles.
+      </ConnectionRow>
+      <ConnectionRow label="Mereb" ok={connections.mereb}>
+        Añade <code>MEREB_URL</code>, <code>MEREB_USER</code> y <code>MEREB_PASSWORD</code> al archivo <code>.env</code>. Mientras tanto puedes añadir las tareas a mano.
+      </ConnectionRow>
+      {footer}
+    </section>
+  );
+}

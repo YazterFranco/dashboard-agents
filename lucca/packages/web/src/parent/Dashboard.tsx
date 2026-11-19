@@ -1,16 +1,27 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ApiError, type Overview, type ParentApi } from './api';
 import { NETWORK_ERROR } from './fields';
+import { ProgressTab } from './ProgressTab';
+import { SettingsTab } from './SettingsTab';
+import { TasksTab } from './TasksTab';
+
+type Tab = 'tasks' | 'progress' | 'settings';
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'tasks', label: 'Tareas' },
+  { id: 'progress', label: 'Progreso' },
+  { id: 'settings', label: 'Ajustes' },
+];
 
 interface Props {
   api: ParentApi;
   onLogout(): void;
 }
 
-/** Panel del padre. Carga el resumen una vez y lo comparte con las pestañas. */
+/** Panel del padre: el resumen se pide una vez y se comparte con las pestañas; cada cambio lo vuelve a pedir sin vaciar la pantalla. */
 export function Dashboard({ api, onLogout }: Props) {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>('tasks');
 
   const load = useCallback(async () => {
     setProblem(null);
@@ -34,7 +45,14 @@ export function Dashboard({ api, onLogout }: Props) {
   return (
     <main className="p-shell">
       <header className="p-top">
-        <h1>Área de papá</h1>
+        <div>
+          <h1>Área de papá</h1>
+          {overview ? (
+            <p className="p-lead">
+              <strong>{overview.settings.childName}</strong> · <span>{overview.settings.grade}.º grado</span>
+            </p>
+          ) : null}
+        </div>
         <div className="p-top-actions">
           <a className="p-btn p-btn-ghost" href="/">
             Ver la pantalla de Lucca
@@ -48,30 +66,27 @@ export function Dashboard({ api, onLogout }: Props) {
       {problem ? (
         <section className="p-card" role="alert">
           <p>{problem}</p>
-          <button type="button" className="p-btn p-btn-primary" onClick={() => void load()}>
-            Intentar de nuevo
-          </button>
+          <div className="p-actions">
+            <button type="button" className="p-btn p-btn-primary" onClick={() => void load()}>
+              Intentar de nuevo
+            </button>
+          </div>
         </section>
       ) : null}
 
       {overview ? (
-        <section className="p-card" aria-label="Resumen">
-          <h2>Resumen</h2>
-          <dl className="p-facts">
-            <div>
-              <dt>Niño</dt>
-              <dd>{overview.settings.childName}</dd>
-            </div>
-            <div>
-              <dt>Grado</dt>
-              <dd>{overview.settings.grade}.º</dd>
-            </div>
-            <div>
-              <dt>Tareas guardadas</dt>
-              <dd>{overview.tasks.length}</dd>
-            </div>
-          </dl>
-        </section>
+        <>
+          <nav className="p-tabs" aria-label="Secciones">
+            {TABS.map((t) => (
+              <button key={t.id} type="button" className="p-tab-btn" aria-current={tab === t.id ? 'page' : undefined} onClick={() => setTab(t.id)}>
+                {t.label}
+              </button>
+            ))}
+          </nav>
+          {tab === 'tasks' ? <TasksTab tasks={overview.tasks} today={overview.today} onChanged={() => void load()} api={api} /> : null}
+          {tab === 'progress' ? <ProgressTab api={api} /> : null}
+          {tab === 'settings' ? <SettingsTab settings={overview.settings} connections={overview.connections} onSaved={() => void load()} api={api} /> : null}
+        </>
       ) : problem ? null : (
         <p className="p-lead">Un momento…</p>
       )}

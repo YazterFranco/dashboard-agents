@@ -259,3 +259,200 @@ code {
   background: var(--chip);
   font-size: 0.92em;
 }
+
+/* ---------- Pestañas ---------- */
+.p-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.p-tab-btn {
+  min-height: 48px;
+  padding: 0 22px;
+  border-radius: var(--radius-pill);
+  background: var(--chip);
+  color: var(--ink);
+  font: 700 17px var(--font-body);
+}
+.p-tab-btn[aria-current='page'] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.p-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ---------- Tareas ---------- */
+.p-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.p-weeknav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.p-btn-icon {
+  width: 48px;
+  padding: 0;
+}
+.p-btn-sm {
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 16px;
+}
+.p-range {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font: 700 19px var(--font-display);
+}
+.p-day {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font: 700 20px var(--font-display);
+}
+.p-empty {
+  margin: 0;
+  padding: 28px 16px;
+  text-align: center;
+  color: var(--muted);
+  border: 2px dashed var(--line);
+  border-radius: 24px;
+}
+.p-tasks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.p-task {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--chip);
+}
+.p-task-hidden {
+  opacity: 0.7;
+  border: 2px dashed var(--line);
+}
+.p-task-main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.p-task-title {
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.p-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.p-subject {
+  font-weight: 700;
+  font-size: 16px;
+}
+.p-chip {
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--tile);
+  border: 2px solid var(--line);
+  font-size: 16px;
+  font-weight: 700;
+}
+.p-chip-done {
+  color: var(--ok);
+}
+.p-chip-doing,
+.p-chip-hidden {
+  color: var(--warn);
+}
+.p-chip-now {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: transparent;
+}
+.p-due {
+  font-size: 16px;
+  color: var(--muted);
+}
+.p-task-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.p-move {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--line);
+  background: var(--tile);
+  color: var(--ink);
+  font: 700 16px var(--font-body);
+}
+.p-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 2px solid var(--danger);
+}
+.p-confirm p {
+  margin: 0;
+}
+.p-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.p-two {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+.p-status {
+  margin: 0;
+  font-weight: 700;
+  color: var(--ok);
+}
+
+/* ---------- Progreso ---------- */
+.p-help {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.p-help li {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--chip);
+}
+.p-help-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
