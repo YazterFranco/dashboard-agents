@@ -1193,7 +1193,7 @@ async function lessonGroup() {
       await page.getByText('Pregunta 1 de 3').waitFor();
       expect(await page.getByRole('button', { name: 'Siguiente' }).isDisabled(), 'no se avanza sin responder');
       await page.getByRole('button', { name: 'La raíz' }).click();
-      await page.getByText('¡Muy bien!').waitFor();
+      await page.getByText('¡Muy bien pensado!').waitFor();
       await shot(page, 'pregunta-acertada');
       await lessonNext(page);
       await page.getByRole('button', { name: 'Verdadero' }).click();
@@ -1220,13 +1220,13 @@ async function lessonGroup() {
       await page.getByRole('button', { name: '3', exact: true }).click();
       await page.getByText('Casi. Inténtalo otra vez.').waitFor();
       await page.getByRole('button', { name: '4', exact: true }).click();
-      await page.getByText('¡Muy bien!').waitFor();
+      await page.getByText('¡Seguiste intentando y lo lograste!').waitFor();
       await shot(page, 'contar');
       await lessonNext(page);
       await lessonNext(page);
       await page.getByText('Paso 6 de 9').waitFor();
       for (const part of ['Raíz', 'Tallo', 'Hojas', 'Flor']) await page.getByRole('button', { name: part, exact: true }).click();
-      await page.getByText('¡Muy bien!').waitFor();
+      await page.getByText('¡Muy bien pensado!').waitFor();
       expect((await text(page.getByRole('list', { name: 'Tu orden' }))) === 'RaízTalloHojasFlor', 'el orden elegido se muestra');
       await shot(page, 'ordenar');
     });
@@ -1251,6 +1251,8 @@ async function lessonGroup() {
       await page.getByText('Pregunta 1 de 3').waitFor();
       await page.getByRole('button', { name: 'La flor' }).click();
       expect((await page.getByText('¿Te lo explico de otra forma?').count()) === 0, 'con un fallo todavía no ofrece');
+      await page.getByText('Piensa: ¿qué parte está bajo la tierra?').waitFor();
+      await shot(page, 'pista-tras-el-primer-fallo');
       await page.getByRole('button', { name: 'Las hojas' }).click();
       await page.getByText('¿Te lo explico de otra forma?').waitFor();
       await shot(page, 'oferta-de-otra-explicacion');

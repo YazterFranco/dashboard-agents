@@ -36,7 +36,7 @@ describe('choice', () => {
     expect((screen.getByRole('button', { name: 'La flor' }) as HTMLButtonElement).disabled).toBe(true);
     expect(onMiss).toHaveBeenCalledTimes(1);
     tap('La raíz');
-    expect(status()).toBe('¡Muy bien!');
+    expect(status()).toBe('¡Seguiste intentando y lo lograste!');
     expect(onSolved).toHaveBeenCalledTimes(1);
   });
   it('tapping the same wrong option twice counts once', () => {
@@ -126,7 +126,7 @@ describe('sort', () => {
     expect(screen.getByText('Ahora: Perro')).toBeTruthy();
     tap('Tierra');
     expect(onSolved).toHaveBeenCalled();
-    expect(status()).toBe('¡Muy bien!');
+    expect(status()).toBe('¡Seguiste intentando y lo lograste!');
   });
 });
 
@@ -137,3 +137,54 @@ describe('shuffled', () => {
     expect(shuffled([1], 'a')).toEqual([1]);
   });
 });
+
+describe('process praise and hints', () => {
+  const q: Block = { type: 'choice', question: bi('¿Qué bebe agua?', 'What drinks water?'), options: [{ text: bi('La raíz', 'The root') }, { text: bi('La flor', 'The flower') }], correct: 0, hint: bi('Piensa en lo que está bajo la tierra.', 'Think about what is under the soil.') };
+
+  it('right on the first try praises the thinking, not the child', () => {
+    draw(q);
+    tap('La raíz');
+    expect(status()).toBe('¡Muy bien pensado!');
+  });
+
+  it('the hint appears only after the first miss', () => {
+    draw(q);
+    expect(screen.queryByText(/Pista/)).toBeNull();
+    tap('La flor');
+    expect(screen.getByText('Piensa en lo que está bajo la tierra.')).toBeTruthy();
+    expect(screen.getByText(/Pista/)).toBeTruthy();
+  });
+
+  it('the hint is in the lesson language', () => {
+    draw(q, 'en');
+    tap('The flower');
+    expect(screen.getByText('Think about what is under the soil.')).toBeTruthy();
+    expect(screen.getByText(/Hint/)).toBeTruthy();
+  });
+
+  it('a block without a hint shows none', () => {
+    draw({ ...q, hint: undefined } as Block);
+    tap('La flor');
+    expect(screen.queryByText(/Pista/)).toBeNull();
+  });
+});
+
+describe('tap to hear', () => {
+  it('with voice on, tapping a text reads it, with its language', async () => {
+    const { SayContext } = await import('./text');
+    const say = vi.fn();
+    render(
+      <SayContext.Provider value={say}>
+        <LessonBlock block={{ type: 'explain', text: { es: [{ text: 'La palabra ' }, { text: 'cat', lang: 'en' }], en: [{ text: 'Cat.' }] } }} lang="es" />
+      </SayContext.Provider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Escuchar: La palabra cat' }));
+    expect(say).toHaveBeenCalledWith([{ text: 'La palabra ', lang: 'es' }, { text: 'cat', lang: 'en' }]);
+  });
+
+  it('without voice (Leer) the text is plain text, not a button', () => {
+    draw({ type: 'explain', text: bi('Hola.', 'Hi.') });
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+});
+

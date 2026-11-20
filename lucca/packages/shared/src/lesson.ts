@@ -24,9 +24,11 @@ const story = z.strictObject({
   panels: z.array(z.strictObject({ text: BiTextSchema, emoji: EmojiSchema })).min(2).max(4),
 });
 const option = z.strictObject({ text: BiTextSchema, emoji: EmojiSchema.optional() });
-const choice = z.strictObject({ type: z.literal('choice'), question: BiTextSchema, options: z.array(option).min(2).max(4), correct: z.number().int() });
-const trueFalse = z.strictObject({ type: z.literal('trueFalse'), statement: BiTextSchema, answer: z.boolean() });
-const count = z.strictObject({ type: z.literal('count'), question: BiTextSchema, emoji: EmojiSchema, amount: z.number().int() });
+/** Pista que se muestra tras el primer fallo: orienta sin decir la respuesta (control de fuga en `checkLesson`). */
+const hint = BiTextSchema.optional();
+const choice = z.strictObject({ type: z.literal('choice'), question: BiTextSchema, options: z.array(option).min(2).max(4), correct: z.number().int(), hint });
+const trueFalse = z.strictObject({ type: z.literal('trueFalse'), statement: BiTextSchema, answer: z.boolean(), hint });
+const count = z.strictObject({ type: z.literal('count'), question: BiTextSchema, emoji: EmojiSchema, amount: z.number().int(), hint });
 const numberLine = z.strictObject({
   type: z.literal('numberLine'),
   question: BiTextSchema,
@@ -41,7 +43,7 @@ const match = z.strictObject({
   pairs: z.array(z.strictObject({ left: BiTextSchema, right: BiTextSchema })).min(2).max(4),
 });
 /** `sentence` lleva "___" donde va la palabra que falta. */
-const fillWord = z.strictObject({ type: z.literal('fillWord'), sentence: BiTextSchema, options: z.array(BiTextSchema).min(2).max(4), correct: z.number().int() });
+const fillWord = z.strictObject({ type: z.literal('fillWord'), sentence: BiTextSchema, options: z.array(BiTextSchema).min(2).max(4), correct: z.number().int(), hint });
 const sort = z.strictObject({
   type: z.literal('sort'),
   question: BiTextSchema,
@@ -86,10 +88,11 @@ function textsOf(block: Block): BiText[] {
     case 'story':
       return block.panels.map((p) => p.text);
     case 'choice':
-      return [block.question, ...block.options.map((o) => o.text)];
+      return [block.question, ...block.options.map((o) => o.text), ...(block.hint ? [block.hint] : [])];
     case 'trueFalse':
-      return [block.statement];
+      return [block.statement, ...(block.hint ? [block.hint] : [])];
     case 'count':
+      return [block.question, ...(block.hint ? [block.hint] : [])];
     case 'numberLine':
       return [block.question];
     case 'order':
@@ -97,7 +100,7 @@ function textsOf(block: Block): BiText[] {
     case 'match':
       return [block.question, ...block.pairs.flatMap((p) => [p.left, p.right])];
     case 'fillWord':
-      return [block.sentence, ...block.options];
+      return [block.sentence, ...block.options, ...(block.hint ? [block.hint] : [])];
     case 'sort':
       return [block.question, ...block.groups, ...block.items.map((i) => i.text)];
   }
@@ -119,7 +122,46 @@ function emojisOf(block: Block): string[] {
   }
 }
 
+/** Minúsculas, sin acentos ni signos: para buscar la respuesta dentro de una pista. */
+const normalize = (s: string): string =>
+  s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+const NUMBER_WORDS: Record<Lang, string[]> = {
+  es: ['cero', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez', 'once', 'doce', 'trece', 'catorce', 'quince', 'dieciseis', 'diecisiete', 'dieciocho', 'diecinueve', 'veinte'],
+  en: ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty'],
+};
+/** Quita los artículos al principio: «la raíz» se reconoce también como «raíz». */
+const core = (s: string): string => normalize(s).replace(/^(el|la|los|las|un|una|the|a|an) /, '');
+const containsWord = (text: string, word: string): boolean => word !== '' && ` ${normalize(text)} `.includes(` ${word} `);
+
+/** Formas de la respuesta correcta que una pista no puede contener, por idioma. */
+function answerForms(block: Block, lang: Lang): string[] {
+  switch (block.type) {
+    case 'choice':
+      return [core(lessonText(block.options[block.correct]?.text ?? { es: [], en: [] }, lang))];
+    case 'fillWord':
+      return [core(lessonText(block.options[block.correct] ?? { es: [], en: [] }, lang))];
+    case 'count':
+      return [String(block.amount), NUMBER_WORDS[lang][block.amount] ?? ''];
+    case 'trueFalse':
+      return lang === 'es' ? ['verdadero', 'falso', 'cierto', 'mentira'] : ['true', 'false'];
+    default:
+      return [];
+  }
+}
+
 function checkBlock(block: Block, where: string, issues: string[]): void {
+  const hintText = 'hint' in block ? block.hint : undefined;
+  if (hintText) {
+    for (const lang of ['es', 'en'] as const) {
+      if (answerForms(block, lang).some((form) => containsWord(lessonText(hintText, lang), form)))
+        issues.push(`${where}: la pista revela la respuesta (${lang === 'es' ? 'español' : 'inglés'})`);
+    }
+  }
   const dupes = (list: BiText[]) => new Set(list.map((t) => lessonText(t, 'es').trim().toLowerCase())).size !== list.length;
   switch (block.type) {
     case 'choice':

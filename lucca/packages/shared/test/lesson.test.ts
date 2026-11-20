@@ -85,3 +85,28 @@ describe('sentenceWords', () => {
     expect(sentenceWords('Hola, Lucca. ¿Cómo estás hoy? ¡Bien!')).toEqual([2, 3, 1]);
   });
 });
+
+describe('hints (pistas sin la respuesta)', () => {
+  const withQuiz = (q: LessonDoc['quiz'][number]): LessonDoc => ({ ...valid(), quiz: [q, valid().quiz[1]] });
+
+  it('a hint that guides without giving the answer is fine', () => {
+    const doc = withQuiz({ type: 'choice', question: bi('¿Qué parte bebe agua?', 'Which part drinks water?'), options: [{ text: bi('La raíz', 'The root') }, { text: bi('La flor', 'The flower') }], correct: 0, hint: bi('Piensa en lo que está bajo la tierra.', 'Think about what is under the soil.') });
+    expect(checkLesson(doc)).toEqual([]);
+  });
+
+  it.each([
+    ['choice: the right option inside the hint', { type: 'choice', question: bi('¿Qué parte bebe agua?', 'Which part?'), options: [{ text: bi('La raíz', 'The root') }, { text: bi('La flor', 'The flower') }], correct: 0, hint: bi('Es la RAÍZ, claro.', 'Think.') }],
+    ['choice: the answer without accents still counts', { type: 'choice', question: bi('¿Qué parte?', 'Which?'), options: [{ text: bi('La raíz', 'The root') }, { text: bi('La flor', 'The flower') }], correct: 0, hint: bi('Piensa.', 'It is the root.') }],
+    ['fillWord: the missing word', { type: 'fillWord', sentence: bi('La flor hace ___.', 'The flower makes ___.'), options: [bi('piedras', 'stones'), bi('semillas', 'seeds')], correct: 1, hint: bi('Empieza por s: semillas.', 'Think.') }],
+    ['count: the number in digits', { type: 'count', question: bi('¿Cuántas?', 'How many?'), emoji: '🍃', amount: 4, hint: bi('Son 4.', 'Count slowly.') }],
+    ['count: the number in words', { type: 'count', question: bi('¿Cuántas?', 'How many?'), emoji: '🍃', amount: 4, hint: bi('Cuenta despacio.', 'There are four.') }],
+    ['trueFalse: saying true or false', { type: 'trueFalse', statement: bi('Las hojas comen sol.', 'Leaves eat sunlight.'), answer: true, hint: bi('Es verdadero.', 'Think.') }],
+  ])('%s is a leaked answer', (_n, q) => {
+    expect(checkLesson(withQuiz(q as LessonDoc['quiz'][number])).some((i) => /pista revela la respuesta/.test(i))).toBe(true);
+  });
+
+  it('a hint is also limited to 12-word sentences', () => {
+    const doc = withQuiz({ type: 'trueFalse', statement: bi('Las hojas comen sol.', 'Leaves eat.'), answer: true, hint: bi('Piensa en lo que hacen las hojas cuando el sol sale por la mañana temprano.', 'Think.') });
+    expect(checkLesson(doc).some((i) => /más de 12 palabras/.test(i))).toBe(true);
+  });
+});

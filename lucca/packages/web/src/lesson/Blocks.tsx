@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import type { Block, Lang } from '@lucca/shared';
+import type { BiText, Block, Lang } from '@lucca/shared';
 import { t } from '../i18n';
-import { T, plain, shuffled } from './text';
+import { SayText, T, plain, shuffled } from './text';
 
 type Of<K extends Block['type']> = Extract<Block, { type: K }>;
 
@@ -16,13 +16,27 @@ interface Props<K extends Block['type']> extends BlockEvents {
   lang: Lang;
 }
 
-function Feedback({ state, lang }: { state: 'right' | 'wrong' | null; lang: Lang }) {
+type FeedbackState = 'right' | 'kept-trying' | 'wrong' | null;
+
+/** Elogio del proceso, no del talento: «lo pensaste bien», o «seguiste intentando» si hubo fallos antes. */
+function Feedback({ state, lang, hint }: { state: FeedbackState; lang: Lang; hint?: BiText }) {
+  const text = state === 'right' ? t(lang, 'lessonRight') : state === 'kept-trying' ? t(lang, 'lessonKeptTrying') : state === 'wrong' ? t(lang, 'lessonTryAgain') : '';
   return (
-    <p className={`lesson-feedback${state ? ` is-${state}` : ''}`} role="status">
-      {state === 'right' ? t(lang, 'lessonRight') : state === 'wrong' ? t(lang, 'lessonTryAgain') : ''}
-    </p>
+    <>
+      <p className={`lesson-feedback${state ? ` is-${state === 'wrong' ? 'wrong' : 'right'}` : ''}`} role="status">
+        {text}
+      </p>
+      {state === 'wrong' && hint ? (
+        <p className="lesson-hint">
+          <span aria-hidden="true">💡 </span>
+          <strong>{t(lang, 'lessonHint')}:</strong> <T text={hint} lang={lang} />
+        </p>
+      ) : null}
+    </>
   );
 }
+const outcome = (solved: boolean, missed: boolean, everMissed: boolean): FeedbackState =>
+  solved ? (everMissed ? 'kept-trying' : 'right') : missed ? 'wrong' : null;
 
 const Emoji = ({ value, size = 'big' }: { value?: string; size?: 'big' | 'small' }) =>
   value ? (
@@ -45,11 +59,11 @@ function useSingleAnswer(events: BlockEvents) {
       events.onMiss?.();
     }
   };
-  const state: 'right' | 'wrong' | null = solved ? 'right' : wrong.length ? 'wrong' : null;
+  const state = outcome(solved, wrong.length > 0, wrong.length > 0);
   return { wrong, solved, pick, state };
 }
 
-function Options({ labels, correct, lang, events, emojis }: { labels: React.ReactNode[]; correct: number; lang: Lang; events: BlockEvents; emojis?: (string | undefined)[] }) {
+function Options({ labels, correct, lang, events, emojis, hint }: { labels: React.ReactNode[]; correct: number; lang: Lang; events: BlockEvents; emojis?: (string | undefined)[]; hint?: BiText }) {
   const { wrong, solved, pick, state } = useSingleAnswer(events);
   return (
     <>
@@ -68,7 +82,7 @@ function Options({ labels, correct, lang, events, emojis }: { labels: React.Reac
           </button>
         ))}
       </div>
-      <Feedback state={state} lang={lang} />
+      <Feedback state={state} lang={lang} hint={hint} />
     </>
   );
 }
@@ -77,9 +91,7 @@ export function ExplainBlock({ block, lang }: Props<'explain'>) {
   return (
     <div className="lesson-explain">
       <Emoji value={block.emoji} />
-      <p className="lesson-text">
-        <T text={block.text} lang={lang} />
-      </p>
+      <SayText text={block.text} lang={lang} />
     </div>
   );
 }
@@ -90,9 +102,7 @@ export function StoryBlock({ block, lang }: Props<'story'>) {
       {block.panels.map((p, i) => (
         <li key={i}>
           <Emoji value={p.emoji} size="small" />
-          <p className="lesson-text">
-            <T text={p.text} lang={lang} />
-          </p>
+          <SayText text={p.text} lang={lang} />
         </li>
       ))}
     </ol>
@@ -102,10 +112,8 @@ export function StoryBlock({ block, lang }: Props<'story'>) {
 export function ChoiceBlock({ block, lang, ...events }: Props<'choice'>) {
   return (
     <div className="lesson-question">
-      <p className="lesson-text">
-        <T text={block.question} lang={lang} />
-      </p>
-      <Options labels={block.options.map((o, i) => <T key={i} text={o.text} lang={lang} />)} emojis={block.options.map((o) => o.emoji)} correct={block.correct} lang={lang} events={events} />
+      <SayText text={block.question} lang={lang} />
+      <Options labels={block.options.map((o, i) => <T key={i} text={o.text} lang={lang} />)} emojis={block.options.map((o) => o.emoji)} correct={block.correct} lang={lang} events={events} hint={block.hint} />
     </div>
   );
 }
@@ -113,10 +121,8 @@ export function ChoiceBlock({ block, lang, ...events }: Props<'choice'>) {
 export function FillWordBlock({ block, lang, ...events }: Props<'fillWord'>) {
   return (
     <div className="lesson-question">
-      <p className="lesson-text lesson-fill">
-        <T text={block.sentence} lang={lang} />
-      </p>
-      <Options labels={block.options.map((o, i) => <T key={i} text={o} lang={lang} />)} correct={block.correct} lang={lang} events={events} />
+      <SayText text={block.sentence} lang={lang} className="lesson-text lesson-fill" />
+      <Options labels={block.options.map((o, i) => <T key={i} text={o} lang={lang} />)} correct={block.correct} lang={lang} events={events} hint={block.hint} />
     </div>
   );
 }
@@ -124,10 +130,8 @@ export function FillWordBlock({ block, lang, ...events }: Props<'fillWord'>) {
 export function TrueFalseBlock({ block, lang, ...events }: Props<'trueFalse'>) {
   return (
     <div className="lesson-question">
-      <p className="lesson-text">
-        <T text={block.statement} lang={lang} />
-      </p>
-      <Options labels={[t(lang, 'lessonTrue'), t(lang, 'lessonFalse')]} emojis={['👍', '👎']} correct={block.answer ? 0 : 1} lang={lang} events={events} />
+      <SayText text={block.statement} lang={lang} />
+      <Options labels={[t(lang, 'lessonTrue'), t(lang, 'lessonFalse')]} emojis={['👍', '👎']} correct={block.answer ? 0 : 1} lang={lang} events={events} hint={block.hint} />
     </div>
   );
 }
@@ -142,9 +146,7 @@ export function CountBlock({ block, lang, ...events }: Props<'count'>) {
   const choices = countChoices(block.amount);
   return (
     <div className="lesson-question">
-      <p className="lesson-text">
-        <T text={block.question} lang={lang} />
-      </p>
+      <SayText text={block.question} lang={lang} />
       <div className="lesson-count" role="group" aria-label={plain(block.question, lang)}>
         {Array.from({ length: block.amount }, (_, i) => (
           <span key={i} role="img" aria-label={block.emoji}>
@@ -152,7 +154,7 @@ export function CountBlock({ block, lang, ...events }: Props<'count'>) {
           </span>
         ))}
       </div>
-      <Options labels={choices.map(String)} correct={choices.indexOf(block.amount)} lang={lang} events={events} />
+      <Options labels={choices.map(String)} correct={choices.indexOf(block.amount)} lang={lang} events={events} hint={block.hint} />
     </div>
   );
 }
@@ -162,9 +164,7 @@ export function NumberLineBlock({ block, lang, ...events }: Props<'numberLine'>)
   const { wrong, solved, pick, state } = useSingleAnswer(events);
   return (
     <div className="lesson-question">
-      <p className="lesson-text">
-        <T text={block.question} lang={lang} />
-      </p>
+      <SayText text={block.question} lang={lang} />
       <div className="lesson-line" role="group" aria-label={plain(block.question, lang)}>
         {numbers.map((n) => (
           <button
@@ -187,6 +187,7 @@ export function OrderBlock({ block, lang, ...events }: Props<'order'>) {
   const offered = useMemo(() => shuffled(block.items.map((_, i) => i), plain(block.question, 'es')), [block]);
   const [chosen, setChosen] = useState<number[]>([]);
   const [missed, setMissed] = useState(false);
+  const [everMissed, setEverMissed] = useState(false);
   const solved = chosen.length === block.items.length;
   const tap = (index: number) => {
     if (solved || chosen.includes(index)) return;
@@ -197,14 +198,13 @@ export function OrderBlock({ block, lang, ...events }: Props<'order'>) {
       if (next.length === block.items.length) events.onSolved?.();
     } else {
       setMissed(true);
+      setEverMissed(true);
       events.onMiss?.();
     }
   };
   return (
     <div className="lesson-question">
-      <p className="lesson-text">
-        <T text={block.question} lang={lang} />
-      </p>
+      <SayText text={block.question} lang={lang} />
       <div className="lesson-options">
         {offered.map((i) => (
           <button key={i} type="button" className={`lesson-option${chosen.includes(i) ? ' is-right' : ''}`} disabled={chosen.includes(i)} onClick={() => tap(i)}>
@@ -223,7 +223,7 @@ export function OrderBlock({ block, lang, ...events }: Props<'order'>) {
           ))}
         </ol>
       ) : null}
-      <Feedback state={solved ? 'right' : missed ? 'wrong' : null} lang={lang} />
+      <Feedback state={outcome(solved, missed, everMissed)} lang={lang} />
     </div>
   );
 }
@@ -233,6 +233,7 @@ export function MatchBlock({ block, lang, ...events }: Props<'match'>) {
   const [left, setLeft] = useState<number | null>(null);
   const [done, setDone] = useState<number[]>([]);
   const [missed, setMissed] = useState(false);
+  const [everMissed, setEverMissed] = useState(false);
   const solved = done.length === block.pairs.length;
   const pickRight = (i: number) => {
     if (left === null || done.includes(i)) return;
@@ -243,15 +244,14 @@ export function MatchBlock({ block, lang, ...events }: Props<'match'>) {
       if (next.length === block.pairs.length) events.onSolved?.();
     } else {
       setMissed(true);
+      setEverMissed(true);
       events.onMiss?.();
     }
     setLeft(null);
   };
   return (
     <div className="lesson-question">
-      <p className="lesson-text">
-        <T text={block.question} lang={lang} />
-      </p>
+      <SayText text={block.question} lang={lang} />
       <div className="lesson-match">
         <div className="lesson-options lesson-col">
           {block.pairs.map((p, i) => (
@@ -272,7 +272,7 @@ export function MatchBlock({ block, lang, ...events }: Props<'match'>) {
           ))}
         </div>
       </div>
-      <Feedback state={solved ? 'right' : missed ? 'wrong' : null} lang={lang} />
+      <Feedback state={outcome(solved, missed, everMissed)} lang={lang} />
     </div>
   );
 }
@@ -280,6 +280,7 @@ export function MatchBlock({ block, lang, ...events }: Props<'match'>) {
 export function SortBlock({ block, lang, ...events }: Props<'sort'>) {
   const [index, setIndex] = useState(0);
   const [missed, setMissed] = useState(false);
+  const [everMissed, setEverMissed] = useState(false);
   const solved = index >= block.items.length;
   const item = block.items[Math.min(index, block.items.length - 1)];
   const pick = (group: number) => {
@@ -290,14 +291,13 @@ export function SortBlock({ block, lang, ...events }: Props<'sort'>) {
       if (index + 1 === block.items.length) events.onSolved?.();
     } else {
       setMissed(true);
+      setEverMissed(true);
       events.onMiss?.();
     }
   };
   return (
     <div className="lesson-question">
-      <p className="lesson-text">
-        <T text={block.question} lang={lang} />
-      </p>
+      <SayText text={block.question} lang={lang} />
       {solved ? null : (
         <p className="lesson-sort-item">
           <Emoji value={item.emoji} size="small" />
@@ -313,7 +313,7 @@ export function SortBlock({ block, lang, ...events }: Props<'sort'>) {
           </button>
         ))}
       </div>
-      <Feedback state={solved ? 'right' : missed ? 'wrong' : null} lang={lang} />
+      <Feedback state={outcome(solved, missed, everMissed)} lang={lang} />
     </div>
   );
 }

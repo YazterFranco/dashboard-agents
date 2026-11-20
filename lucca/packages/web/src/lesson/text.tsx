@@ -1,4 +1,6 @@
+import { createContext, useContext } from 'react';
 import { lessonText, type BiText, type Lang } from '@lucca/shared';
+import { t } from '../i18n';
 import type { Segment } from '../speaker';
 
 /** Un texto bilingüe en el idioma pedido; las palabras de otro idioma llevan su `lang` (lector de pantalla y voz). */
@@ -19,6 +21,26 @@ export function T({ text, lang }: { text: BiText; lang: Lang }) {
 }
 
 export const plain = (text: BiText, lang: Lang): string => lessonText(text, lang);
+
+/** Leer en voz alta al tocar un texto. `null` (modo «Leer») = el texto no es tocable. */
+export const SayContext = createContext<((segments: Segment[]) => void) | null>(null);
+
+/** Texto de la lección; con voz activa se puede tocar para oírlo (como en Khan Academy Kids). */
+export function SayText({ text, lang, className = 'lesson-text' }: { text: BiText; lang: Lang; className?: string }) {
+  const say = useContext(SayContext);
+  if (!say) {
+    return (
+      <p className={className}>
+        <T text={text} lang={lang} />
+      </p>
+    );
+  }
+  return (
+    <button type="button" className={`${className} lesson-say`} aria-label={t(lang, 'lessonSay', { text: plain(text, lang) })} onClick={() => say(voiceOf(text, lang))}>
+      <T text={text} lang={lang} />
+    </button>
+  );
+}
 
 /** Fragmentos para la voz: cada uno con su idioma. */
 export const voiceOf = (text: BiText, lang: Lang): Segment[] => text[lang].map((s) => ({ text: s.text, lang: s.lang ?? lang }));

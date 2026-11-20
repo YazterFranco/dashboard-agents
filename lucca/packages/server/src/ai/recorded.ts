@@ -24,6 +24,7 @@ const sort = (es: string, en: string, g0: Pair, g1: Pair, ...items: [string, str
   groups: [t(g0), t(g1)],
   items: items.map(([ies, ien, group, emoji]) => ({ text: bi(ies, ien), group, ...(emoji ? { emoji } : {}) })),
 });
+const withHint = <B extends QuizBlock>(block: B, es: string, en: string): B => ({ ...block, hint: bi(es, en) });
 const choice = (es: string, en: string, correct: number, ...options: [string, string, string?][]): Block & QuizBlock => ({
   type: 'choice',
   question: bi(es, en),
@@ -54,9 +55,9 @@ const RECORDED: Recorded[] = [
         [order('Ordena de abajo hacia arriba.', 'Order from bottom to top.', ['Raíz', 'Root'], ['Tallo', 'Stem'], ['Hojas', 'Leaves'], ['Flor', 'Flower'])],
       ],
       [
-        choice('¿Qué parte bebe agua?', 'Which part drinks water?', 0, ['La raíz', 'The root', '🥕'], ['La flor', 'The flower', '🌸'], ['Las hojas', 'The leaves', '🍃']),
-        tf('Las hojas toman la luz del sol.', 'Leaves take in sunlight.', true),
-        fill('La flor hace las ___.', 'The flower makes the ___.', 1, ['piedras', 'stones'], ['semillas', 'seeds']),
+        withHint(choice('¿Qué parte bebe agua?', 'Which part drinks water?', 0, ['La raíz', 'The root', '🥕'], ['La flor', 'The flower', '🌸'], ['Las hojas', 'The leaves', '🍃']), 'Piensa: ¿qué parte está bajo la tierra?', 'Think: which part is under the soil?'),
+        withHint(tf('Las hojas toman la luz del sol.', 'Leaves take in sunlight.', true), 'Mira otra vez la pantalla 4.', 'Look again at screen 4.'),
+        withHint(fill('La flor hace las ___.', 'The flower makes the ___.', 1, ['piedras', 'stones'], ['semillas', 'seeds']), 'De ahí nacen plantas nuevas.', 'New plants grow from them.'),
       ],
     ),
     alternative: lesson(
@@ -85,9 +86,9 @@ const RECORDED: Recorded[] = [
         [line('Salta hacia atrás: 9 menos 4.', 'Jump back: 9 minus 4.', 0, 10, 5)],
       ],
       [
-        choice('¿Cuánto es 8 menos 3?', 'What is 8 minus 3?', 2, ['4', '4'], ['6', '6'], ['5', '5']),
-        tf('Al restar, el número se hace más pequeño.', 'When you subtract, the number gets smaller.', true),
-        count('¿Cuántos globos quedan de 6 si vuelan 2?', 'How many balloons are left of 6 if 2 fly away?', '🎈', 4),
+        withHint(choice('¿Cuánto es 8 menos 3?', 'What is 8 minus 3?', 2, ['4', '4'], ['6', '6'], ['5', '5']), 'Empieza en 8 y salta 3 hacia atrás.', 'Start at 8 and jump back 3.'),
+        withHint(tf('Al restar, el número se hace más pequeño.', 'When you subtract, the number gets smaller.', true), 'Restar es quitar.', 'Subtracting is taking away.'),
+        withHint(count('¿Cuántos globos quedan de 6 si vuelan 2?', 'How many balloons are left of 6 if 2 fly away?', '🎈', 4), 'Tapa 2 globos con el dedo y cuenta.', 'Cover 2 balloons with a finger and count.'),
       ],
     ),
     alternative: lesson(

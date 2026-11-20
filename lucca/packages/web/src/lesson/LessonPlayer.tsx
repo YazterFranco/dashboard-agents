@@ -7,7 +7,7 @@ import { Mascot } from '../components/Mascot';
 import { SpeakerIcon } from '../components/SubjectIcon';
 import { LessonBlock, blockSpeech } from './Blocks';
 import type { LessonAnswer, LessonVariant } from './api';
-import { T, voiceOf } from './text';
+import { SayContext, T, voiceOf } from './text';
 
 interface Props {
   task: Task;
@@ -212,6 +212,7 @@ export function LessonPlayer({ task, lang, voiceMode, speaker, load, onProgress,
           <span style={{ width: `${Math.round(((index + 1) / total) * 100)}%` }} />
         </div>
         {inQuiz ? <p className="lesson-quiz-label">{t(lang, 'lessonQuiz', { n: String(index - screens + 1), m: String(total - screens) })}</p> : null}
+        <SayContext.Provider value={showSpeakerButtons(voiceMode) ? (segments) => speaker.speak(segments) : null}>
         <div className="lesson-blocks" key={`${view.variant}-${index}-${contentLang}`}>
           {blocks.map((b, i) => (
             <LessonBlock
@@ -223,6 +224,7 @@ export function LessonPlayer({ task, lang, voiceMode, speaker, load, onProgress,
             />
           ))}
         </div>
+        </SayContext.Provider>
         {offer ? (
           <div className="lesson-offer" role="status">
             <Mascot size={64} />
