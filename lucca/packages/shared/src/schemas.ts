@@ -52,6 +52,8 @@ export const SettingsFields = {
   theme: z.enum(THEMES, { error: 'Elige el tema' }),
   speechRate: z.number({ error: 'La velocidad va de 0,7 a 1,2' }).min(0.7, 'La velocidad va de 0,7 a 1,2').max(1.2, 'La velocidad va de 0,7 a 1,2'),
   tz: z.string().min(1),
+  /** Minutos de uso seguido antes de proponer una pausa; 0 = sin recordatorio. */
+  pauseMinutes: z.number({ error: 'La pausa va de 10 a 60 minutos, o 0 para no recordarla' }).int('La pausa va de 10 a 60 minutos, o 0 para no recordarla').refine((n) => n === 0 || (n >= 10 && n <= 60), 'La pausa va de 10 a 60 minutos, o 0 para no recordarla'),
   aiMonthlyCapUsd: z.number({ error: 'El tope va de 1 a 200 dólares' }).min(1, 'El tope va de 1 a 200 dólares').max(200, 'El tope va de 1 a 200 dólares'),
 };
 
@@ -63,6 +65,7 @@ export const SettingsSchema = z.object({
   theme: SettingsFields.theme.default('dark'),
   speechRate: SettingsFields.speechRate.default(0.9),
   tz: SettingsFields.tz.default('America/Panama'),
+  pauseMinutes: SettingsFields.pauseMinutes.default(25),
   aiMonthlyCapUsd: SettingsFields.aiMonthlyCapUsd.default(20),
 });
 export type Settings = z.infer<typeof SettingsSchema>;

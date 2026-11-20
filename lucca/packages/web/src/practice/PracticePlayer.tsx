@@ -4,6 +4,7 @@ import { t } from '../i18n';
 import type { ProgressResult } from '../progress';
 import { shouldAutoSpeak, showSpeakerButtons, type Speaker } from '../speaker';
 import { Mascot } from '../components/Mascot';
+import { Celebration } from '../components/Celebration';
 import { LessonBlock, blockSpeech } from '../lesson/Blocks';
 import { defaultContentLang } from '../lesson/LessonPlayer';
 import { SayContext } from '../lesson/text';
@@ -137,6 +138,7 @@ export function PracticePlayer({ task, lang, voiceMode, speaker, load, onProgres
       <main className="lesson">
         <header className="guide-top">{back}</header>
         <section className="tile guide-end celebrate">
+          <Celebration />
           <Mascot size={120} />
           <h1 ref={heading} tabIndex={-1}>
             {t(lang, 'practiceDone')}

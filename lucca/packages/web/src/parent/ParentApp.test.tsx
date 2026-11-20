@@ -15,7 +15,7 @@ const status = (over: Partial<StatusBody> = {}): StatusBody => ({
   connections: { ai: false, mereb: false },
   ...over,
 });
-const overviewBody = { today: '2026-11-18', weekStart: '2026-11-16', settings: { childName: 'Lucca', grade: 2, lang: 'es', voiceMode: 'both', theme: 'dark', speechRate: 0.9, tz: 'America/Panama', aiMonthlyCapUsd: 20 }, tasks: [], connections: { ai: false, mereb: false } };
+const overviewBody = { today: '2026-11-18', weekStart: '2026-11-16', settings: { childName: 'Lucca', grade: 2, lang: 'es', voiceMode: 'both', theme: 'dark', speechRate: 0.9, tz: 'America/Panama', aiMonthlyCapUsd: 20, pauseMinutes: 25 }, tasks: [], connections: { ai: false, mereb: false } };
 
 function fakeApi(over: Partial<Record<keyof ParentApi, unknown>> = {}): ParentApi {
   const base = {

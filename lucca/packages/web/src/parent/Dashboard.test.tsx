@@ -13,7 +13,7 @@ afterEach(() => {
 const overview = (over: Partial<Overview> = {}): Overview => ({
   today: '2026-11-18',
   weekStart: '2026-11-16',
-  settings: { childName: 'Lucca', grade: 2, lang: 'es', voiceMode: 'both', theme: 'dark', speechRate: 0.9, tz: 'America/Panama', aiMonthlyCapUsd: 20 },
+  settings: { childName: 'Lucca', grade: 2, lang: 'es', voiceMode: 'both', theme: 'dark', speechRate: 0.9, tz: 'America/Panama', aiMonthlyCapUsd: 20, pauseMinutes: 25 },
   tasks: [task({ id: 'a', title: 'Sumas con llevadas', assignedDate: '2026-11-17', dueDate: '2026-11-18' })],
   connections: { ai: false, mereb: false },
   ai: { mode: 'recorded', monthCostUsd: 0, capUsd: 20, alerts: [] },

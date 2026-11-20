@@ -13,8 +13,10 @@ function parseRate(text: string): number | null {
   return /^\d+(\.\d+)?$/.test(clean) ? Number(clean) : null;
 }
 
-type Key = 'childName' | 'speechRate' | 'aiMonthlyCapUsd';
-const IDS: Record<Key, string> = { childName: 'set-name', speechRate: 'set-rate', aiMonthlyCapUsd: 'set-cap' };
+type Key = 'childName' | 'speechRate' | 'aiMonthlyCapUsd' | 'pauseMinutes';
+const IDS: Record<Key, string> = { childName: 'set-name', speechRate: 'set-rate', aiMonthlyCapUsd: 'set-cap', pauseMinutes: 'set-pause' };
+const PAUSE_MESSAGE = 'La pausa va de 10 a 60 minutos, o 0 para no recordarla';
+const KEY_ORDER: Key[] = ['childName', 'speechRate', 'pauseMinutes', 'aiMonthlyCapUsd'];
 const CAP_MESSAGE = 'El tope va de 1 a 200 dólares';
 
 interface Props {
@@ -90,6 +92,7 @@ function SettingsForm({ settings, onSaved, api }: Omit<Props, 'connections'>) {
   const [theme, setTheme] = useState<Theme>(settings.theme);
   const [rate, setRate] = useState(asText(settings.speechRate));
   const [cap, setCap] = useState(String(settings.aiMonthlyCapUsd));
+  const [pause, setPause] = useState(String(settings.pauseMinutes));
   const [errors, setErrors] = useState<Partial<Record<Key, string>>>({});
   const [general, setGeneral] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -115,8 +118,11 @@ function SettingsForm({ settings, onSaved, api }: Omit<Props, 'connections'>) {
     const capNumber = parseRate(cap);
     const capResult = capNumber === null ? null : SettingsFields.aiMonthlyCapUsd.safeParse(capNumber);
     if (!capResult?.success) found.aiMonthlyCapUsd = CAP_MESSAGE;
+    const pauseText = pause.trim();
+    const pauseResult = /^\d+$/.test(pauseText) ? SettingsFields.pauseMinutes.safeParse(Number(pauseText)) : null;
+    if (!pauseResult?.success) found.pauseMinutes = PAUSE_MESSAGE;
     setErrors(found);
-    const first = (['childName', 'speechRate', 'aiMonthlyCapUsd'] as Key[]).find((k) => found[k]);
+    const first = KEY_ORDER.find((k) => found[k]);
     if (first) return void document.getElementById(IDS[first])?.focus();
 
     const patch: Partial<Omit<Settings, 'tz'>> = {};
@@ -127,6 +133,7 @@ function SettingsForm({ settings, onSaved, api }: Omit<Props, 'connections'>) {
     if (theme !== baseline.theme) patch.theme = theme;
     if (rateResult?.success && rateResult.data !== baseline.speechRate) patch.speechRate = rateResult.data;
     if (capResult?.success && capResult.data !== baseline.aiMonthlyCapUsd) patch.aiMonthlyCapUsd = capResult.data;
+    if (pauseResult?.success && pauseResult.data !== baseline.pauseMinutes) patch.pauseMinutes = pauseResult.data;
     if (Object.keys(patch).length === 0) return void setStatus('No hay cambios que guardar');
 
     sending.current = true;
@@ -142,11 +149,11 @@ function SettingsForm({ settings, onSaved, api }: Omit<Props, 'connections'>) {
         const mapped: Partial<Record<Key, string>> = {};
         let rest: string | null = null;
         for (const [key, message] of Object.entries(err.fields)) {
-          if (key === 'childName' || key === 'speechRate' || key === 'aiMonthlyCapUsd') mapped[key] = message;
+          if ((KEY_ORDER as string[]).includes(key)) mapped[key as Key] = message;
           else rest ??= message;
         }
         setErrors(mapped);
-        const firstField = (['childName', 'speechRate', 'aiMonthlyCapUsd'] as Key[]).find((k) => mapped[k]);
+        const firstField = KEY_ORDER.find((k) => mapped[k]);
         if (firstField) document.getElementById(IDS[firstField])?.focus();
         setGeneral(firstField ? rest : (rest ?? GENERIC_ERROR));
       } else {
@@ -246,6 +253,22 @@ function SettingsForm({ settings, onSaved, api }: Omit<Props, 'connections'>) {
               setRate(e.target.value);
               touch();
               if (errors.speechRate) setErrors(({ speechRate: _gone, ...rest }) => rest);
+            }}
+          />
+        )}
+      </Field>
+      <Field id={IDS.pauseMinutes} label="Pausa cada (minutos)" hint="De 10 a 60; 0 para no recordarla. Tras ese tiempo de uso, la mascota propone un minuto de descanso." error={errors.pauseMinutes}>
+        {(c) => (
+          <input
+            {...c}
+            type="text"
+            inputMode="numeric"
+            autoComplete="off"
+            value={pause}
+            onChange={(e) => {
+              setPause(e.target.value);
+              touch();
+              if (errors.pauseMinutes) setErrors(({ pauseMinutes: _gone, ...rest }) => rest);
             }}
           />
         )}

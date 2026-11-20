@@ -72,6 +72,7 @@ export const SettingsPatchSchema = z
     theme: SettingsFields.theme,
     speechRate: SettingsFields.speechRate,
     aiMonthlyCapUsd: SettingsFields.aiMonthlyCapUsd,
+    pauseMinutes: SettingsFields.pauseMinutes,
   })
   .partial();
 export type SettingsPatch = z.infer<typeof SettingsPatchSchema>;

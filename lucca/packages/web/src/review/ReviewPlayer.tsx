@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Lang, VoiceMode } from '@lucca/shared';
 import { t } from '../i18n';
 import { Mascot } from '../components/Mascot';
+import { Celebration } from '../components/Celebration';
 import { LessonBlock, blockSpeech } from '../lesson/Blocks';
 import { SayContext } from '../lesson/text';
 import { shouldAutoSpeak, showSpeakerButtons, type Speaker } from '../speaker';
@@ -95,7 +96,8 @@ export function ReviewPlayer({ lang, voiceMode, speaker, api, onClose }: Props) 
     return (
       <main className="lesson">
         <header className="guide-top">{back}</header>
-        <section className="tile guide-end">
+        <section className={`tile guide-end${view.kind === 'done' ? ' celebrate' : ''}`}>
+          {view.kind === 'done' ? <Celebration /> : null}
           <Mascot size={120} />
           {view.kind === 'done' ? (
             <>

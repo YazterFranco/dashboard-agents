@@ -1,3 +1,4 @@
+import { Celebration } from './Celebration';
 import { useEffect, useRef, useState } from 'react';
 import { taskTitle, type Lang, type ProgressKind, type Task, type VoiceMode } from '@lucca/shared';
 import { dueLabel, t } from '../i18n';
@@ -125,7 +126,8 @@ export function DayGuide({ lang, voiceMode, speaker, tasks, initialIds, emptyMes
     return (
       <main className="guide">
         <header className="guide-top">{back}</header>
-        <section className="tile guide-end">
+        <section className="tile guide-end celebrate">
+          <Celebration />
           <h1 ref={heading} tabIndex={-1}>
             {t(lang, 'guideFinished')}
           </h1>

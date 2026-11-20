@@ -288,3 +288,18 @@ describe('SettingsTab AI', () => {
   });
 });
 
+
+describe('SettingsTab pause', () => {
+  it('changes the pause; 0 turns it off; 5 or 61 are rejected', async () => {
+    const { save } = setup();
+    type('Pausa cada (minutos)', '5');
+    saveSettings();
+    expect(errorOf('Pausa cada (minutos)')!.textContent).toBe('La pausa va de 10 a 60 minutos, o 0 para no recordarla');
+    type('Pausa cada (minutos)', '61');
+    saveSettings();
+    expect(save).not.toHaveBeenCalled();
+    type('Pausa cada (minutos)', '0');
+    saveSettings();
+    await waitFor(() => expect(save).toHaveBeenCalledWith({ pauseMinutes: 0 }));
+  });
+});

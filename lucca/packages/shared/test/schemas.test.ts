@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { IsoDateSchema, KidStateSchema, SettingsSchema, SUBJECTS, TaskSchema, taskTitle } from '../src/index.js';
+import { IsoDateSchema, KidStateSchema, SettingsFields, SettingsSchema, SUBJECTS, TaskSchema, taskTitle } from '../src/index.js';
 
 const baseTask = { id: 't1', subject: 'science', title: 'Las partes de la planta', source: 'manual' } as const;
 
@@ -46,6 +46,7 @@ describe('schemas', () => {
       theme: 'dark',
       speechRate: 0.9,
       tz: 'America/Panama',
+      pauseMinutes: 25,
       aiMonthlyCapUsd: 20,
     });
   });
@@ -83,4 +84,9 @@ describe('schemas', () => {
     for (const speechRate of [0.7, 0.9, 1.2]) expect(SettingsSchema.safeParse({ speechRate }).success).toBe(true);
     for (const speechRate of [0.69, 1.21, 0, -1, 'rápido']) expect(SettingsSchema.safeParse({ speechRate }).success).toBe(false);
   });
+});
+
+describe('pauseMinutes', () => {
+  it.each([0, 10, 25, 60])('%i is valid', (n) => expect(SettingsFields.pauseMinutes.safeParse(n).success).toBe(true));
+  it.each([5, 9, 61, 12.5, -1])('%s is rejected', (n) => expect(SettingsFields.pauseMinutes.safeParse(n).success).toBe(false));
 });

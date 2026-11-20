@@ -5,6 +5,7 @@ import { ReviewPlayer } from './review/ReviewPlayer';
 import { reviewApi } from './review/api';
 import { PracticePlayer } from './practice/PracticePlayer';
 import { fetchPractice } from './practice/api';
+import { PauseGate } from './pause';
 import { SettingsSchema, type KidState, type ProgressKind, type Settings } from '@lucca/shared';
 import { fetchState, postProgress } from './api';
 import { Mascot } from './components/Mascot';
@@ -111,7 +112,7 @@ export function App() {
 
   if (state) {
     return (
-      <>
+      <PauseGate minutes={state.settings.pauseMinutes} lang={prefs.lang}>
         <div className="week-wrap" hidden={Boolean(openTask) || reviewing || Boolean(practiceTask)}>
           <WeekScreen
             key={state.today}
@@ -174,7 +175,7 @@ export function App() {
             onClose={closeLesson}
           />
         ) : null}
-      </>
+      </PauseGate>
     );
   }
 

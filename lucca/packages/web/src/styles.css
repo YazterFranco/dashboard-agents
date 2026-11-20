@@ -1008,3 +1008,43 @@ h3 {
 .practice-note { margin: 0; font: 800 22px var(--font-display); color: var(--ink); }
 .task-practice { flex: 1 1 120px; min-height: var(--tap); padding: 0 16px; }
 .pill-understood { background: var(--on-accent); color: var(--c, #fff); }
+
+/* ---------- Pausa saludable ---------- */
+.pause-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  background: rgba(8, 12, 22, 0.78);
+}
+.pause-card {
+  max-width: 520px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+.pause-card h1 { margin: 0; font: 800 34px/1.15 var(--font-display); }
+.pause-card h1:focus { outline: none; }
+.pause-ideas { margin: 0; font-size: 48px; }
+.pause-timer { margin: 0; font: 800 40px var(--font-display); font-variant-numeric: tabular-nums; }
+
+/* ---------- Celebración (decorativa; sin movimiento si se pide reducirlo) ---------- */
+.celebrate { position: relative; overflow: hidden; }
+.confetti { position: absolute; inset: 0; pointer-events: none; }
+.confetti span {
+  position: absolute;
+  top: -40px;
+  font-size: 28px;
+  animation: confetti-fall 1.6s ease-in forwards;
+}
+@keyframes confetti-fall {
+  to { transform: translateY(340px) rotate(300deg); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .confetti span { animation: none; top: 8px; opacity: 0.9; }
+}

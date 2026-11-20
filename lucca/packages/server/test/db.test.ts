@@ -86,7 +86,7 @@ describe('LuccaDb', () => {
   it('settings default, patch and persist', () => {
     const file = tempFile();
     const a = open(file);
-    expect(a.getSettings()).toEqual({ childName: 'Lucca', grade: 2, lang: 'es', voiceMode: 'both', theme: 'dark', speechRate: 0.9, tz: 'America/Panama', aiMonthlyCapUsd: 20 });
+    expect(a.getSettings()).toEqual({ childName: 'Lucca', grade: 2, lang: 'es', voiceMode: 'both', theme: 'dark', speechRate: 0.9, tz: 'America/Panama', pauseMinutes: 25, aiMonthlyCapUsd: 20 });
     expect(a.setSettings({ lang: 'en' })).toMatchObject({ lang: 'en', childName: 'Lucca' });
     a.close();
     opened.pop();
