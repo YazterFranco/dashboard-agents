@@ -51,3 +51,23 @@ Al terminar, el sistema SHALL mostrar un resumen alegre (retos completados y est
 #### Scenario: Fin de la práctica
 - **WHEN** Lucca completa el último reto
 - **THEN** ve "¡Buen trabajo! Hiciste 6 retos", gana una estrella y puede elegir otra ronda o volver
+
+### Requirement: Repaso rápido con práctica espaciada
+Al terminar una lección, sus preguntas finales SHALL guardarse para un repaso que vuelve al día siguiente. Cada pregunta acertada a la primera SHALL volver más tarde (a los 3, 7 y 14 días) y una fallada SHALL volver al día siguiente. Lucca ve como mucho 5 preguntas al día y gana una estrella al terminar el repaso, una vez por día. Si papá oculta una tarea, sus preguntas dejan de aparecer.
+
+#### Scenario: Repaso al día siguiente
+- **WHEN** Lucca termina la lección de "Las partes de la planta" el miércoles
+- **THEN** el miércoles no ve repaso y el jueves ve "3 para repasar hoy" y el botón "Repaso rápido"
+
+#### Scenario: Pregunta fallada
+- **WHEN** Lucca falla una pregunta del repaso a la primera
+- **THEN** esa pregunta vuelve al día siguiente y las acertadas esperan 3 días
+
+#### Scenario: Una estrella al día
+- **WHEN** Lucca termina el repaso dos veces el mismo día
+- **THEN** solo gana una estrella
+
+#### Scenario: Papá ve el repaso
+- **WHEN** papá abre Progreso
+- **THEN** ve cuántas preguntas hay guardadas, cuántas aprendidas y cuántas tocan hoy
+

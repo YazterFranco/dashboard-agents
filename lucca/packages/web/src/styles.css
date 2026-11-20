@@ -13,6 +13,9 @@
   --bar: #c6f432;
   --star: #ffd15c;
   --nova: #b79cff;
+  /* Acción principal: debe destacar sobre el fondo de la página en cada tema (≥ 3:1). */
+  --action: #c6f432;
+  --on-action: #101828;
 
   --subj-math: #7cc4ff;
   --subj-spanish: #ff8a7a;
@@ -46,6 +49,8 @@
   --line: #b8c2d2;
   --ring: #3b2ee0;
   --bar: #15803d;
+  --action: #101828;
+  --on-action: #ffffff;
   color-scheme: light;
 }
 
@@ -129,8 +134,8 @@ h3 {
 .btn-primary.splash-retry {
   flex: none;
   padding: 0 32px;
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--action);
+  color: var(--on-action);
 }
 
 /* ---------- Rejilla Bento ---------- */
@@ -480,7 +485,7 @@ h3 {
   max-width: 30ch;
   font: 700 26px/1.3 var(--font-display);
 }
-.lesson-retry { flex: none; padding: 0 32px; background: var(--accent); color: var(--on-accent); }
+.btn-primary.lesson-retry { flex: none; padding: 0 32px; background: var(--action); color: var(--on-action); }
 .lesson-card {
   display: flex;
   flex-direction: column;
@@ -633,7 +638,7 @@ h3 {
   background: var(--chip);
 }
 .lesson-offer p { margin: 0; font: 700 22px var(--font-display); flex: 1 1 200px; }
-.lesson-offer .btn-primary { flex: none; padding: 0 28px; background: var(--accent); color: var(--on-accent); }
+.lesson-offer .btn-primary { flex: none; padding: 0 28px; background: var(--action); color: var(--on-action); }
 .lesson-nav {
   display: flex;
   flex-wrap: wrap;
@@ -641,7 +646,10 @@ h3 {
   gap: 12px;
 }
 .lesson-nav .seg-btn { flex: 0 1 auto; padding: 0 22px; }
-.lesson-next { flex: 1 1 220px; }
+/* Acción principal en verde lima: con el fondo oscuro de .btn-primary se confundía con la página (1:1). */
+.btn-primary.lesson-next { flex: 1 1 220px; background: var(--action); color: var(--on-action); }
+/* En una columna, flex: 1 1 240px de .lesson-text sería una altura: dejaba un hueco bajo la pregunta. */
+.lesson-question > .lesson-text { flex: none; }
 .lesson-nav button:disabled { opacity: 0.5; cursor: default; }
 
 /* ---------- Plan de la semana ---------- */
@@ -976,11 +984,11 @@ h3 {
   gap: 10px;
 }
 .review-tile p { margin: 0; font-size: 19px; font-weight: 700; }
-.review-open {
+.btn-primary.review-open {
   flex: none;
   width: 100%;
-  background: var(--nova);
-  color: var(--on-accent);
+  background: var(--action);
+  color: var(--on-action);
 }
 .lesson-wait-text {
   margin: 0;

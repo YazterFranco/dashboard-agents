@@ -1133,6 +1133,27 @@ function measureLesson() {
     const size = parseFloat(getComputedStyle(el).fontSize);
     if (visible(el) && (el.textContent || '').trim() && size < 19) problems.push(`texto pequeño (${size}px): ${label(el)}`);
   }
+  // Una pregunta no debe dejar un hueco grande antes de sus respuestas.
+  for (const el of document.querySelectorAll('.lesson-question > .lesson-text')) {
+    if (!visible(el)) continue;
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const empty = el.getBoundingClientRect().height - range.getBoundingClientRect().height;
+    if (empty > 40) problems.push(`hueco de ${Math.round(empty)}px bajo la pregunta: ${label(el)}`);
+  }
+  // La acción principal debe distinguirse del fondo de la página (contraste de componente ≥ 3:1).
+  const lumOf = (c) => {
+    const m = c.match(/[\d.]+/g).slice(0, 3).map(Number);
+    const f = (v) => ((v /= 255) <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+    return 0.2126 * f(m[0]) + 0.7152 * f(m[1]) + 0.0722 * f(m[2]);
+  };
+  for (const el of document.querySelectorAll('.lesson-next, .review-open')) {
+    if (!visible(el)) continue;
+    const a = lumOf(getComputedStyle(el).backgroundColor);
+    const b = lumOf(getComputedStyle(document.body).backgroundColor);
+    const ratio = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+    if (ratio < 3) problems.push(`el botón principal se confunde con el fondo (${ratio.toFixed(1)}:1): ${label(el)}`);
+  }
   const card = document.querySelector('.lesson-card');
   if (card) {
     const c = card.getBoundingClientRect();
@@ -1366,6 +1387,120 @@ async function lessonGroup() {
   });
 }
 
+
+// =====================================================================================================
+// Repaso rápido (práctica espaciada) y tocar para oír
+// =====================================================================================================
+async function reviewGroup() {
+  const { mkdtempSync, rmSync } = require('node:fs');
+  const os = require('node:os');
+  const path = require('node:path');
+  const dir = mkdtempSync(path.join(os.tmpdir(), 'lucca-review-'));
+  const dbPath = path.join(dir, 'lucca.db');
+  const at = (iso) => ({ LUCCA_DEMO: '1', LUCCA_AI: 'recorded', LUCCA_DB: dbPath, LUCCA_FAKE_NOW: iso });
+  try {
+    // Miércoles: Lucca termina la lección de la planta. Hoy no hay nada que repasar.
+    await withServer(at('2026-11-18T17:00:00Z'), async (s) => {
+      await H.setupParent(s);
+      await run('R01', 'negativo', 'El mismo día de la lección no hay repaso (las preguntas vuelven mañana)', async () => {
+        const plant = taskByTitle((await kidState(s)).tasks, /planta/);
+        await H.api(s, 'GET', `/api/kid/lessons/${plant.id}`);
+        await H.api(s, 'POST', '/api/kid/progress', { body: { taskId: plant.id, kind: 'lesson_done' } });
+        const { page } = await openKid(s);
+        expect((await page.getByRole('button', { name: 'Repaso rápido' }).count()) === 0, 'hoy no debe aparecer el repaso');
+        expect((await kidState(s)).reviewDue === 0, 'el servidor no tiene nada para hoy');
+        const finish = await H.api(s, 'POST', '/api/kid/review/finish');
+        expect(finish.status === 400, 'no se puede «terminar» un repaso vacío para ganar una estrella');
+        await shot(page, 'sin-repaso-el-mismo-dia');
+      });
+    });
+
+    // Jueves: las 3 preguntas vuelven. Una se falla a la primera.
+    await withServer(at('2026-11-19T17:00:00Z'), async (s) => {
+      await run('R02', 'positivo', 'Al día siguiente aparece «Repaso rápido»: 3 preguntas, estrella al terminar y el botón desaparece', async () => {
+        const before = (await kidState(s)).starsThisWeek;
+        const { page } = await openKid(s);
+        await page.getByText('3 para repasar hoy').waitFor();
+        await shot(page, 'boton-de-repaso');
+        await page.getByRole('button', { name: 'Repaso rápido' }).click();
+        await page.getByText('Pregunta 1 de 3').waitFor();
+        await page.getByRole('button', { name: 'La flor' }).click();
+        await page.getByText('Piensa: ¿qué parte está bajo la tierra?').waitFor();
+        await page.getByRole('button', { name: 'La raíz' }).click();
+        await page.getByText('¡Seguiste intentando y lo lograste!').waitFor();
+        await shot(page, 'pregunta-de-repaso');
+        await page.getByRole('button', { name: 'Siguiente' }).click();
+        await page.getByRole('button', { name: 'Verdadero' }).click();
+        await page.getByRole('button', { name: 'Siguiente' }).click();
+        await page.getByRole('button', { name: 'semillas' }).click();
+        await page.getByRole('button', { name: 'Terminar' }).click();
+        await page.getByRole('heading', { name: '¡Repaso terminado!' }).waitFor();
+        await page.getByText(/Ganaste una estrella/).waitFor();
+        await shot(page, 'repaso-terminado');
+        await page.getByRole('button', { name: /Volver a mi semana/ }).click();
+        await kidHeading(page).waitFor();
+        await page.getByRole('button', { name: 'Repaso rápido' }).waitFor({ state: 'detached' });
+        const after = await kidState(s);
+        expect(after.starsThisWeek === before + 1 && after.reviewDue === 0, `una estrella más y nada pendiente (antes ${before}, ahora ${after.starsThisWeek}, pendientes ${after.reviewDue})`);
+      });
+
+      await run('R03', 'borde', 'Repetir el repaso el mismo día no da otra estrella ni adelanta las preguntas', async () => {
+        const items = (await H.api(s, 'GET', '/api/kid/review')).json;
+        expect(items.items.length === 0 && items.doneToday === true, 'ya no queda nada para hoy');
+        const again = await H.api(s, 'POST', '/api/kid/review/finish');
+        expect(again.status === 200 && again.json.starGained === false, 'la segunda vez no hay estrella');
+      });
+    });
+
+    // Viernes: solo vuelve la que se falló (caja 1); las acertadas esperan 3 días.
+    await withServer(at('2026-11-20T17:00:00Z'), async (s) => {
+      const cookie = await H.api(s, 'POST', '/api/parent/login', { body: { pin: PIN } }).then((r) => r.cookie);
+      await run('R04', 'borde', 'Al otro día solo vuelve la pregunta fallada; las acertadas esperan 3 días', async () => {
+        const r = (await H.api(s, 'GET', '/api/kid/review')).json;
+        expect(r.items.length === 1, `debía volver 1 pregunta y volvieron ${r.items.length}`);
+        const { page } = await openKid(s);
+        await page.getByText('1 para repasar hoy').waitFor();
+        await shot(page, 'vuelve-la-fallada');
+      });
+      await run('R05', 'positivo', 'Papá ve en Progreso cuántas preguntas hay guardadas, aprendidas y para hoy', async () => {
+        const { page } = await open(s, { cookie });
+        await goParent(page, s);
+        await parentHeading(page).waitFor();
+        await tab(page, 'Progreso');
+        const card = page.getByRole('region', { name: 'Repaso rápido' });
+        await card.getByText('3 preguntas guardadas').waitFor();
+        await card.getByText('0 aprendidas').waitFor();
+        await card.getByText('1 para hoy').waitFor();
+        await shot(page, 'repaso-en-progreso');
+      });
+    });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+
+  await withServer({ LUCCA_DEMO: '1', LUCCA_AI: 'recorded' }, async (s) => {
+    await run('E11', 'positivo', 'Tocar un texto de la lección lo lee en voz alta (con su idioma); en modo «Leer» no es tocable', async () => {
+      const { page, context } = await open(s);
+      await context.addInitScript(() => {
+        window.__spoken = [];
+        if (window.speechSynthesis) window.speechSynthesis.speak = (u) => window.__spoken.push({ text: u.text, lang: u.lang });
+      });
+      await page.goto(s.url);
+      await kidHeading(page).waitFor();
+      await startLesson(page, /^(Empezar|Seguir|Repasar): Las partes de la planta/);
+      await page.evaluate(() => (window.__spoken = []));
+      await page.getByRole('button', { name: 'Escuchar: Una planta es un ser vivo. ¡Crece como tú!' }).click();
+      const spoken = await page.evaluate(() => window.__spoken.map((u) => u.text).join(' '));
+      expect(spoken.includes('Una planta es un ser vivo.'), `debía leer el texto tocado (leyó: «${spoken}»)`);
+      await shot(page, 'texto-tocable');
+      await page.getByRole('button', { name: /Volver a mi semana/ }).click();
+      await page.getByRole('button', { name: 'Leer', exact: true }).click();
+      await startLesson(page, /^(Empezar|Seguir|Repasar): Las partes de la planta/);
+      expect((await page.getByRole('button', { name: /^Escuchar: / }).count()) === 0, 'en modo Leer los textos no son botones');
+    });
+  });
+}
+
 (async () => {
   H.prepareOut();
   browser = await chromium.launch();
@@ -1380,6 +1515,7 @@ async function lessonGroup() {
     await keyboardGroup();
     await kidGroup();
     await lessonGroup();
+    await reviewGroup();
     code = H.report();
   } catch (err) {
     console.error('Las pruebas funcionales no pudieron terminar:', err);

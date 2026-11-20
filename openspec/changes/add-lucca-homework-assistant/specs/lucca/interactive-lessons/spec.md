@@ -95,3 +95,29 @@ El padre SHALL poder ver cualquier lección tal como la ve Lucca, regenerarla u 
 #### Scenario: Aprobación obligatoria
 - **WHEN** "Revisar antes de mostrar" está activado y se genera una lección nueva
 - **THEN** Lucca ve "Papá está revisando esta lección" hasta que el padre la aprueba
+
+### Requirement: Pistas que no dan la respuesta
+Cada pregunta final SHALL poder llevar una pista corta que se muestra solo después del primer fallo. La pista MUST NOT contener la respuesta correcta (ni la opción correcta, ni el número en cifras o en palabras, ni "verdadero"/"falso"); si la contiene, la lección no supera los controles.
+
+#### Scenario: Primer fallo
+- **WHEN** Lucca falla una pregunta que tiene pista
+- **THEN** ve "Pista:" con una frase que le ayuda a pensar, sin la respuesta
+
+#### Scenario: Pista con la respuesta
+- **WHEN** la IA propone la pista "Es la raíz" para la pregunta cuya respuesta es "La raíz"
+- **THEN** la lección no supera los controles y se regenera
+
+### Requirement: Elogio del esfuerzo
+Los mensajes tras una respuesta SHALL elogiar el razonamiento o la constancia ("¡Muy bien pensado!", "¡Seguiste intentando y lo lograste!") y nunca el talento.
+
+#### Scenario: Acierto tras un fallo
+- **WHEN** Lucca acierta una pregunta después de fallarla
+- **THEN** ve "¡Seguiste intentando y lo lograste!"
+
+### Requirement: Tocar para oír
+Con la voz activa ("Escuchar" o "Ambos"), cada texto de la lección SHALL poder tocarse para oírlo, con la voz del idioma de cada palabra. En modo "Leer" los textos no son tocables.
+
+#### Scenario: Tocar una frase
+- **WHEN** Lucca toca "Una planta es un ser vivo"
+- **THEN** la frase se lee en voz alta
+

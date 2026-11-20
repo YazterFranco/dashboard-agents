@@ -53,21 +53,21 @@
 
 ## 4. Cliente de IA y controles de contenido
 
-- [ ] 4.1 Crear el cliente de Claude (`@anthropic-ai/sdk`, `claude-opus-5-5`, pensamiento adaptativo, `effort` explícito, *prompt caching* del sistema, `fallbacks: "default"` con la beta `server-side-fallback-2026-07-01`, comprobación de `refusal`, registro en `ai_usage`) y verificar con pruebas usando respuestas grabadas
-- [ ] 4.2 Implementar el modo de pruebas con respuestas grabadas (sin red ni coste) que usan todas las pruebas y el e2e, y verificar que `npm test` pasa sin `ANTHROPIC_API_KEY`
-- [ ] 4.3 Implementar la cadena de controles D6 (zod, URLs, longitud de frase, idioma por fragmento, limpieza de SVG con DOMPurify, tamaños, fuga de respuesta incluidos números con letras, revisión P5) y verificar con pruebas cada regla y el escenario "Pista que revela la respuesta"
-- [ ] 4.4 Implementar la minimización de datos (sin nombre completo, colegio ni credenciales; fotos sin EXIF y reescaladas con `sharp`) y verificar con una prueba que inspecciona las peticiones salientes
+- [x] 4.1 Crear el cliente de Claude (`@anthropic-ai/sdk`, `claude-opus-5-5`, pensamiento adaptativo, `effort` explícito, *prompt caching* del sistema, `fallbacks: "default"` con la beta `server-side-fallback-2026-07-01`, comprobación de `refusal`, registro en `ai_usage`) y verificar con pruebas usando respuestas grabadas _(hecho: `ClaudeLessonModel` con salida estructurada de zod, `effort: medium`, `fallbacks: "default"` y caché del sistema; se activa con `ANTHROPIC_API_KEY`)_
+- [x] 4.2 Implementar el modo de pruebas con respuestas grabadas (sin red ni coste) que usan todas las pruebas y el e2e, y verificar que `npm test` pasa sin `ANTHROPIC_API_KEY` _(hecho: `LUCCA_AI=recorded` con 10 lecciones grabadas; todas las pruebas y el e2e van sin red ni coste)_
+- [ ] 4.3 Implementar la cadena de controles D6 (zod, URLs, longitud de frase, idioma por fragmento, limpieza de SVG con DOMPurify, tamaños, fuga de respuesta incluidos números con letras, revisión P5) y verificar con pruebas cada regla y el escenario "Pista que revela la respuesta" _(parcial: zod, enlaces, frases ≤ 12 palabras, ambos idiomas, índices, emoji y control de fuga de respuestas en las pistas; pendiente: idioma por fragmento, DOMPurify del SVG y P5)_
+- [ ] 4.4 Implementar la minimización de datos (sin nombre completo, colegio ni credenciales; fotos sin EXIF y reescaladas con `sharp`) y verificar con una prueba que inspecciona las peticiones salientes _(parcial: la petición a la IA nunca lleva el nombre del niño (probado); fotos pendientes con 6.x)_
 
 ## 5. "Entender": lecciones interactivas
 
-- [ ] 5.1 Definir en `shared` el esquema `LessonDoc` (pantallas, 12 tipos de bloque, textos bilingües por fragmentos, ilustraciones por id o SVG) y su JSON Schema, y verificar con pruebas lecciones de ejemplo válidas e inválidas
+- [ ] 5.1 Definir en `shared` el esquema `LessonDoc` (pantallas, 12 tipos de bloque, textos bilingües por fragmentos, ilustraciones por id o SVG) y su JSON Schema, y verificar con pruebas lecciones de ejemplo válidas e inválidas _(parcial: 10 bloques (sin hotspots ni freeform), ilustraciones con emoji en lugar de Fluent; incluye pistas por pregunta)_
 - [ ] 5.2 Seleccionar e incluir la biblioteca curada de ilustraciones (Fluent Emoji 3D, MIT, unas 300) con su licencia, y verificar que cada `id` del catálogo resuelve a un archivo
-- [ ] 5.3 Implementar los componentes React de los 11 bloques no libres con el estilo Bento, accesibles y con objetivos de ≥ 60 px, y verificar cada uno con Testing Library
+- [x] 5.3 Implementar los componentes React de los 11 bloques no libres con el estilo Bento, accesibles y con objetivos de ≥ 60 px, y verificar cada uno con Testing Library _(hecho para los 10 bloques del catálogo v1, con objetivos ≥ 60 px y pruebas; se añadieron pistas, elogio del esfuerzo y tocar para oír)_
 - [ ] 5.4 Implementar el bloque libre en `iframe sandbox="allow-scripts"` con CSP, mensajes por lista blanca, límite de 100 KB y 3 s de espera, y verificar con e2e que una petición de red y un acceso a `parent` quedan bloqueados
-- [ ] 5.5 Implementar el reproductor de lecciones (Atrás/Siguiente, "Paso N de M", preguntas finales, "Explícamelo de otra forma" tras dos fallos, idioma, botón "¿Me lo dices en español?" en Inglés) y verificar con e2e los escenarios de interactive-lessons
-- [ ] 5.6 Implementar P2 (lección y banco de práctica ≥ 20 retos) con *structured outputs* y reintentos, y la lección sencilla de respaldo, y verificar con respuestas grabadas válidas e inválidas
+- [x] 5.5 Implementar el reproductor de lecciones (Atrás/Siguiente, "Paso N de M", preguntas finales, "Explícamelo de otra forma" tras dos fallos, idioma, botón "¿Me lo dices en español?" en Inglés) y verificar con e2e los escenarios de interactive-lessons _(hecho: Atrás/Siguiente, «Paso N de M», preguntas finales, otra explicación tras 2 fallos, idioma por materia con cambio, voz, estrella; sin espera artificial)_
+- [ ] 5.6 Implementar P2 (lección y banco de práctica ≥ 20 retos) con *structured outputs* y reintentos, y la lección sencilla de respaldo, y verificar con respuestas grabadas válidas e inválidas _(parcial: lección con salida estructurada, 3 intentos y respaldo; banco de práctica de 20 retos pendiente (el Repaso rápido usa las preguntas de la lección))_
 - [ ] 5.7 Implementar la preparación por lotes (Message Batches tras la sincronización, consulta cada 2 min, refusal → llamada directa con fallbacks) y la generación en vivo con espera de 60 s como máximo, y verificar con pruebas usando un reloj simulado
-- [ ] 5.8 Implementar la revisión del padre (vista previa sin progreso, regenerar, ocultar, "Revisar antes de mostrar") y verificar con e2e el escenario "Aprobación obligatoria"
+- [ ] 5.8 Implementar la revisión del padre (vista previa sin progreso, regenerar, ocultar, "Revisar antes de mostrar") y verificar con e2e el escenario "Aprobación obligatoria" _(parcial: vista previa sin progreso y regenerar; pendientes ocultar lección y «Revisar antes de mostrar»)_
 - [ ] 5.9 Ejecutar la evaluación de calidad con 10 tareas reales y la IA real (con presupuesto aprobado por el padre) y verificar que todas superan los controles y la revisión del padre
 
 ## 6. "Hacer la tarea"
@@ -102,3 +102,11 @@
 
 - Probar una semana real con Lucca y ajustar textos, voces y tope de gasto según el uso medido.
 - Archivar el cambio con `openspec archive add-lucca-homework-assistant` cuando el padre dé por buena la v1.
+
+## 10. Mejoras basadas en evidencia (petición posterior de papá)
+
+- [x] 10.1 Repaso rápido con práctica espaciada (cajas de 1, 3, 7 y 14 días, máximo 5 al día, una estrella diaria) y su resumen en Progreso, verificado con pruebas y e2e con dos días simulados
+- [x] 10.2 Pistas tras el primer fallo con control de fuga de la respuesta, verificado con pruebas
+- [x] 10.3 Mensajes que elogian el esfuerzo y la constancia, no el talento
+- [x] 10.4 Tocar cualquier texto de la lección para oírlo, con la voz de cada idioma
+
