@@ -58,16 +58,21 @@ export function LessonPlayer({ task, lang, voiceMode, speaker, load, onProgress,
     setMisses({});
   };
 
+  // `load` puede cambiar en cada render (la semana se actualiza al marcar avance): se usa siempre la última sin
+  // volver a cargar la lección, que solo se pide al abrirla.
+  const loadRef = useRef(load);
+  loadRef.current = load;
+
   const open = useCallback(async () => {
     setView({ kind: 'loading' });
     try {
-      const answer = await load('default');
+      const answer = await loadRef.current('default');
       if (answer.status === 'ready') showLesson(answer.lesson.doc, 'default');
       else setView({ kind: 'unavailable', reason: answer.reason });
     } catch {
       setView({ kind: 'unavailable', reason: 'offline' });
     }
-  }, [load]);
+  }, []);
 
   /** La otra explicación se pide sin quitar la lección actual: si no llega, Lucca sigue donde estaba. */
   const anotherWay = async () => {
@@ -75,7 +80,7 @@ export function LessonPlayer({ task, lang, voiceMode, speaker, load, onProgress,
     setAltFailed(false);
     setAltLoading(true);
     try {
-      const answer = await load('alternative');
+      const answer = await loadRef.current('alternative');
       if (answer.status === 'ready') showLesson(answer.lesson.doc, 'alternative');
       else setAltFailed(true);
     } catch {

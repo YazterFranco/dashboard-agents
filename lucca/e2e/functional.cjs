@@ -1109,6 +1109,261 @@ async function kidGroup() {
   });
 }
 
+
+// =====================================================================================================
+// Entender: lecciones interactivas (lecciones grabadas: sin red ni coste)
+// =====================================================================================================
+/** Dentro de la lección: tamaños táctiles de Lucca, texto ≥ 19 px, contraste 4,5:1 y nada fuera de su tarjeta. */
+function measureLesson() {
+  const problems = [];
+  const root = document.documentElement;
+  if (root.scrollWidth > window.innerWidth) problems.push(`desplazamiento horizontal: ${root.scrollWidth} > ${window.innerWidth}`);
+  const visible = (el) => {
+    const r = el.getBoundingClientRect();
+    const s = getComputedStyle(el);
+    return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none';
+  };
+  const label = (el) => (el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 40);
+  for (const b of document.querySelectorAll('.lesson button')) {
+    if (!visible(b)) continue;
+    const r = b.getBoundingClientRect();
+    if (r.width < 59.5 || r.height < 59.5) problems.push(`botón pequeño (${Math.round(r.width)}×${Math.round(r.height)}): ${label(b)}`);
+  }
+  for (const el of document.querySelectorAll('.lesson-text, .lesson-option, .lesson-feedback, .guide-step, .lesson-sort-item')) {
+    const size = parseFloat(getComputedStyle(el).fontSize);
+    if (visible(el) && (el.textContent || '').trim() && size < 19) problems.push(`texto pequeño (${size}px): ${label(el)}`);
+  }
+  const card = document.querySelector('.lesson-card');
+  if (card) {
+    const c = card.getBoundingClientRect();
+    for (const el of card.querySelectorAll('button, p, h1, li')) {
+      if (!visible(el)) continue;
+      const r = el.getBoundingClientRect();
+      if (r.right > c.right + 0.5 || r.left < c.left - 0.5) problems.push(`se sale de la tarjeta: ${label(el)}`);
+    }
+  }
+  const rgb = (c) => {
+    const m = c.match(/rgba?\(([^)]+)\)/);
+    if (!m) return null;
+    const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number);
+    return { r: p[0], g: p[1], b: p[2], a: p[3] === undefined ? 1 : p[3] };
+  };
+  const lum = ({ r, g, b }) => {
+    const f = (v) => ((v /= 255) <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+  };
+  const bgOf = (el) => {
+    for (let n = el; n; n = n.parentElement) {
+      const c = rgb(getComputedStyle(n).backgroundColor);
+      if (c && c.a >= 1) return c;
+    }
+    return { r: 255, g: 255, b: 255, a: 1 };
+  };
+  for (const el of document.querySelectorAll('.lesson-text, .lesson-option:not(:disabled), .lesson-feedback, .lesson-title, .lesson-next, .lesson-nav .seg-btn:not(:disabled), .lesson-lang, .lesson-tick:not(:disabled), .lesson-wait p')) {
+    if (!visible(el) || !(el.textContent || '').trim()) continue;
+    const fg = rgb(getComputedStyle(el).color);
+    const bg = bgOf(el);
+    const [hi, lo] = [Math.max(lum(bg), lum(fg)), Math.min(lum(bg), lum(fg))];
+    const ratio = (hi + 0.05) / (lo + 0.05);
+    if (ratio < 4.5) problems.push(`poco contraste (${ratio.toFixed(1)}:1): ${label(el)}`);
+  }
+  return problems;
+}
+
+async function startLesson(page, name) {
+  await page.getByRole('button', { name }).click();
+  await page.getByText(/^Paso 1 de \d+$/).waitFor();
+}
+const lessonNext = (page) => page.getByRole('button', { name: /^(Siguiente|Terminar)$/ }).click();
+
+async function lessonGroup() {
+  await withServer({ LUCCA_DEMO: '1', LUCCA_AI: 'recorded' }, async (s) => {
+    const cookie = await H.setupParent(s);
+
+    await run('E01', 'positivo', 'Lucca abre «Entender» desde su tarea, recorre la lección, responde las preguntas y gana una estrella', async () => {
+      const before = await kidState(s);
+      const { page } = await openKid(s);
+      await startLesson(page, /^(Empezar|Seguir|Repasar): Las partes de la planta/);
+      expect((await text(page.getByText(/^Paso 1 de \d+$/))) === 'Paso 1 de 9', 'la lección de la planta tiene 6 pantallas y 3 preguntas');
+      expect(await page.getByRole('button', { name: 'Atrás' }).isDisabled(), 'en el primer paso no se puede ir atrás');
+      await shot(page, 'pantalla-1');
+      for (let i = 0; i < 5; i++) await lessonNext(page);
+      await page.getByText('Paso 6 de 9').waitFor();
+      await lessonNext(page);
+      await page.getByText('Pregunta 1 de 3').waitFor();
+      expect(await page.getByRole('button', { name: 'Siguiente' }).isDisabled(), 'no se avanza sin responder');
+      await page.getByRole('button', { name: 'La raíz' }).click();
+      await page.getByText('¡Muy bien!').waitFor();
+      await shot(page, 'pregunta-acertada');
+      await lessonNext(page);
+      await page.getByRole('button', { name: 'Verdadero' }).click();
+      await lessonNext(page);
+      await page.getByRole('button', { name: 'semillas' }).click();
+      await page.getByRole('button', { name: 'Terminar' }).click();
+      await page.getByRole('heading', { name: '¡Lo entendiste!' }).waitFor();
+      await page.getByText(/Ganaste una estrella/).waitFor();
+      await shot(page, 'leccion-terminada');
+      const after = await kidState(s);
+      expect(after.starsThisWeek === before.starsThisWeek + 1, `debía ganar 1 estrella (antes ${before.starsThisWeek}, ahora ${after.starsThisWeek})`);
+      await page.getByRole('button', { name: /Volver a mi semana/ }).click();
+      await kidHeading(page).waitFor();
+      expect(Number(await page.locator('.stars-number').textContent()) === after.starsThisWeek, 'la semana muestra la estrella nueva');
+      await shot(page, 'semana-con-la-estrella');
+    });
+
+    await run('E02', 'positivo', 'Los bloques interactivos responden: contar hojas, ordenar las partes de la planta', async () => {
+      const { page } = await openKid(s);
+      await startLesson(page, /^(Empezar|Seguir|Repasar): Las partes de la planta/);
+      for (let i = 0; i < 3; i++) await lessonNext(page);
+      await page.getByText('Paso 4 de 9').waitFor();
+      expect((await page.locator('.lesson-count [role=img]').count()) === 4, 'debía haber 4 hojas para contar');
+      await page.getByRole('button', { name: '3', exact: true }).click();
+      await page.getByText('Casi. Inténtalo otra vez.').waitFor();
+      await page.getByRole('button', { name: '4', exact: true }).click();
+      await page.getByText('¡Muy bien!').waitFor();
+      await shot(page, 'contar');
+      await lessonNext(page);
+      await lessonNext(page);
+      await page.getByText('Paso 6 de 9').waitFor();
+      for (const part of ['Raíz', 'Tallo', 'Hojas', 'Flor']) await page.getByRole('button', { name: part, exact: true }).click();
+      await page.getByText('¡Muy bien!').waitFor();
+      expect((await text(page.getByRole('list', { name: 'Tu orden' }))) === 'RaízTalloHojasFlor', 'el orden elegido se muestra');
+      await shot(page, 'ordenar');
+    });
+
+    await run('E03', 'positivo', 'Una tarea de Inglés se ve en inglés y «¿Me lo dices en español?» la cambia sin perder el paso', async () => {
+      const { page } = await openKid(s);
+      await dayButton(page, /^Lunes 16/).click();
+      await startLesson(page, 'Repasar: Palabras: cat, hat, bat');
+      await page.getByText('Today we learn words that end in -at.').waitFor();
+      await lessonNext(page);
+      await shot(page, 'en-ingles');
+      await page.getByRole('button', { name: '¿Me lo dices en español?' }).click();
+      await page.getByText('Paso 2 de 8').waitFor();
+      expect((await page.locator('.lesson-text [lang=en]').first().textContent()) === 'Cat', 'la palabra en inglés va marcada con su idioma');
+      await shot(page, 'en-espanol');
+    });
+
+    await run('E04', 'negativo', 'Dos fallos en una pregunta: la mascota ofrece otra explicación y llega con otro enfoque', async () => {
+      const { page } = await openKid(s);
+      await startLesson(page, /^(Empezar|Seguir|Repasar): Las partes de la planta/);
+      for (let i = 0; i < 6; i++) await lessonNext(page);
+      await page.getByText('Pregunta 1 de 3').waitFor();
+      await page.getByRole('button', { name: 'La flor' }).click();
+      expect((await page.getByText('¿Te lo explico de otra forma?').count()) === 0, 'con un fallo todavía no ofrece');
+      await page.getByRole('button', { name: 'Las hojas' }).click();
+      await page.getByText('¿Te lo explico de otra forma?').waitFor();
+      await shot(page, 'oferta-de-otra-explicacion');
+      await page.getByRole('button', { name: 'Sí, explícamelo' }).click();
+      await page.getByText('Imagina que la planta es una casa.').waitFor();
+      await page.getByText(/^Paso 1 de \d+$/).waitFor();
+      await shot(page, 'otra-explicacion');
+    });
+
+    await run('E05', 'borde', 'La lección en móvil y tablet, en oscuro y claro: sin desbordes, botones ≥ 60 px, texto ≥ 19 px y contraste 4,5:1', async () => {
+      const found = [];
+      for (const [viewport, theme] of [[PHONE, 'dark'], [PHONE, 'light'], [PORTRAIT, 'light'], [TABLET, 'dark']]) {
+        const tag = `${viewport.width} ${theme}`;
+        const { page } = await openKid(s, { viewport, theme });
+        await startLesson(page, /^(Empezar|Seguir|Repasar): Restas sin llevar/);
+        const steps = Number((await text(page.getByText(/^Paso 1 de \d+$/))).match(/de (\d+)/)[1]);
+        for (let i = 0; i < steps; i++) {
+          for (const p of await page.evaluate(measureLesson)) found.push(`[${tag} · paso ${i + 1}] ${p}`);
+          if (i === 1 && viewport === PHONE) await shot(page, `cuento-${viewport.width}-${theme}`);
+          if (i === 4 && viewport !== TABLET) await shot(page, `recta-numerica-${viewport.width}-${theme}`);
+          const next = page.getByRole('button', { name: /^(Siguiente|Terminar)$/ });
+          if (await next.isDisabled()) break;
+          if (i < steps - 1) await next.click();
+        }
+        for (const c of opened.splice(0)) await c.close().catch(() => {});
+      }
+      expect(found.length === 0, `Incumplimientos:\n      ${found.join('\n      ')}`);
+    });
+
+    await run('E06', 'borde', 'Modo «Leer»: la lección no tiene botón de escuchar; en «Escuchar» sí', async () => {
+      const { page } = await openKid(s);
+      await page.getByRole('button', { name: 'Leer', exact: true }).click();
+      await startLesson(page, /^(Empezar|Seguir|Repasar): Restas sin llevar/);
+      expect((await page.getByRole('button', { name: 'Escuchar esta pantalla' }).count()) === 0, 'en modo Leer no hay botón de audio');
+      await page.getByRole('button', { name: /Volver a mi semana/ }).click();
+      await page.getByRole('button', { name: 'Escuchar', exact: true }).click();
+      await startLesson(page, /^(Empezar|Seguir|Repasar): Restas sin llevar/);
+      expect((await page.getByRole('button', { name: 'Escuchar esta pantalla' }).count()) === 1, 'en modo Escuchar sí hay botón');
+    });
+
+    await run('E07', 'negativo', 'Sin conexión al abrir la lección: mensaje amable y el reintento funciona', async () => {
+      const { page } = await openKid(s);
+      await page.route('**/api/kid/lessons/**', (route) => route.abort());
+      await page.getByRole('button', { name: /^(Empezar|Seguir|Repasar): Restas sin llevar/ }).click();
+      await page.getByText('No encuentro tu lección ahora. ¡Díselo a papá!').waitFor();
+      expect((await page.getByText(/failed|TypeError|fetch/i).count()) === 0, 'sin mensajes técnicos');
+      await shot(page, 'sin-conexion');
+      await page.unroute('**/api/kid/lessons/**');
+      await page.getByRole('button', { name: 'Intentar de nuevo' }).click();
+      await page.getByText(/^Paso 1 de \d+$/).waitFor();
+    });
+
+    await run('E08', 'positivo', 'Papá ve la lección como Lucca, sin que cuente como progreso, y puede regenerarla', async () => {
+      const before = await kidState(s);
+      const { page } = await open(s, { cookie });
+      await goParent(page, s);
+      await parentHeading(page).waitFor();
+      await page.getByRole('button', { name: /^Ver lección: Dibujo de mi familia/ }).click();
+      await page.getByText('Vas a dibujar a tu familia. ¡Qué divertido!').waitFor();
+      await shot(page, 'vista-previa');
+      for (let i = 0; i < 4; i++) await lessonNext(page);
+      await page.getByRole('button', { name: 'Un círculo' }).click();
+      await lessonNext(page);
+      await page.getByRole('button', { name: 'Verdadero' }).click();
+      await page.getByRole('button', { name: 'Terminar' }).click();
+      await page.getByRole('heading', { name: '¡Lo entendiste!' }).waitFor();
+      const after = await kidState(s);
+      expect(after.starsThisWeek === before.starsThisWeek, 'la vista previa no da estrellas');
+      expect(taskByTitle(after.tasks, /Dibujo/).status === taskByTitle(before.tasks, /Dibujo/).status, 'la vista previa no cambia el estado de la tarea');
+      await page.getByRole('button', { name: 'Regenerar lección' }).click();
+      await page.getByText('Lección nueva lista.').waitFor();
+      await shot(page, 'regenerada');
+      await page.getByRole('button', { name: /Cerrar la vista previa/ }).click();
+      await page.getByRole('button', { name: 'Nueva tarea' }).waitFor();
+    });
+
+    await run('E09', 'borde', 'Ajustes de IA: modo, gasto del mes frente al tope y cambio del tope (fuera de rango se rechaza)', async () => {
+      const { page } = await open(s, { cookie });
+      await goParent(page, s);
+      await parentHeading(page).waitFor();
+      await tab(page, 'Ajustes');
+      await page.getByText(/Lecciones grabadas \(modo de prueba/).waitFor();
+      await page.getByText('US$ 0,00').first().waitFor();
+      await page.getByLabel('Tope mensual de IA (dólares)', { exact: true }).fill('500');
+      await page.getByRole('button', { name: 'Guardar ajustes' }).click();
+      await fieldError(page, 'Tope mensual de IA (dólares)').waitFor();
+      expect((await text(fieldError(page, 'Tope mensual de IA (dólares)'))) === 'El tope va de 1 a 200 dólares', 'debía explicar el rango');
+      await page.getByLabel('Tope mensual de IA (dólares)', { exact: true }).fill('35');
+      await page.getByRole('button', { name: 'Guardar ajustes' }).click();
+      await page.getByText('Ajustes guardados', { exact: true }).waitFor();
+      expect((await H.api(s, 'GET', '/api/parent/overview', { cookie })).json.ai.capUsd === 35, 'el tope nuevo queda guardado');
+      await shot(page, 'ia-en-ajustes', { scrollTo: page.getByRole('heading', { name: 'Inteligencia artificial' }) });
+    });
+  });
+
+  await withServer({ LUCCA_DEMO: '1' }, async (s) => {
+    const cookie = await H.setupParent(s);
+    await run('E10', 'negativo', 'Sin clave de IA: Lucca ve «Esta tarea la vemos con papá» (sin errores) y papá ve qué falta', async () => {
+      const { page } = await openKid(s);
+      await page.getByRole('button', { name: /^(Empezar|Seguir|Repasar): Restas sin llevar/ }).click();
+      await page.getByText('Esta tarea la vemos con papá.').waitFor();
+      expect((await page.getByRole('button', { name: 'Intentar de nuevo' }).count()) === 0, 'no hay nada que reintentar');
+      await shot(page, 'con-papa');
+      const parent = await open(s, { cookie });
+      await goParent(parent.page, s);
+      await parentHeading(parent.page).waitFor();
+      await tab(parent.page, 'Ajustes');
+      await parent.page.getByText(/falta ANTHROPIC_API_KEY en el archivo \.env/).waitFor();
+      await shot(parent.page, 'papa-ve-que-falta', { scrollTo: parent.page.getByRole('heading', { name: 'Inteligencia artificial' }) });
+    });
+  });
+}
+
 (async () => {
   H.prepareOut();
   browser = await chromium.launch();
@@ -1122,6 +1377,7 @@ async function kidGroup() {
     await responsiveGroup();
     await keyboardGroup();
     await kidGroup();
+    await lessonGroup();
     code = H.report();
   } catch (err) {
     console.error('Las pruebas funcionales no pudieron terminar:', err);

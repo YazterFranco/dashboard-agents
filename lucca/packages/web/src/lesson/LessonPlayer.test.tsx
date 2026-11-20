@@ -200,3 +200,19 @@ describe('LessonPlayer edge', () => {
     expect(defaultContentLang(task({ id: 'a', subject: 'math' }), 'en')).toBe('en');
   });
 });
+
+describe('LessonPlayer regression', () => {
+  it('a new load function on re-render (the week state changed) does not reload or restart the lesson', async () => {
+    const speaker = { available: () => true, speak: vi.fn(), stop: vi.fn(), speaking: false } as unknown as Speaker;
+    const first = vi.fn(async () => ready(doc()));
+    const props = { task: task({ id: 't1', subject: 'science' }), lang: 'es' as const, voiceMode: 'text' as const, speaker, onClose: vi.fn() };
+    const { rerender } = render(<LessonPlayer {...props} load={first} />);
+    await screen.findByText('Paso 1 de 3');
+    click('Siguiente');
+    const second = vi.fn(async () => ready(doc()));
+    rerender(<LessonPlayer {...props} load={second} />);
+    await act(async () => {});
+    expect(second).not.toHaveBeenCalled();
+    expect(screen.getByText('Paso 2 de 3')).toBeTruthy();
+  });
+});
