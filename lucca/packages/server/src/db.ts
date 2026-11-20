@@ -2,7 +2,7 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createRequire } from 'node:module';
 import type { DatabaseSync } from 'node:sqlite';
-import { LessonDocSchema, SettingsSchema, TaskSchema, type LessonDoc, type ProgressEvent, type ProgressKind, type Settings, type Task, type TaskStatus } from '@lucca/shared';
+import { LessonDocSchema, QuizBlockSchema, SettingsSchema, TaskSchema, type LessonDoc, type QuizBlock, type Subject, type ProgressEvent, type ProgressKind, type Settings, type Task, type TaskStatus } from '@lucca/shared';
 
 /** Cada migración sube `PRAGMA user_version` en uno. No se editan las antiguas: se añade una nueva. */
 const MIGRATIONS: string[] = [
@@ -61,7 +61,30 @@ const MIGRATIONS: string[] = [
   );
   CREATE INDEX ai_usage_at ON ai_usage (at);
   `,
+  `
+  CREATE TABLE review_items (
+    id TEXT PRIMARY KEY,
+    task_id TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    task_title TEXT NOT NULL,
+    question TEXT NOT NULL,
+    box INTEGER NOT NULL DEFAULT 1,
+    due_date TEXT NOT NULL,
+    last_seen TEXT
+  );
+  `,
 ];
+
+export interface StoredReviewItem {
+  id: string;
+  taskId: string;
+  subject: Subject;
+  taskTitle: string;
+  question: QuizBlock;
+  box: number;
+  dueDate: string;
+  lastSeen: string | null;
+}
 
 export type LessonVariant = 'default' | 'alternative';
 export type LessonSource = 'ai' | 'recorded' | 'fallback';
@@ -290,5 +313,33 @@ export class LuccaDb {
   aiCostSince(fromIso: string): number {
     const r = this.db.prepare('SELECT COALESCE(SUM(cost_usd), 0) AS total FROM ai_usage WHERE at >= ?').get(fromIso) as Row;
     return Number(r.total);
+  }
+
+  /** Añade una pregunta al repaso; si ya existe, no la toca (no reinicia su caja). */
+  addReviewItem(item: Omit<StoredReviewItem, 'box' | 'lastSeen'>): void {
+    this.db
+      .prepare('INSERT OR IGNORE INTO review_items (id, task_id, subject, task_title, question, box, due_date) VALUES (?, ?, ?, ?, ?, 1, ?)')
+      .run(item.id, item.taskId, item.subject, item.taskTitle, JSON.stringify(item.question), item.dueDate);
+  }
+
+  listReviewItems(): StoredReviewItem[] {
+    return (this.db.prepare('SELECT * FROM review_items').all() as Row[]).map((r) => ({
+      id: String(r.id),
+      taskId: String(r.task_id),
+      subject: r.subject as Subject,
+      taskTitle: String(r.task_title),
+      question: QuizBlockSchema.parse(JSON.parse(String(r.question))),
+      box: Number(r.box),
+      dueDate: String(r.due_date),
+      lastSeen: r.last_seen === null ? null : String(r.last_seen),
+    }));
+  }
+
+  getReviewItem(id: string): StoredReviewItem | null {
+    return this.listReviewItems().find((i) => i.id === id) ?? null;
+  }
+
+  updateReviewItem(id: string, box: number, dueDate: string, lastSeen: string): void {
+    this.db.prepare('UPDATE review_items SET box = ?, due_date = ?, last_seen = ? WHERE id = ?').run(box, dueDate, lastSeen, id);
   }
 }

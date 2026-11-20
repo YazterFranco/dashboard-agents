@@ -52,6 +52,8 @@ export interface Overview {
 export interface ParentProgress {
   weeks: WeekProgress[];
   needsHelp: { weekStart: string; taskId: string; title: string; count: number }[];
+  /** Repaso rápido: preguntas guardadas, aprendidas (caja 4) y las que tocan hoy. */
+  review?: { total: number; learned: number; due: number };
 }
 
 export interface SetupInput {

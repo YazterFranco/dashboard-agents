@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LessonPlayer } from './lesson/LessonPlayer';
 import { fetchLesson } from './lesson/api';
+import { ReviewPlayer } from './review/ReviewPlayer';
+import { reviewApi } from './review/api';
 import { SettingsSchema, type KidState, type ProgressKind, type Settings } from '@lucca/shared';
 import { fetchState, postProgress } from './api';
 import { Mascot } from './components/Mascot';
@@ -19,6 +21,7 @@ export function App() {
   const [failed, setFailed] = useState(false);
   /** Tarea abierta en «Entender»; la semana sigue montada (oculta) para volver al mismo día. */
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
+  const [reviewing, setReviewing] = useState(false);
   const opener = useRef<HTMLElement | null>(null);
   const [prefs, setPrefs] = useState<Prefs>(() => loadPrefs(FALLBACK));
   // La velocidad de la voz la elige papá (0,7 a 1,2); mientras no llegan los ajustes se usa 0,9.
@@ -104,9 +107,36 @@ export function App() {
   if (state) {
     return (
       <>
-        <div className="week-wrap" hidden={Boolean(openTask)}>
-          <WeekScreen key={state.today} state={state} prefs={prefs} speaker={speaker} onPrefs={onPrefs} onOpenTask={openLesson} onProgress={onProgress} />
+        <div className="week-wrap" hidden={Boolean(openTask) || reviewing}>
+          <WeekScreen
+            key={state.today}
+            state={state}
+            prefs={prefs}
+            speaker={speaker}
+            onPrefs={onPrefs}
+            onOpenTask={openLesson}
+            onProgress={onProgress}
+            onOpenReview={() => {
+              opener.current = document.activeElement as HTMLElement | null;
+              speaker.stop();
+              setReviewing(true);
+            }}
+          />
         </div>
+        {reviewing ? (
+          <ReviewPlayer
+            lang={prefs.lang}
+            voiceMode={prefs.voiceMode}
+            speaker={speaker}
+            api={reviewApi}
+            onClose={() => {
+              setReviewing(false);
+              // Las estrellas y lo que queda por repasar cambian: se vuelve a pedir el estado.
+              load();
+              requestAnimationFrame(() => opener.current?.focus());
+            }}
+          />
+        ) : null}
         {openTask ? (
           <LessonPlayer
             key={openTask.id}

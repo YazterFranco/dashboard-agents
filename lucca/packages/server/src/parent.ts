@@ -35,6 +35,7 @@ import {
 import type { Config } from './config.js';
 import type { LuccaDb } from './db.js';
 import type { LessonService } from './lessons.js';
+import { reviewSummary } from './review.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -279,7 +280,7 @@ export function registerParentRoutes(app: FastifyInstance, deps: ParentDeps): vo
         weeks.push(weeklyProgress(tasks, events, weekStart, asLucaSeesIt, config.tz));
         for (const h of needsHelp(tasks, events, weekStart, config.tz)) help.push({ weekStart, ...h });
       }
-      return { weeks, needsHelp: help };
+      return { weeks, needsHelp: help, review: reviewSummary(db, today) };
     });
   });
 }

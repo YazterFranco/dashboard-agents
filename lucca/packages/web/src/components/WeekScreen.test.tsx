@@ -737,3 +737,18 @@ describe('WeekScreen link to the parents area', () => {
     expect(screen.getByRole('link', { name: 'Área de papá' })).toBeTruthy();
   });
 });
+
+describe('WeekScreen quick review', () => {
+  it('shows "Repaso rápido" with how many are due, and opens it', () => {
+    const onOpenReview = vi.fn();
+    const { onOpenReview: _ } = { onOpenReview };
+    render(<WeekScreen state={demoState({ reviewDue: 3 })} prefs={ES} speaker={fakeSpeaker()} onPrefs={vi.fn()} onOpenTask={vi.fn()} onProgress={vi.fn()} onOpenReview={onOpenReview} />);
+    expect(screen.getByText('3 para repasar hoy')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Repaso rápido' }));
+    expect(onOpenReview).toHaveBeenCalled();
+  });
+  it('nothing due: no review tile', () => {
+    render(<WeekScreen state={demoState({ reviewDue: 0 })} prefs={ES} speaker={fakeSpeaker()} onPrefs={vi.fn()} onOpenTask={vi.fn()} onProgress={vi.fn()} onOpenReview={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: 'Repaso rápido' })).toBeNull();
+  });
+});

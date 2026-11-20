@@ -40,9 +40,23 @@ export function ProgressTab({ api }: { api: ParentApi }) {
     );
   }
 
-  const { weeks, needsHelp } = state.data;
+  const { weeks, needsHelp, review } = state.data;
   return (
     <div className="p-tab">
+      {review ? (
+        <section className="p-card" aria-labelledby="review-title">
+          <h2 id="review-title">Repaso rápido</h2>
+          {review.total === 0 ? (
+            <p className="p-lead">Cuando Lucca termine una lección, sus preguntas volverán a los 1, 3 y 7 días para que no las olvide.</p>
+          ) : (
+            <div className="p-chips">
+              <span className="p-chip">{plural(review.total, 'pregunta guardada', 'preguntas guardadas')}</span>
+              <span className="p-chip p-chip-done">{plural(review.learned, 'aprendida', 'aprendidas')}</span>
+              <span className="p-chip">{plural(review.due, 'para hoy', 'para hoy')}</span>
+            </div>
+          )}
+        </section>
+      ) : null}
       <section className="p-card" aria-labelledby="help-title">
         <h2 id="help-title">Necesita ayuda</h2>
         {needsHelp.length === 0 ? (

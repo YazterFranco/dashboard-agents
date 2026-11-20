@@ -128,3 +128,18 @@ describe('ProgressTab negative', () => {
     expect(screen.queryByRole('alert')).toBeNull();
   });
 });
+
+describe('ProgressTab review', () => {
+  it('shows the quick review numbers', async () => {
+    setup({ weeks: [week('2026-11-16')], needsHelp: [], review: { total: 6, learned: 2, due: 1 } });
+    const r = within(await screen.findByRole('region', { name: 'Repaso rápido' }));
+    expect(r.getByText('6 preguntas guardadas')).toBeTruthy();
+    expect(r.getByText('2 aprendidas')).toBeTruthy();
+    expect(r.getByText('1 para hoy')).toBeTruthy();
+  });
+  it('explains how it works when nothing is saved yet', async () => {
+    setup({ weeks: [week('2026-11-16')], needsHelp: [], review: { total: 0, learned: 0, due: 0 } });
+    expect(await screen.findByText(/volverán a los 1, 3 y 7 días/)).toBeTruthy();
+  });
+});
+

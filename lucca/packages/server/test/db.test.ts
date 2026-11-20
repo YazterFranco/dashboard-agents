@@ -31,11 +31,11 @@ describe('LuccaDb', () => {
   it('migrates an empty db and is idempotent', () => {
     const file = tempFile();
     const a = open(file);
-    expect(a.schemaVersion()).toBe(2);
+    expect(a.schemaVersion()).toBe(3);
     a.close();
     opened.pop();
     const b = open(file);
-    expect(b.schemaVersion()).toBe(2);
+    expect(b.schemaVersion()).toBe(3);
   });
 
   it('roundtrips a task with translations and null dates', () => {

@@ -38,9 +38,11 @@ interface WeekScreenProps {
   onOpenTask(id: string): void;
   /** Envía un avance al servidor; la guía del día lo usa para marcar tareas. */
   onProgress(taskId: string, kind: ProgressKind): Promise<ProgressResult>;
+  /** Abrir el «Repaso rápido» (solo aparece si hay preguntas para hoy). */
+  onOpenReview?(): void;
 }
 
-export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask, onProgress }: WeekScreenProps) {
+export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask, onProgress, onOpenReview }: WeekScreenProps) {
   const { lang } = prefs;
   const today = plannerToday(state.today);
   const [weekStart, setWeekStart] = useState<IsoDate>(mondayOf(today));
@@ -261,6 +263,14 @@ export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask, onProgr
 
       <aside className="side">
         <StarsTile count={state.starsThisWeek} lang={lang} />
+        {state.reviewDue > 0 && onOpenReview ? (
+          <section className="tile review-tile">
+            <p>{t(lang, 'reviewCount', { n: String(state.reviewDue) })}</p>
+            <button type="button" className="btn-primary review-open" onClick={onOpenReview}>
+              {t(lang, 'reviewOpen')}
+            </button>
+          </section>
+        ) : null}
         <Controls prefs={prefs} onPrefs={onPrefs} />
         <a className="seg-btn parent-link" href="/papa">
           <LockIcon />

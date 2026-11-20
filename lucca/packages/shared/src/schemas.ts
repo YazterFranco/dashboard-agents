@@ -74,6 +74,8 @@ export const KidStateSchema = z.object({
   settings: SettingsSchema,
   tasks: z.array(TaskSchema),
   starsThisWeek: z.number().int().nonnegative(),
+  /** Preguntas de «Repaso rápido» que tocan hoy. */
+  reviewDue: z.number().int().nonnegative().default(0),
 });
 export type KidState = z.infer<typeof KidStateSchema>;
 

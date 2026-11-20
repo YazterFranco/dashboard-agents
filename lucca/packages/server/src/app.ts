@@ -22,6 +22,7 @@ import { ClaudeLessonModel } from './ai/claude.js';
 import type { LessonModel } from './ai/generate.js';
 import { RecordedLessonModel } from './ai/recorded.js';
 import { LessonService } from './lessons.js';
+import { addLessonToReview, registerReviewRoutes, reviewSummary } from './review.js';
 import { isPrivateAddress } from './privateNet.js';
 
 export const VERSION = '0.1.0';
@@ -78,6 +79,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
       settings: { ...db.getSettings(), tz: config.tz },
       tasks: db.listTasks().filter((t) => !t.hidden && !t.retired),
       starsThisWeek: starsNow(),
+      reviewDue: reviewSummary(db, today).due,
     });
   });
 
@@ -93,6 +95,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
     if (!alreadyEarned) db.addProgress({ id: randomUUID(), taskId: task.id, kind: body.data.kind, at: now().toISOString() });
     const status = nextStatus(task.status, body.data.kind);
     if (status !== task.status) db.setTaskStatus(task.id, status);
+    if (body.data.kind === 'lesson_done') addLessonToReview(db, task.id, localDate(now(), config.tz));
     return { status, starsThisWeek: starsNow() };
   });
 
@@ -114,6 +117,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
     return answer;
   });
 
+  registerReviewRoutes(app, { db, config, now });
   registerParentRoutes(app, { db, config, now, throttle: new LoginThrottle(), lessons });
 
   if (config.webDir && existsSync(config.webDir)) {
