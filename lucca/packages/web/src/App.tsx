@@ -3,6 +3,8 @@ import { LessonPlayer } from './lesson/LessonPlayer';
 import { fetchLesson } from './lesson/api';
 import { ReviewPlayer } from './review/ReviewPlayer';
 import { reviewApi } from './review/api';
+import { PracticePlayer } from './practice/PracticePlayer';
+import { fetchPractice } from './practice/api';
 import { SettingsSchema, type KidState, type ProgressKind, type Settings } from '@lucca/shared';
 import { fetchState, postProgress } from './api';
 import { Mascot } from './components/Mascot';
@@ -22,6 +24,7 @@ export function App() {
   /** Tarea abierta en «Entender»; la semana sigue montada (oculta) para volver al mismo día. */
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const [reviewing, setReviewing] = useState(false);
+  const [practiceTaskId, setPracticeTaskId] = useState<string | null>(null);
   const opener = useRef<HTMLElement | null>(null);
   const [prefs, setPrefs] = useState<Prefs>(() => loadPrefs(FALLBACK));
   // La velocidad de la voz la elige papá (0,7 a 1,2); mientras no llegan los ajustes se usa 0,9.
@@ -61,6 +64,7 @@ export function App() {
           ...prev,
           starsThisWeek: answer.starsThisWeek,
           tasks: prev.tasks.map((t) => (t.id === taskId ? { ...t, status: answer.status } : t)),
+          understood: kind === 'lesson_done' && !prev.understood.includes(taskId) ? [...prev.understood, taskId] : prev.understood,
         });
         return { ok: true, starsGained: Math.max(0, answer.starsThisWeek - prev.starsThisWeek) };
       } catch {
@@ -93,6 +97,7 @@ export function App() {
   };
 
   const openTask = state && openTaskId ? state.tasks.find((t) => t.id === openTaskId) : undefined;
+  const practiceTask = state && practiceTaskId ? state.tasks.find((t) => t.id === practiceTaskId) : undefined;
   const openLesson = (id: string) => {
     opener.current = document.activeElement as HTMLElement | null;
     speaker.stop();
@@ -107,7 +112,7 @@ export function App() {
   if (state) {
     return (
       <>
-        <div className="week-wrap" hidden={Boolean(openTask) || reviewing}>
+        <div className="week-wrap" hidden={Boolean(openTask) || reviewing || Boolean(practiceTask)}>
           <WeekScreen
             key={state.today}
             state={state}
@@ -116,6 +121,11 @@ export function App() {
             onPrefs={onPrefs}
             onOpenTask={openLesson}
             onProgress={onProgress}
+            onPractice={(id) => {
+              opener.current = document.activeElement as HTMLElement | null;
+              speaker.stop();
+              setPracticeTaskId(id);
+            }}
             onOpenReview={() => {
               opener.current = document.activeElement as HTMLElement | null;
               speaker.stop();
@@ -123,6 +133,21 @@ export function App() {
             }}
           />
         </div>
+        {practiceTask ? (
+          <PracticePlayer
+            key={practiceTask.id}
+            task={practiceTask}
+            lang={prefs.lang}
+            voiceMode={prefs.voiceMode}
+            speaker={speaker}
+            load={() => fetchPractice(practiceTask.id)}
+            onProgress={onProgress}
+            onClose={() => {
+              setPracticeTaskId(null);
+              requestAnimationFrame(() => opener.current?.focus());
+            }}
+          />
+        ) : null}
         {reviewing ? (
           <ReviewPlayer
             lang={prefs.lang}

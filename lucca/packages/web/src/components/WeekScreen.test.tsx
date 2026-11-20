@@ -752,3 +752,14 @@ describe('WeekScreen quick review', () => {
     expect(screen.queryByRole('button', { name: 'Repaso rápido' })).toBeNull();
   });
 });
+
+describe('WeekScreen practice and understood', () => {
+  it('each task card has "Practicar" and marks the tasks whose lesson was finished', () => {
+    const onPractice = vi.fn();
+    const state = demoState({ understood: ['tue-sci'] });
+    render(<WeekScreen state={state} prefs={ES} speaker={fakeSpeaker()} onPrefs={vi.fn()} onOpenTask={vi.fn()} onProgress={vi.fn()} onPractice={onPractice} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Practicar: Restas sin llevar, pág. 26' }));
+    expect(onPractice).toHaveBeenCalledWith('tue-math');
+    expect(screen.getAllByText(/Entendida/)).toHaveLength(1);
+  });
+});

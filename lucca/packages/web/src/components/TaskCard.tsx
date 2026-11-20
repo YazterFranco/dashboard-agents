@@ -16,6 +16,10 @@ interface TaskCardProps {
   showSpeaker: boolean;
   onOpen(): void;
   onListen(): void;
+  /** «Practicar»: retos sobre el tema. */
+  onPractice?(): void;
+  /** La lección de esta tarea ya se terminó una vez. */
+  understood?: boolean;
 }
 
 /** Nombre de la materia: el de Lucca en su idioma; si es "Otra", el que escribió el colegio. */
@@ -24,7 +28,7 @@ export function subjectLabelOf(task: Task, lang: Lang): string {
   return subject === 'other' && subjectLabel ? subjectLabel : subjectName(lang, subject);
 }
 
-export function TaskCard({ item, lang, showSpeaker, onOpen, onListen }: TaskCardProps) {
+export function TaskCard({ item, lang, showSpeaker, onOpen, onListen, onPractice, understood }: TaskCardProps) {
   const titleId = useId();
   const { task } = item;
   const title = taskTitle(task, lang);
@@ -46,6 +50,7 @@ export function TaskCard({ item, lang, showSpeaker, onOpen, onListen }: TaskCard
         <div className="task-meta">
           {item.urgent ? <span className="pill pill-urgent">{t(lang, 'urgent')}</span> : null}
           {item.dueDate ? <span className="task-due">{dueLabel(lang, item.dueDate)}</span> : null}
+          {understood ? <span className="pill pill-understood">💡 {t(lang, 'understood')}</span> : null}
         </div>
       </div>
       <div className="task-actions">
@@ -58,6 +63,11 @@ export function TaskCard({ item, lang, showSpeaker, onOpen, onListen }: TaskCard
           <PlayIcon />
           <span>{cta}</span>
         </button>
+        {onPractice ? (
+          <button type="button" className="seg-btn task-practice" aria-label={t(lang, 'practiceTask', { title })} onClick={onPractice}>
+            {t(lang, 'practiceOpen')}
+          </button>
+        ) : null}
       </div>
     </article>
   );

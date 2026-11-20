@@ -231,3 +231,21 @@ export function checkLesson(doc: LessonDoc): string[] {
   }
   return [...new Set(issues)];
 }
+
+/** Controles de un bloque suelto (los retos de Practicar): los mismos que dentro de una lección. */
+export function checkPracticeBlock(block: Block): string[] {
+  const issues: string[] = [];
+  const where = `reto (${block.type})`;
+  checkBlock(block, where, issues);
+  for (const e of emojisOf(block)) if (!EMOJI_RE.test(e)) issues.push(`${where}: la ilustración debe ser solo emoji`);
+  for (const t of textsOf(block)) {
+    for (const lang of ['es', 'en'] as const) {
+      const text = lessonText(t, lang);
+      if (!text.trim()) issues.push(`${where}: falta el texto en ${lang === 'es' ? 'español' : 'inglés'}`);
+      else if (URL_RE.test(text)) issues.push(`${where}: no puede llevar enlaces`);
+      else if (Math.max(...sentenceWords(text)) > MAX_WORDS) issues.push(`${where}: una frase tiene más de ${MAX_WORDS} palabras`);
+    }
+  }
+  return issues;
+}
+

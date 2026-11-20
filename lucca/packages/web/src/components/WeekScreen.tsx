@@ -40,9 +40,11 @@ interface WeekScreenProps {
   onProgress(taskId: string, kind: ProgressKind): Promise<ProgressResult>;
   /** Abrir el «Repaso rápido» (solo aparece si hay preguntas para hoy). */
   onOpenReview?(): void;
+  /** Abrir «Practicar» de una tarea. */
+  onPractice?(id: string): void;
 }
 
-export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask, onProgress, onOpenReview }: WeekScreenProps) {
+export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask, onProgress, onOpenReview, onPractice }: WeekScreenProps) {
   const { lang } = prefs;
   const today = plannerToday(state.today);
   const [weekStart, setWeekStart] = useState<IsoDate>(mondayOf(today));
@@ -254,6 +256,8 @@ export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask, onProgr
                 lang={lang}
                 showSpeaker={speakers}
                 onOpen={() => onOpenTask(item.task.id)}
+                onPractice={onPractice ? () => onPractice(item.task.id) : undefined}
+                understood={state.understood.includes(item.task.id)}
                 onListen={() => toggleSpeaking(item.task.id, `${subjectLabelOf(item.task, lang)}. ${taskTitle(item.task, lang)}`)}
               />
             ))

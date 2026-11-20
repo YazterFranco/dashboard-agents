@@ -7,6 +7,9 @@ import {
   KidStateSchema,
   ProgressKindSchema,
   STAR_KINDS,
+  lessonBank,
+  mathBank,
+  mathKind,
   localDate,
   mondayOf,
   nextStatus,
@@ -80,6 +83,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
       tasks: db.listTasks().filter((t) => !t.hidden && !t.retired),
       starsThisWeek: starsNow(),
       reviewDue: reviewSummary(db, today).due,
+      understood: [...new Set(db.listProgress().filter((e) => e.kind === 'lesson_done').map((e) => e.taskId))],
     });
   });
 
@@ -113,6 +117,20 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
     const q = VariantSchema.safeParse(req.query ?? {});
     if (!q.success) return reply.code(400).send({ error: 'solicitud inválida' });
     const answer = await lessons.get(req.params.taskId, q.data.variant);
+    if (answer.status === 'not-found') return reply.code(404).send({ error: 'tarea no encontrada' });
+    return answer;
+  });
+
+  // «Practicar»: el banco de retos de una tarea. Sumas y restas salen del generador (sin IA); lo demás, de su lección.
+  app.get<{ Params: { taskId: string } }>('/api/kid/practice/:taskId', async (req, reply) => {
+    const task = db.getTask(req.params.taskId);
+    if (!task || task.hidden || task.retired) return reply.code(404).send({ error: 'tarea no encontrada' });
+    const kind = mathKind(task.title, task.description);
+    if (kind) return { status: 'ready', source: 'math', items: mathBank(kind, task.id, /sin llevar|without carrying|no carry/i.test(`${task.title} ${task.description}`)) };
+    const stored = [db.getLesson(task.id, 'default'), db.getLesson(task.id, 'alternative')].flatMap((l) => (l ? [l.doc] : []));
+    if (stored.length) return { status: 'ready', source: 'lesson', items: lessonBank(stored) };
+    const answer = await lessons.get(task.id, 'default');
+    if (answer.status === 'ready') return { status: 'ready', source: 'lesson', items: lessonBank([answer.lesson.doc]) };
     if (answer.status === 'not-found') return reply.code(404).send({ error: 'tarea no encontrada' });
     return answer;
   });

@@ -5,3 +5,4 @@ export * from './guide.js';
 export * from './parent.js';
 export * from './lesson.js';
 export * from './review.js';
+export * from './practice.js';
