@@ -125,3 +125,19 @@ describe('PracticePlayer', () => {
     expect(screen.queryByText(/Ganaste una estrella/)).toBeNull();
   });
 });
+
+describe('PracticePlayer finishing offline', () => {
+  it('if saving the finish fails, it says so and the retry saves it', async () => {
+    const speaker = { available: () => true, speak: vi.fn(), stop: vi.fn(), speaking: false } as unknown as Speaker;
+    const onProgress = vi.fn().mockResolvedValueOnce({ ok: false }).mockResolvedValueOnce({ ok: true, starsGained: 1 });
+    render(<PracticePlayer task={task({ id: 'sub', subject: 'math' })} lang="es" voiceMode="text" speaker={speaker} load={async () => ready()} onProgress={onProgress} onClose={vi.fn()} />);
+    await screen.findByText('Reto 1 de 6');
+    for (let i = 0; i < 6; i++) {
+      right();
+      await act(async () => click(i === 5 ? 'Terminar' : 'Siguiente'));
+    }
+    expect(screen.getByText('No pude guardar tu avance. Revisa la conexión e inténtalo otra vez.')).toBeTruthy();
+    await act(async () => click('Intentar de nuevo'));
+    expect(screen.getByText(/Ganaste una estrella/)).toBeTruthy();
+  });
+});

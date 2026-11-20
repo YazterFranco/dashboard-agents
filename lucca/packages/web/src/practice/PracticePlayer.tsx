@@ -20,7 +20,7 @@ interface Props {
   onClose(): void;
 }
 
-type View = { kind: 'loading' } | { kind: 'unavailable'; reason: 'no-ai' | 'cap' | 'slow' | 'offline' } | { kind: 'playing' } | { kind: 'done'; star: boolean };
+type View = { kind: 'loading' } | { kind: 'unavailable'; reason: 'no-ai' | 'cap' | 'slow' | 'offline' } | { kind: 'playing' } | { kind: 'done'; star: boolean; saveFailed?: boolean };
 
 /**
  * «Practicar»: 6 retos que empiezan fáciles; dos aciertos a la primera suben de nivel y dos fallos bajan.
@@ -101,8 +101,12 @@ export function PracticePlayer({ task, lang, voiceMode, speaker, load, onProgres
       setLevelNote(null);
       return;
     }
+    await saveDone();
+  };
+
+  const saveDone = async () => {
     const result = onProgress ? await onProgress(task.id, 'practice_done') : null;
-    setView({ kind: 'done', star: Boolean(result && result.ok && result.starsGained > 0) });
+    setView({ kind: 'done', star: Boolean(result && result.ok && result.starsGained > 0), saveFailed: Boolean(result && !result.ok) });
   };
 
   const back = (
@@ -145,6 +149,16 @@ export function PracticePlayer({ task, lang, voiceMode, speaker, load, onProgres
           </h1>
           <p className="lesson-wait-text">{t(lang, 'practiceSummary', { m: String(results.length), n: String(firstTries) })}</p>
           {view.star ? <p className="guide-stars">⭐ {t(lang, 'lessonStar')}</p> : null}
+          {view.saveFailed ? (
+            <>
+              <p className="lesson-wait-text" role="status">
+                {t(lang, 'saveFailed')}
+              </p>
+              <button type="button" className="btn-primary lesson-retry" onClick={() => void saveDone()}>
+                {t(lang, 'retry')}
+              </button>
+            </>
+          ) : null}
           <button type="button" className="btn-primary lesson-retry" onClick={() => begin(bank)}>
             {t(lang, 'practiceAgain')}
           </button>

@@ -216,3 +216,26 @@ describe('LessonPlayer regression', () => {
     expect(screen.getByText('Paso 2 de 3')).toBeTruthy();
   });
 });
+
+describe('LessonPlayer finishing offline', () => {
+  it('if saving the finish fails, it says so and the retry saves it', async () => {
+    const speaker = { available: () => true, speak: vi.fn(), stop: vi.fn(), speaking: false } as unknown as Speaker;
+    const onProgress = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, starsGained: 0 }) // lesson_step
+      .mockResolvedValueOnce({ ok: false }) // lesson_done falla
+      .mockResolvedValueOnce({ ok: true, starsGained: 1 }); // reintento
+    render(<LessonPlayer task={task({ id: 't1', subject: 'science' })} lang="es" voiceMode="text" speaker={speaker} load={async () => ready(doc())} onProgress={onProgress} onClose={vi.fn()} />);
+    await screen.findByText('Paso 1 de 3');
+    click('Siguiente');
+    click('Siguiente');
+    click(/Verdadero/);
+    await act(async () => click('Terminar'));
+    expect(screen.getByText('No pude guardar tu avance. Revisa la conexión e inténtalo otra vez.')).toBeTruthy();
+    expect(screen.queryByText(/Ganaste una estrella/)).toBeNull();
+    await act(async () => click('Intentar de nuevo'));
+    expect(onProgress).toHaveBeenLastCalledWith('t1', 'lesson_done');
+    expect(screen.getByText(/Ganaste una estrella/)).toBeTruthy();
+    expect(screen.queryByText(/No pude guardar/)).toBeNull();
+  });
+});

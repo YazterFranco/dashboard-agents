@@ -45,7 +45,7 @@ export function LessonPlayer({ task, lang, voiceMode, speaker, load, onProgress,
   const [contentLang, setContentLang] = useState<Lang>(() => defaultContentLang(task, lang));
   const [solved, setSolved] = useState<Record<number, boolean>>({});
   const [misses, setMisses] = useState<Record<number, number>>({});
-  const [finished, setFinished] = useState<{ star: boolean } | null>(null);
+  const [finished, setFinished] = useState<{ star: boolean; saveFailed?: boolean } | null>(null);
   const [altFailed, setAltFailed] = useState(false);
   const stepSent = useRef(false);
   const heading = useRef<HTMLHeadingElement>(null);
@@ -127,8 +127,13 @@ export function LessonPlayer({ task, lang, voiceMode, speaker, load, onProgress,
       return;
     }
     speaker.stop();
+    await saveDone();
+  };
+
+  /** Guarda el final; si no hay conexión, lo dice y deja reintentar (la estrella no se pierde en silencio). */
+  const saveDone = async () => {
     const result = onProgress ? await onProgress(task.id, 'lesson_done') : null;
-    setFinished({ star: Boolean(result && result.ok && result.starsGained > 0) });
+    setFinished({ star: Boolean(result && result.ok && result.starsGained > 0), saveFailed: Boolean(result && !result.ok) });
   };
 
   const back = (
@@ -179,6 +184,16 @@ export function LessonPlayer({ task, lang, voiceMode, speaker, load, onProgress,
             {t(lang, 'lessonDone')}
           </h1>
           {finished.star ? <p className="guide-stars">⭐ {t(lang, 'lessonStar')}</p> : null}
+          {finished.saveFailed ? (
+            <>
+              <p className="lesson-wait-text" role="status">
+                {t(lang, 'saveFailed')}
+              </p>
+              <button type="button" className="btn-primary lesson-retry" onClick={() => void saveDone()}>
+                {t(lang, 'retry')}
+              </button>
+            </>
+          ) : null}
         </section>
       </main>
     );
