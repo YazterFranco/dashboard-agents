@@ -130,9 +130,9 @@ describe('LessonPlayer positive', () => {
   it('reads each screen aloud in "both" mode, with the language of each part', async () => {
     const { speaker } = setup();
     await screen.findByText('Paso 1 de 3');
-    expect(speaker.speak).toHaveBeenLastCalledWith([{ text: 'Una planta crece.', lang: 'es' }]);
+    await waitFor(() => expect(speaker.speak).toHaveBeenLastCalledWith([{ text: 'Una planta crece.', lang: 'es' }]));
     click('Siguiente');
-    expect(speaker.speak).toHaveBeenLastCalledWith([{ text: 'La raíz bebe agua.', lang: 'es' }]);
+    await waitFor(() => expect(speaker.speak).toHaveBeenLastCalledWith([{ text: 'La raíz bebe agua.', lang: 'es' }]));
   });
 });
 

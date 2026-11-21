@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { bi, type PracticeItem } from '@lucca/shared';
 import { task } from '../testFixtures';
 import type { Speaker } from '../speaker';
@@ -112,7 +112,7 @@ describe('PracticePlayer', () => {
     [async () => Promise.reject(new TypeError('fetch')), 'No encuentro tu lección ahora. ¡Díselo a papá!'],
   ])('unavailable cases say it kindly (%#)', async (load, message) => {
     setup(load as () => Promise<PracticeAnswer>);
-    expect((await screen.findByRole('status')).textContent).toBe(message);
+    await waitFor(() => expect(screen.getByRole('status').textContent).toBe(message));
   });
 
   it('a second round the same day does not promise another star', async () => {

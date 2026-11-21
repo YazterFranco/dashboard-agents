@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { bi, type VoiceMode } from '@lucca/shared';
 import type { Speaker } from '../speaker';
 import type { ReviewApi, ReviewItemView } from './api';
@@ -52,14 +52,14 @@ describe('ReviewPlayer positive', () => {
   it('reads the question aloud when the voice is on', async () => {
     const { speaker } = setup({}, 'both');
     await screen.findByText('Pregunta 1 de 2');
-    expect(speaker.speak).toHaveBeenCalledWith([{ text: 'La raíz bebe agua.', lang: 'es' }]);
+    await waitFor(() => expect(speaker.speak).toHaveBeenCalledWith([{ text: 'La raíz bebe agua.', lang: 'es' }]));
   });
 });
 
 describe('ReviewPlayer negative and edge', () => {
   it('nothing due says so kindly', async () => {
     setup({ today: vi.fn(async () => ({ today: 'x', items: [], doneToday: true })) });
-    expect((await screen.findByRole('status')).textContent).toBe('Hoy no hay nada que repasar. ¡Bien!');
+    await waitFor(() => expect(screen.getByRole('status').textContent).toBe('Hoy no hay nada que repasar. ¡Bien!'));
   });
 
   it('no connection: friendly message and retry', async () => {

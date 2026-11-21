@@ -1,1153 +1,262 @@
 {
   "clock": "2026-11-18T17:00:00Z",
-  "total": 61,
-  "passed": 61,
+  "total": 16,
+  "passed": 16,
   "failed": 0,
   "results": [
     {
-      "id": "E01",
+      "id": "F01",
       "kind": "positivo",
-      "title": "Lucca abre «Entender» desde su tarea, recorre la lección, responde las preguntas y gana una estrella",
+      "title": "Lunes · papá: configura el asistente y prepara la semana con dos tareas",
       "ok": true,
       "shots": [
         {
-          "name": "pantalla-1",
-          "file": "E01-pantalla-1.jpg"
-        },
-        {
-          "name": "pregunta-acertada",
-          "file": "E01-pregunta-acertada.jpg"
-        },
-        {
-          "name": "leccion-terminada",
-          "file": "E01-leccion-terminada.jpg"
-        },
-        {
-          "name": "semana-con-la-estrella",
-          "file": "E01-semana-con-la-estrella.jpg"
+          "name": "semana-preparada",
+          "file": "F01-semana-preparada.jpg"
         }
       ],
-      "checks": 13,
+      "checks": 2,
       "problems": [],
-      "ms": 1187
+      "ms": 752
     },
     {
-      "id": "E02",
+      "id": "F02",
       "kind": "positivo",
-      "title": "Los bloques interactivos responden: contar hojas, ordenar las partes de la planta",
+      "title": "Lunes · Lucca: entiende la lección, practica y termina su tarea con la guía (3 estrellas)",
       "ok": true,
       "shots": [
         {
-          "name": "contar",
-          "file": "E02-contar.jpg"
+          "name": "dia-terminado",
+          "file": "F02-dia-terminado.jpg"
         },
         {
-          "name": "ordenar",
-          "file": "E02-ordenar.jpg"
+          "name": "semana-del-lunes",
+          "file": "F02-semana-del-lunes.jpg"
         }
       ],
       "checks": 6,
       "problems": [],
-      "ms": 916
+      "ms": 1743
     },
     {
-      "id": "E03",
+      "id": "F03",
       "kind": "positivo",
-      "title": "Una tarea de Inglés se ve en inglés y «¿Me lo dices en español?» la cambia sin perder el paso",
+      "title": "Martes · Lucca: repasa lo del lunes (estrella), y deja la lección de ciencias a medias",
       "ok": true,
       "shots": [
         {
-          "name": "en-ingles",
-          "file": "E03-en-ingles.jpg"
-        },
-        {
-          "name": "en-espanol",
-          "file": "E03-en-espanol.jpg"
+          "name": "martes",
+          "file": "F03-martes.jpg"
         }
       ],
       "checks": 5,
       "problems": [],
-      "ms": 523
+      "ms": 921
     },
     {
-      "id": "E04",
-      "kind": "negativo",
-      "title": "Dos fallos en una pregunta: la mascota ofrece otra explicación y llega con otro enfoque",
+      "id": "F04",
+      "kind": "positivo",
+      "title": "Miércoles · papá revisa el progreso y ajusta: oculta ciencias y pone tema claro; Lucca lo ve",
       "ok": true,
       "shots": [
         {
-          "name": "pista-tras-el-primer-fallo",
-          "file": "E04-pista-tras-el-primer-fallo.jpg"
+          "name": "papa-revisa",
+          "file": "F04-papa-revisa.jpg"
         },
         {
-          "name": "oferta-de-otra-explicacion",
-          "file": "E04-oferta-de-otra-explicacion.jpg"
-        },
-        {
-          "name": "otra-explicacion",
-          "file": "E04-otra-explicacion.jpg"
+          "name": "lucca-tras-los-cambios",
+          "file": "F04-lucca-tras-los-cambios.jpg"
         }
       ],
-      "checks": 7,
+      "checks": 6,
       "problems": [],
-      "ms": 934
+      "ms": 954
     },
     {
-      "id": "E05",
+      "id": "F05",
       "kind": "borde",
-      "title": "La lección en móvil y tablet, en oscuro y claro: sin desbordes, botones ≥ 60 px, texto ≥ 19 px y contraste 4,5:1",
-      "ok": true,
-      "shots": [
-        {
-          "name": "cuento-390-dark",
-          "file": "E05-cuento-390-dark.jpg"
-        },
-        {
-          "name": "recta-numerica-390-dark",
-          "file": "E05-recta-numerica-390-dark.jpg"
-        },
-        {
-          "name": "cuento-390-light",
-          "file": "E05-cuento-390-light.jpg"
-        },
-        {
-          "name": "recta-numerica-390-light",
-          "file": "E05-recta-numerica-390-light.jpg"
-        },
-        {
-          "name": "recta-numerica-768-light",
-          "file": "E05-recta-numerica-768-light.jpg"
-        }
-      ],
-      "checks": 11,
-      "problems": [],
-      "ms": 2327
-    },
-    {
-      "id": "E06",
-      "kind": "borde",
-      "title": "Modo «Leer»: la lección no tiene botón de escuchar; en «Escuchar» sí",
+      "title": "Jueves · lo que acertó el martes espera 3 días: hoy no hay repaso",
       "ok": true,
       "shots": [],
       "checks": 2,
       "problems": [],
-      "ms": 459
+      "ms": 171
     },
     {
-      "id": "E07",
-      "kind": "negativo",
-      "title": "Sin conexión al abrir la lección: mensaje amable y el reintento funciona",
-      "ok": true,
-      "shots": [
-        {
-          "name": "sin-conexion",
-          "file": "E07-sin-conexion.jpg"
-        }
-      ],
-      "checks": 3,
-      "problems": [],
-      "ms": 444
-    },
-    {
-      "id": "E08",
-      "kind": "positivo",
-      "title": "Papá ve la lección como Lucca, sin que cuente como progreso, y puede regenerarla",
-      "ok": true,
-      "shots": [
-        {
-          "name": "vista-previa",
-          "file": "E08-vista-previa.jpg"
-        },
-        {
-          "name": "regenerada",
-          "file": "E08-regenerada.jpg"
-        }
-      ],
-      "checks": 6,
-      "problems": [],
-      "ms": 894
-    },
-    {
-      "id": "E09",
+      "id": "F06",
       "kind": "borde",
-      "title": "Ajustes de IA: modo, gasto del mes frente al tope y cambio del tope (fuera de rango se rechaza)",
+      "title": "Viernes · vuelven las 3 preguntas del lunes (3 días después de acertarlas)",
       "ok": true,
       "shots": [
         {
-          "name": "ia-en-ajustes",
-          "file": "E09-ia-en-ajustes.jpg"
-        }
-      ],
-      "checks": 4,
-      "problems": [],
-      "ms": 451
-    },
-    {
-      "id": "E10",
-      "kind": "negativo",
-      "title": "Sin clave de IA: Lucca ve «Esta tarea la vemos con papá» (sin errores) y papá ve qué falta",
-      "ok": true,
-      "shots": [
-        {
-          "name": "con-papa",
-          "file": "E10-con-papa.jpg"
-        },
-        {
-          "name": "papa-ve-que-falta",
-          "file": "E10-papa-ve-que-falta.jpg"
-        }
-      ],
-      "checks": 5,
-      "problems": [],
-      "ms": 683
-    },
-    {
-      "id": "E11",
-      "kind": "positivo",
-      "title": "Tocar un texto de la lección lo lee en voz alta (con su idioma); en modo «Leer» no es tocable",
-      "ok": true,
-      "shots": [
-        {
-          "name": "texto-tocable",
-          "file": "E11-texto-tocable.jpg"
-        }
-      ],
-      "checks": 4,
-      "problems": [],
-      "ms": 566
-    },
-    {
-      "id": "K01",
-      "kind": "positivo",
-      "title": "Recorrido completo: semana, plan, guía del día hasta el final y estrellas",
-      "ok": true,
-      "shots": [
-        {
-          "name": "mi-semana",
-          "file": "K01-mi-semana.jpg"
-        },
-        {
-          "name": "plan-de-la-semana",
-          "file": "K01-plan-de-la-semana.jpg"
-        },
-        {
-          "name": "guia-tarea-1",
-          "file": "K01-guia-tarea-1.jpg"
-        },
-        {
-          "name": "guia-terminada",
-          "file": "K01-guia-terminada.jpg"
-        },
-        {
-          "name": "semana-con-estrellas",
-          "file": "K01-semana-con-estrellas.jpg"
-        }
-      ],
-      "checks": 13,
-      "problems": [],
-      "ms": 1148
-    },
-    {
-      "id": "K02",
-      "kind": "borde",
-      "title": "Sin agenda: Lucca ve \"Pídele a papá que conecte tu agenda\" y el enlace al área de papá lleva al PIN",
-      "ok": true,
-      "shots": [
-        {
-          "name": "sin-agenda",
-          "file": "K02-sin-agenda.jpg"
-        },
-        {
-          "name": "enlace-a-papa",
-          "file": "K02-enlace-a-papa.jpg"
-        }
-      ],
-      "checks": 6,
-      "problems": [],
-      "ms": 486
-    },
-    {
-      "id": "K03",
-      "kind": "negativo",
-      "title": "Servidor caído: pantalla amable con reintento, y al volver la agenda aparece",
-      "ok": true,
-      "shots": [
-        {
-          "name": "sin-conexion",
-          "file": "K03-sin-conexion.jpg"
-        },
-        {
-          "name": "conexion-recuperada",
-          "file": "K03-conexion-recuperada.jpg"
-        }
-      ],
-      "checks": 7,
-      "problems": [],
-      "ms": 445
-    },
-    {
-      "id": "K04",
-      "kind": "negativo",
-      "title": "Falla \"¡Ya la hice!\" (error 500): dice \"Inténtalo otra vez\", no marca nada y el reintento funciona",
-      "ok": true,
-      "shots": [
-        {
-          "name": "error-al-marcar",
-          "file": "K04-error-al-marcar.jpg"
-        },
-        {
-          "name": "reintento-correcto",
-          "file": "K04-reintento-correcto.jpg"
-        }
-      ],
-      "checks": 7,
-      "problems": [],
-      "ms": 572
-    },
-    {
-      "id": "K05",
-      "kind": "borde",
-      "title": "Domingo: abre el lunes siguiente y ningún día es \"Hoy\"",
-      "ok": true,
-      "shots": [
-        {
-          "name": "domingo-abre-el-lunes",
-          "file": "K05-domingo-abre-el-lunes.jpg"
-        }
-      ],
-      "checks": 4,
-      "problems": [],
-      "ms": 328
-    },
-    {
-      "id": "K06",
-      "kind": "borde",
-      "title": "Martes 22:00 en Panamá (ya miércoles en UTC): Lucca ve el martes",
-      "ok": true,
-      "shots": [
-        {
-          "name": "martes-22h-en-panama",
-          "file": "K06-martes-22h-en-panama.jpg"
-        }
-      ],
-      "checks": 5,
-      "problems": [],
-      "ms": 301
-    },
-    {
-      "id": "K07",
-      "kind": "positivo",
-      "title": "Inglés y modo \"Leer\": el texto cambia de idioma y desaparecen los botones de audio",
-      "ok": true,
-      "shots": [
-        {
-          "name": "ingles-modo-leer",
-          "file": "K07-ingles-modo-leer.jpg"
-        },
-        {
-          "name": "ingles-modo-ambos",
-          "file": "K07-ingles-modo-ambos.jpg"
-        }
-      ],
-      "checks": 9,
-      "problems": [],
-      "ms": 643
-    },
-    {
-      "id": "K08",
-      "kind": "borde",
-      "title": "Título de 200 caracteres en la tarjeta de Lucca en móvil y tablet vertical, sin desbordes",
-      "ok": true,
-      "shots": [
-        {
-          "name": "titulo-200-390",
-          "file": "K08-titulo-200-390.jpg"
-        },
-        {
-          "name": "titulo-200-768",
-          "file": "K08-titulo-200-768.jpg"
-        }
-      ],
-      "checks": 8,
-      "problems": [],
-      "ms": 623
-    },
-    {
-      "id": "P01",
-      "kind": "positivo",
-      "title": "Primera vez: aparece el asistente de configuración y la falta de IA/Mereb no bloquea",
-      "ok": true,
-      "shots": [
-        {
-          "name": "asistente-primera-vez",
-          "file": "P01-asistente-primera-vez.jpg"
-        }
-      ],
-      "checks": 5,
-      "problems": [],
-      "ms": 308
-    },
-    {
-      "id": "P02",
-      "kind": "negativo",
-      "title": "PIN de 3 dígitos: mensaje junto al campo y nada se guarda",
-      "ok": true,
-      "shots": [
-        {
-          "name": "pin-corto",
-          "file": "P02-pin-corto.jpg"
-        }
-      ],
-      "checks": 7,
-      "problems": [],
-      "ms": 348
-    },
-    {
-      "id": "P03",
-      "kind": "negativo",
-      "title": "PIN con letras: se rechaza",
-      "ok": true,
-      "shots": [
-        {
-          "name": "pin-con-letras",
-          "file": "P03-pin-con-letras.jpg"
-        }
-      ],
-      "checks": 7,
-      "problems": [],
-      "ms": 386
-    },
-    {
-      "id": "P04",
-      "kind": "negativo",
-      "title": "Confirmación distinta: se rechaza",
-      "ok": true,
-      "shots": [
-        {
-          "name": "confirmacion-distinta",
-          "file": "P04-confirmacion-distinta.jpg"
-        }
-      ],
-      "checks": 7,
-      "problems": [],
-      "ms": 375
-    },
-    {
-      "id": "P05",
-      "kind": "negativo",
-      "title": "Nombre vacío: se rechaza",
-      "ok": true,
-      "shots": [
-        {
-          "name": "nombre-vacio",
-          "file": "P05-nombre-vacio.jpg"
-        }
-      ],
-      "checks": 7,
-      "problems": [],
-      "ms": 379
-    },
-    {
-      "id": "P06",
-      "kind": "negativo",
-      "title": "Nombre de 31 caracteres: se rechaza (el de 30 se acepta en P06b)",
-      "ok": true,
-      "shots": [
-        {
-          "name": "nombre-31",
-          "file": "P06-nombre-31.jpg"
-        }
-      ],
-      "checks": 7,
-      "problems": [],
-      "ms": 391
-    },
-    {
-      "id": "P06b",
-      "kind": "borde",
-      "title": "Nombre de exactamente 30 caracteres: se acepta y se ve sin desbordes",
-      "ok": true,
-      "shots": [
-        {
-          "name": "nombre-30-en-movil",
-          "file": "P06b-nombre-30-en-movil.jpg"
-        }
-      ],
-      "checks": 3,
-      "problems": [],
-      "ms": 406
-    },
-    {
-      "id": "P07",
-      "kind": "positivo",
-      "title": "Configuración completa: entra al panel y la cookie de sesión es segura",
-      "ok": true,
-      "shots": [
-        {
-          "name": "asistente-lleno",
-          "file": "P07-asistente-lleno.jpg"
-        },
-        {
-          "name": "panel-tras-configurar",
-          "file": "P07-panel-tras-configurar.jpg"
-        }
-      ],
-      "checks": 7,
-      "problems": [],
-      "ms": 557
-    },
-    {
-      "id": "P08",
-      "kind": "positivo",
-      "title": "\"Salir\" cierra la sesión: volver atrás o pedir datos ya no muestra nada",
-      "ok": true,
-      "shots": [
-        {
-          "name": "tras-salir",
-          "file": "P08-tras-salir.jpg"
-        },
-        {
-          "name": "volver-atras-pide-pin",
-          "file": "P08-volver-atras-pide-pin.jpg"
-        }
-      ],
-      "checks": 7,
-      "problems": [],
-      "ms": 655
-    },
-    {
-      "id": "P09",
-      "kind": "negativo",
-      "title": "PIN incorrecto: dice cuántos intentos quedan",
-      "ok": true,
-      "shots": [
-        {
-          "name": "pin-incorrecto",
-          "file": "P09-pin-incorrecto.jpg"
-        }
-      ],
-      "checks": 5,
-      "problems": [],
-      "ms": 367
-    },
-    {
-      "id": "P10",
-      "kind": "borde",
-      "title": "Un PIN con formato inválido (\"12\") no gasta intento",
-      "ok": true,
-      "shots": [
-        {
-          "name": "formato-invalido",
-          "file": "P10-formato-invalido.jpg"
-        },
-        {
-          "name": "sigue-contando-bien",
-          "file": "P10-sigue-contando-bien.jpg"
-        }
-      ],
-      "checks": 6,
-      "problems": [],
-      "ms": 482
-    },
-    {
-      "id": "P11",
-      "kind": "borde",
-      "title": "Cinco fallos seguidos bloquean: cuenta atrás en pantalla y el PIN correcto no entra",
-      "ok": true,
-      "shots": [
-        {
-          "name": "bloqueado",
-          "file": "P11-bloqueado.jpg"
-        },
-        {
-          "name": "bloqueo-persiste-al-recargar",
-          "file": "P11-bloqueo-persiste-al-recargar.jpg"
-        }
-      ],
-      "checks": 10,
-      "problems": [],
-      "ms": 962
-    },
-    {
-      "id": "P12",
-      "kind": "negativo",
-      "title": "Sin sesión (navegador limpio): /papa pide el PIN y la API responde 401 sin datos",
-      "ok": true,
-      "shots": [
-        {
-          "name": "sin-sesion",
-          "file": "P12-sin-sesion.jpg"
-        }
-      ],
-      "checks": 13,
-      "problems": [],
-      "ms": 257
-    },
-    {
-      "id": "P13",
-      "kind": "positivo",
-      "title": "El PIN correcto después de varios fallos reinicia la cuenta",
-      "ok": true,
-      "shots": [
-        {
-          "name": "ultimo-intento",
-          "file": "P13-ultimo-intento.jpg"
-        },
-        {
-          "name": "cuenta-reiniciada",
-          "file": "P13-cuenta-reiniciada.jpg"
-        }
-      ],
-      "checks": 4,
-      "problems": [],
-      "ms": 870
-    },
-    {
-      "id": "P14",
-      "kind": "negativo",
-      "title": "Sesión caducada a mitad de uso: la siguiente acción vuelve al PIN con un aviso, sin mostrar datos",
-      "ok": true,
-      "shots": [
-        {
-          "name": "sesion-caducada",
-          "file": "P14-sesion-caducada.jpg"
-        },
-        {
-          "name": "de-vuelta-en-el-panel",
-          "file": "P14-de-vuelta-en-el-panel.jpg"
-        }
-      ],
-      "checks": 9,
-      "problems": [],
-      "ms": 555
-    },
-    {
-      "id": "P20",
-      "kind": "positivo",
-      "title": "Crear una tarea manual con título en inglés: Lucca la ve el jueves en español e inglés",
-      "ok": true,
-      "shots": [
-        {
-          "name": "formulario-lleno",
-          "file": "P20-formulario-lleno.jpg"
-        },
-        {
-          "name": "tarea-creada",
-          "file": "P20-tarea-creada.jpg"
-        },
-        {
-          "name": "lucca-jueves-es",
-          "file": "P20-lucca-jueves-es.jpg"
-        },
-        {
-          "name": "lucca-jueves-en",
-          "file": "P20-lucca-jueves-en.jpg"
-        }
-      ],
-      "checks": 10,
-      "problems": [],
-      "ms": 1119
-    },
-    {
-      "id": "P21",
-      "kind": "negativo",
-      "title": "Tarea inválida (sin título, entrega antes del día) no se guarda y dice el motivo",
-      "ok": true,
-      "shots": [
-        {
-          "name": "errores-junto-a-los-campos",
-          "file": "P21-errores-junto-a-los-campos.jpg"
-        }
-      ],
-      "checks": 8,
-      "problems": [],
-      "ms": 539
-    },
-    {
-      "id": "P22",
-      "kind": "borde",
-      "title": "Título de 200 caracteres con <script>, comillas y emoji: se ve como texto, sin desbordes, en papá y en Lucca",
-      "ok": true,
-      "shots": [
-        {
-          "name": "papa-titulo-200",
-          "file": "P22-papa-titulo-200.jpg"
-        },
-        {
-          "name": "lucca-titulo-200",
-          "file": "P22-lucca-titulo-200.jpg"
-        }
-      ],
-      "checks": 10,
-      "problems": [],
-      "ms": 864
-    },
-    {
-      "id": "P23",
-      "kind": "positivo",
-      "title": "Mover una tarea de día: Lucca la ve en el día nuevo",
-      "ok": true,
-      "shots": [
-        {
-          "name": "movida-al-viernes",
-          "file": "P23-movida-al-viernes.jpg"
-        },
-        {
-          "name": "lucca-viernes",
-          "file": "P23-lucca-viernes.jpg"
-        }
-      ],
-      "checks": 7,
-      "problems": [],
-      "ms": 751
-    },
-    {
-      "id": "P24",
-      "kind": "positivo",
-      "title": "Ocultar una tarea: Lucca deja de verla, papá la ve atenuada y puede mostrarla de nuevo",
-      "ok": true,
-      "shots": [
-        {
-          "name": "oculta",
-          "file": "P24-oculta.jpg"
-        },
-        {
-          "name": "lucca-sin-la-tarea",
-          "file": "P24-lucca-sin-la-tarea.jpg"
-        }
-      ],
-      "checks": 6,
-      "problems": [],
-      "ms": 1031
-    },
-    {
-      "id": "P25",
-      "kind": "positivo",
-      "title": "Marcar lista no da estrellas: Lucca la ve lista y sus estrellas no cambian",
-      "ok": true,
-      "shots": [
-        {
-          "name": "marcada-lista",
-          "file": "P25-marcada-lista.jpg"
-        }
-      ],
-      "checks": 5,
-      "problems": [],
-      "ms": 576
-    },
-    {
-      "id": "P26",
-      "kind": "positivo",
-      "title": "Editar el título: el formulario viene lleno y Lucca ve el cambio",
-      "ok": true,
-      "shots": [
-        {
-          "name": "editando",
-          "file": "P26-editando.jpg"
-        }
-      ],
-      "checks": 4,
-      "problems": [],
-      "ms": 728
-    },
-    {
-      "id": "P27",
-      "kind": "negativo",
-      "title": "Borrar: cancelar no cambia nada; confirmar elimina del todo una tarea manual",
-      "ok": true,
-      "shots": [
-        {
-          "name": "pregunta-de-borrado",
-          "file": "P27-pregunta-de-borrado.jpg"
-        },
-        {
-          "name": "borrada",
-          "file": "P27-borrada.jpg"
-        }
-      ],
-      "checks": 7,
-      "problems": [],
-      "ms": 701
-    },
-    {
-      "id": "P28",
-      "kind": "borde",
-      "title": "Semanas: solo la anterior, la actual y la siguiente; los extremos se deshabilitan y se puede crear en la siguiente",
-      "ok": true,
-      "shots": [
-        {
-          "name": "semana-anterior-vacia",
-          "file": "P28-semana-anterior-vacia.jpg"
-        },
-        {
-          "name": "semana-siguiente-con-tarea",
-          "file": "P28-semana-siguiente-con-tarea.jpg"
-        },
-        {
-          "name": "lucca-semana-siguiente",
-          "file": "P28-lucca-semana-siguiente.jpg"
-        }
-      ],
-      "checks": 9,
-      "problems": [],
-      "ms": 1093
-    },
-    {
-      "id": "P29",
-      "kind": "borde",
-      "title": "Tarea sin fechas: papá la ve en \"Sin fecha\" y Lucca la ve hoy",
-      "ok": true,
-      "shots": [
-        {
-          "name": "sin-fecha",
-          "file": "P29-sin-fecha.jpg"
-        },
-        {
-          "name": "lucca-hoy-con-la-tarea",
-          "file": "P29-lucca-hoy-con-la-tarea.jpg"
-        }
-      ],
-      "checks": 6,
-      "problems": [],
-      "ms": 894
-    },
-    {
-      "id": "P30",
-      "kind": "borde",
-      "title": "30 tareas en un día: papá y Lucca las muestran todas sin romper el diseño",
-      "ok": true,
-      "shots": [
-        {
-          "name": "papa-30-tareas",
-          "file": "P30-papa-30-tareas.jpg"
-        },
-        {
-          "name": "papa-30-tareas-completa",
-          "file": "P30-papa-30-tareas-completa.jpg"
-        },
-        {
-          "name": "lucca-30-tareas",
-          "file": "P30-lucca-30-tareas.jpg"
-        }
-      ],
-      "checks": 38,
-      "problems": [],
-      "ms": 1183
-    },
-    {
-      "id": "P31",
-      "kind": "negativo",
-      "title": "Se cae la conexión al guardar en el panel: mensaje amable junto a la tarea, nada cambia y al volver se puede repetir",
-      "ok": true,
-      "shots": [
-        {
-          "name": "sin-conexion-al-guardar",
-          "file": "P31-sin-conexion-al-guardar.jpg"
-        }
-      ],
-      "checks": 7,
-      "problems": [],
-      "ms": 481
-    },
-    {
-      "id": "P40",
-      "kind": "borde",
-      "title": "Sin actividad de Lucca: el progreso lo dice claramente en vez de mostrar ceros confusos",
-      "ok": true,
-      "shots": [
-        {
-          "name": "sin-actividad",
-          "file": "P40-sin-actividad.jpg"
+          "name": "viernes-repaso",
+          "file": "F06-viernes-repaso.jpg"
         }
       ],
       "checks": 2,
       "problems": [],
-      "ms": 398
+      "ms": 258
     },
     {
-      "id": "P41",
-      "kind": "positivo",
-      "title": "Lucca completa tareas, usa pistas y pide ayuda: el progreso de papá lo muestra",
+      "id": "F07",
+      "kind": "borde",
+      "title": "Domingo · Lucca ve la semana siguiente con la tarea que papá preparó, y el repaso que no hizo el viernes sigue esperándolo",
       "ok": true,
       "shots": [
         {
-          "name": "con-actividad",
-          "file": "P41-con-actividad.jpg"
-        }
-      ],
-      "checks": 9,
-      "problems": [],
-      "ms": 418
-    },
-    {
-      "id": "P50",
-      "kind": "positivo",
-      "title": "Cambiar el nombre: el panel y el saludo de Lucca cambian",
-      "ok": true,
-      "shots": [
-        {
-          "name": "ajustes-guardados",
-          "file": "P50-ajustes-guardados.jpg"
-        },
-        {
-          "name": "lucca-saluda-a-mateo",
-          "file": "P50-lucca-saluda-a-mateo.jpg"
+          "name": "domingo",
+          "file": "F07-domingo.jpg"
         }
       ],
       "checks": 4,
       "problems": [],
-      "ms": 724
+      "ms": 285
     },
     {
-      "id": "P51",
+      "id": "F08",
       "kind": "positivo",
-      "title": "Tema claro y velocidad 1,1: papá lo ve al instante y Lucca desde la siguiente carga",
+      "title": "Dos dispositivos a la vez: papá añade una tarea desde el móvil y la tablet de Lucca la muestra al volver a mirarla",
       "ok": true,
       "shots": [
         {
-          "name": "tema-claro",
-          "file": "P51-tema-claro.jpg"
+          "name": "tarea-nueva-sin-recargar",
+          "file": "F08-tarea-nueva-sin-recargar.jpg"
+        }
+      ],
+      "checks": 4,
+      "problems": [],
+      "ms": 324
+    },
+    {
+      "id": "Q01",
+      "kind": "positivo",
+      "title": "Practicar restas: empieza en nivel 1, sube tras dos aciertos, 6 retos, resumen y estrella",
+      "ok": true,
+      "shots": [
+        {
+          "name": "reto-nivel-1",
+          "file": "Q01-reto-nivel-1.jpg"
         },
         {
-          "name": "lucca-tema-claro",
-          "file": "P51-lucca-tema-claro.jpg"
-        }
-      ],
-      "checks": 7,
-      "problems": [],
-      "ms": 835
-    },
-    {
-      "id": "P51b",
-      "kind": "borde",
-      "title": "Si Lucca solo cambió el idioma en su tablet, el tema que papá cambie después sí se aplica",
-      "ok": true,
-      "shots": [
-        {
-          "name": "tema-de-papa-e-idioma-de-lucca",
-          "file": "P51b-tema-de-papa-e-idioma-de-lucca.jpg"
-        }
-      ],
-      "checks": 6,
-      "problems": [],
-      "ms": 414
-    },
-    {
-      "id": "P52",
-      "kind": "negativo",
-      "title": "Velocidad 2 y nombre vacío: se rechazan con el motivo y los ajustes anteriores se conservan",
-      "ok": true,
-      "shots": [
-        {
-          "name": "valores-fuera-de-rango",
-          "file": "P52-valores-fuera-de-rango.jpg"
-        }
-      ],
-      "checks": 8,
-      "problems": [],
-      "ms": 420
-    },
-    {
-      "id": "P53",
-      "kind": "positivo",
-      "title": "Cambiar el PIN: el nuevo entra, el viejo ya no y las demás sesiones se cierran",
-      "ok": true,
-      "shots": [
-        {
-          "name": "pin-cambiado",
-          "file": "P53-pin-cambiado.jpg"
+          "name": "sube-de-nivel",
+          "file": "Q01-sube-de-nivel.jpg"
         },
         {
-          "name": "entra-con-el-pin-nuevo",
-          "file": "P53-entra-con-el-pin-nuevo.jpg"
+          "name": "practica-terminada",
+          "file": "Q01-practica-terminada.jpg"
         }
       ],
-      "checks": 8,
+      "checks": 9,
       "problems": [],
-      "ms": 1147
+      "ms": 1071
     },
     {
-      "id": "P54",
+      "id": "Q02",
       "kind": "negativo",
-      "title": "PIN actual incorrecto al cambiarlo: no cambia y cuenta como intento fallido",
+      "title": "Dos fallos seguidos bajan de nivel con un mensaje amable, sin quitar estrellas",
       "ok": true,
       "shots": [
         {
-          "name": "pin-actual-incorrecto",
-          "file": "P54-pin-actual-incorrecto.jpg"
+          "name": "baja-de-nivel",
+          "file": "Q02-baja-de-nivel.jpg"
         }
       ],
       "checks": 5,
       "problems": [],
-      "ms": 709
+      "ms": 722
     },
     {
-      "id": "P60",
-      "kind": "borde",
-      "title": "Todas las pantallas de papá a 390, 768 y 1024 px en oscuro y claro: sin desplazamiento, controles ≥ 44 px, texto ≥ 16 px y contraste 4,5:1",
-      "ok": true,
-      "shots": [
-        {
-          "name": "configuracion-390-dark",
-          "file": "P60-configuracion-390-dark.jpg"
-        },
-        {
-          "name": "acceso-390-dark",
-          "file": "P60-acceso-390-dark.jpg"
-        },
-        {
-          "name": "tareas-390-dark",
-          "file": "P60-tareas-390-dark.jpg"
-        },
-        {
-          "name": "formulario-390-dark",
-          "file": "P60-formulario-390-dark.jpg"
-        },
-        {
-          "name": "ajustes-390-dark",
-          "file": "P60-ajustes-390-dark.jpg"
-        },
-        {
-          "name": "tareas-390-light",
-          "file": "P60-tareas-390-light.jpg"
-        },
-        {
-          "name": "tareas-768-dark",
-          "file": "P60-tareas-768-dark.jpg"
-        },
-        {
-          "name": "progreso-768-light",
-          "file": "P60-progreso-768-light.jpg"
-        },
-        {
-          "name": "ajustes-768-light",
-          "file": "P60-ajustes-768-light.jpg"
-        },
-        {
-          "name": "progreso-1024-dark",
-          "file": "P60-progreso-1024-dark.jpg"
-        },
-        {
-          "name": "configuracion-1024-light",
-          "file": "P60-configuracion-1024-light.jpg"
-        },
-        {
-          "name": "acceso-1024-light",
-          "file": "P60-acceso-1024-light.jpg"
-        },
-        {
-          "name": "tareas-1024-light",
-          "file": "P60-tareas-1024-light.jpg"
-        },
-        {
-          "name": "formulario-1024-light",
-          "file": "P60-formulario-1024-light.jpg"
-        }
-      ],
-      "checks": 35,
-      "problems": [],
-      "ms": 7566
-    },
-    {
-      "id": "P61",
+      "id": "Q03",
       "kind": "positivo",
-      "title": "Todo el flujo con solo teclado: PIN, abrir el formulario, elegir materia, escribir, guardar y cerrar con Esc",
+      "title": "Practicar una tarea que no es de matemáticas usa los juegos de su lección",
       "ok": true,
       "shots": [
         {
-          "name": "foco-visible",
-          "file": "P61-foco-visible.jpg"
-        },
-        {
-          "name": "formulario-con-teclado",
-          "file": "P61-formulario-con-teclado.jpg"
-        },
-        {
-          "name": "tras-guardar-y-cerrar",
-          "file": "P61-tras-guardar-y-cerrar.jpg"
+          "name": "reto-de-ciencias",
+          "file": "Q03-reto-de-ciencias.jpg"
         }
       ],
-      "checks": 10,
+      "checks": 3,
       "problems": [],
-      "ms": 804
+      "ms": 313
     },
     {
-      "id": "R01",
+      "id": "Q04",
       "kind": "negativo",
-      "title": "El mismo día de la lección no hay repaso (las preguntas vuelven mañana)",
+      "title": "Sin IA: las restas se practican igual (generador); ciencias dice «la vemos con papá»",
       "ok": true,
       "shots": [
         {
-          "name": "sin-repaso-el-mismo-dia",
-          "file": "R01-sin-repaso-el-mismo-dia.jpg"
+          "name": "restas-sin-ia",
+          "file": "Q04-restas-sin-ia.jpg"
         }
       ],
-      "checks": 5,
+      "checks": 2,
       "problems": [],
-      "ms": 360
+      "ms": 434
     },
     {
-      "id": "R02",
-      "kind": "positivo",
-      "title": "Al día siguiente aparece «Repaso rápido»: 3 preguntas, estrella al terminar y el botón desaparece",
+      "id": "Q05",
+      "kind": "borde",
+      "title": "Practicar en móvil y tablet, en oscuro y claro: sin desbordes, botones ≥ 60 px, contraste",
       "ok": true,
       "shots": [
         {
-          "name": "boton-de-repaso",
-          "file": "R02-boton-de-repaso.jpg"
+          "name": "practica-390-dark",
+          "file": "Q05-practica-390-dark.jpg"
         },
         {
-          "name": "pregunta-de-repaso",
-          "file": "R02-pregunta-de-repaso.jpg"
+          "name": "practica-390-light",
+          "file": "Q05-practica-390-light.jpg"
         },
         {
-          "name": "repaso-terminado",
-          "file": "R02-repaso-terminado.jpg"
+          "name": "practica-768-light",
+          "file": "Q05-practica-768-light.jpg"
         }
       ],
       "checks": 7,
       "problems": [],
-      "ms": 1029
+      "ms": 1719
     },
     {
-      "id": "R03",
+      "id": "Q06",
+      "kind": "negativo",
+      "title": "Se cae la conexión al terminar la práctica: lo dice, y al volver se guarda la estrella",
+      "ok": true,
+      "shots": [
+        {
+          "name": "sin-conexion-al-terminar",
+          "file": "Q06-sin-conexion-al-terminar.jpg"
+        }
+      ],
+      "checks": 3,
+      "problems": [],
+      "ms": 950
+    },
+    {
+      "id": "W01",
       "kind": "borde",
-      "title": "Repetir el repaso el mismo día no da otra estrella ni adelanta las preguntas",
+      "title": "Pausa saludable: papá la pone cada 10 min; tras 10 min de uso aparece, espera 1 minuto y se sigue donde estaba",
+      "ok": true,
+      "shots": [
+        {
+          "name": "pausa",
+          "file": "W01-pausa.jpg"
+        }
+      ],
+      "checks": 5,
+      "problems": [],
+      "ms": 1159
+    },
+    {
+      "id": "W02",
+      "kind": "borde",
+      "title": "Con la pausa en 0 no aparece aunque pasen horas",
       "ok": true,
       "shots": [],
       "checks": 2,
       "problems": [],
-      "ms": 8
-    },
-    {
-      "id": "R04",
-      "kind": "borde",
-      "title": "Al otro día solo vuelve la pregunta fallada; las acertadas esperan 3 días",
-      "ok": true,
-      "shots": [
-        {
-          "name": "vuelve-la-fallada",
-          "file": "R04-vuelve-la-fallada.jpg"
-        }
-      ],
-      "checks": 3,
-      "problems": [],
-      "ms": 288
-    },
-    {
-      "id": "R05",
-      "kind": "positivo",
-      "title": "Papá ve en Progreso cuántas preguntas hay guardadas, aprendidas y para hoy",
-      "ok": true,
-      "shots": [
-        {
-          "name": "repaso-en-progreso",
-          "file": "R05-repaso-en-progreso.jpg"
-        }
-      ],
-      "checks": 2,
-      "problems": [],
-      "ms": 345
+      "ms": 173
     }
   ]
 }

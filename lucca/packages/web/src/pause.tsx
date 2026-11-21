@@ -4,11 +4,12 @@ import { t } from './i18n';
 import { Mascot } from './components/Mascot';
 
 const TICK_MS = 15_000;
-const BREAK_SECONDS = 60;
+const BREAK_SECONDS = 5 * 60;
 
 /**
- * Pausa saludable: tras `minutes` de uso con la pantalla visible, la mascota propone estirarse y tomar agua durante un
- * minuto. Lo de detrás queda inerte (sin perder dónde estaba Lucca). `0` = sin recordatorio.
+ * Pausa saludable (child-safety): tras `minutes` de uso con la pantalla visible, la mascota propone 5 minutos para
+ * estirarse y tomar agua. Se puede saltar en cualquier momento: sin presión ni castigos. Lo de detrás queda inerte (sin
+ * perder dónde estaba Lucca). `0` = sin recordatorio.
  */
 export function PauseGate({ minutes, lang, children }: { minutes: number; lang: Lang; children: ReactNode }) {
   const used = useRef(0);
@@ -58,8 +59,8 @@ export function PauseGate({ minutes, lang, children }: { minutes: number; lang: 
             <p className="pause-timer" role="timer">
               {`${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`}
             </p>
-            <button type="button" className="btn-primary lesson-retry" disabled={left > 0} onClick={resume}>
-              {t(lang, 'pauseDone')}
+            <button type="button" className="btn-primary lesson-retry" onClick={resume}>
+              {t(lang, left > 0 ? 'pauseSkip' : 'pauseDone')}
             </button>
           </section>
         </div>

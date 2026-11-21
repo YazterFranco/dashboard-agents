@@ -176,7 +176,8 @@ describe('edge', () => {
     await start({ model: slow, timeoutMs: 30 });
     expect((await kid('/api/kid/lessons/plant')).json()).toEqual({ status: 'unavailable', reason: 'slow' });
     release();
-    await new Promise((r) => setTimeout(r, 20));
+    // Se espera a que la lección quede guardada (sin una pausa fija: bajo carga podría no bastar).
+    await vi.waitFor(async () => expect(db.getLesson('plant', 'default')).not.toBeNull(), { timeout: 3000 });
     expect((await kid('/api/kid/lessons/plant')).json().status).toBe('ready');
   });
 });

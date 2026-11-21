@@ -1501,6 +1501,344 @@ async function reviewGroup() {
   });
 }
 
+
+// =====================================================================================================
+// Practicar, pausa saludable y flujos completos de varios días
+// =====================================================================================================
+/** Resuelve un reto de sumas o restas leyendo la pregunta; `wrongFirst` falla una vez antes. */
+async function solveMath(page, { wrongFirst = false } = {}) {
+  const blocks = page.locator('.lesson-blocks');
+  const text = ((await blocks.locator('.lesson-text').first().textContent()) || '').trim();
+  const m = text.match(/(\d+) (más|menos) (\d+)/);
+  if (!m) throw new Error(`no entendí el reto: «${text}»`);
+  const value = m[2] === 'más' ? Number(m[1]) + Number(m[3]) : Number(m[1]) - Number(m[3]);
+  if (await blocks.getByRole('button', { name: /Verdadero/ }).count()) {
+    const truth = Number(text.match(/= (\d+)/)[1]) === value;
+    if (wrongFirst) await blocks.getByRole('button', { name: truth ? /Falso/ : /Verdadero/ }).click();
+    await blocks.getByRole('button', { name: truth ? /Verdadero/ : /Falso/ }).click();
+    return;
+  }
+  if (wrongFirst) {
+    const others = blocks.locator('button.lesson-option:enabled, button.lesson-tick:enabled').filter({ hasNotText: new RegExp(`^${value}$`) });
+    await others.first().click();
+  }
+  await blocks.getByRole('button', { name: String(value), exact: true }).click();
+}
+const practiceLevel = async (page) => text(page.getByText(/^Nivel \d de 3$/));
+
+async function practiceGroup() {
+  await withServer({ LUCCA_DEMO: '1', LUCCA_AI: 'recorded' }, async (s) => {
+    await H.setupParent(s);
+    await run('Q01', 'positivo', 'Practicar restas: empieza en nivel 1, sube tras dos aciertos, 6 retos, resumen y estrella', async () => {
+      const before = (await kidState(s)).starsThisWeek;
+      const { page } = await openKid(s);
+      await page.getByRole('button', { name: /^Practicar: Restas sin llevar/ }).click();
+      await page.getByText('Reto 1 de 6').waitFor();
+      expect((await practiceLevel(page)) === 'Nivel 1 de 3', 'empieza en nivel 1');
+      await shot(page, 'reto-nivel-1');
+      for (let i = 0; i < 6; i++) {
+        await solveMath(page);
+        if (i === 1) {
+          await page.getByText('¡Subes de nivel!').waitFor();
+          await shot(page, 'sube-de-nivel');
+        }
+        await page.getByRole('button', { name: i === 5 ? 'Terminar' : 'Siguiente' }).click();
+        if (i === 1) expect((await practiceLevel(page)) === 'Nivel 2 de 3', 'tras dos aciertos, nivel 2');
+      }
+      await page.getByRole('heading', { name: '¡Práctica terminada!' }).waitFor();
+      await page.getByText('Hiciste 6 retos. 6 a la primera.').waitFor();
+      await page.getByText(/Ganaste una estrella/).waitFor();
+      await shot(page, 'practica-terminada');
+      expect((await kidState(s)).starsThisWeek === before + 1, 'una estrella por practicar');
+    });
+
+    await run('Q02', 'negativo', 'Dos fallos seguidos bajan de nivel con un mensaje amable, sin quitar estrellas', async () => {
+      const before = (await kidState(s)).starsThisWeek;
+      const { page } = await openKid(s);
+      await page.getByRole('button', { name: /^Practicar: Restas sin llevar/ }).click();
+      await page.getByText('Reto 1 de 6').waitFor();
+      for (let i = 0; i < 2; i++) {
+        await solveMath(page);
+        await page.getByRole('button', { name: 'Siguiente' }).click();
+      }
+      expect((await practiceLevel(page)) === 'Nivel 2 de 3', 'llegó al nivel 2');
+      await solveMath(page, { wrongFirst: true });
+      await page.getByRole('button', { name: 'Siguiente' }).click();
+      await solveMath(page, { wrongFirst: true });
+      await page.getByText('Vamos con uno más fácil.').waitFor();
+      await shot(page, 'baja-de-nivel');
+      await page.getByRole('button', { name: 'Siguiente' }).click();
+      expect((await practiceLevel(page)) === 'Nivel 1 de 3', 'vuelve al nivel 1');
+      expect((await kidState(s)).starsThisWeek === before, 'equivocarse no quita estrellas');
+    });
+
+    await run('Q03', 'positivo', 'Practicar una tarea que no es de matemáticas usa los juegos de su lección', async () => {
+      const { page } = await openKid(s);
+      await page.getByRole('button', { name: /^Practicar: Las partes de la planta/ }).click();
+      await page.getByText('Reto 1 de 6').waitFor();
+      expect((await page.locator('.lesson-blocks .lesson-question').count()) === 1, 'muestra un reto interactivo');
+      await shot(page, 'reto-de-ciencias');
+    });
+
+    await run('Q05', 'borde', 'Practicar en móvil y tablet, en oscuro y claro: sin desbordes, botones ≥ 60 px, contraste', async () => {
+      const found = [];
+      for (const [viewport, theme] of [[PHONE, 'dark'], [PHONE, 'light'], [PORTRAIT, 'light']]) {
+        const { page } = await openKid(s, { viewport, theme });
+        await page.getByRole('button', { name: /^Practicar: Restas sin llevar/ }).click();
+        await page.getByText('Reto 1 de 6').waitFor();
+        for (let i = 0; i < 3; i++) {
+          for (const p of await page.evaluate(measureLesson)) found.push(`[${viewport.width} ${theme} · reto ${i + 1}] ${p}`);
+          await solveMath(page);
+          for (const p of await page.evaluate(measureLesson)) found.push(`[${viewport.width} ${theme} · reto ${i + 1} resuelto] ${p}`);
+          if (i === 0) await shot(page, `practica-${viewport.width}-${theme}`);
+          await page.getByRole('button', { name: 'Siguiente' }).click();
+        }
+        for (const c of opened.splice(0)) await c.close().catch(() => {});
+      }
+      expect(found.length === 0, `Incumplimientos:\n      ${found.join('\n      ')}`);
+    });
+
+    await run('Q06', 'negativo', 'Se cae la conexión al terminar la práctica: lo dice, y al volver se guarda la estrella', async () => {
+      const { page } = await openKid(s);
+      await page.getByRole('button', { name: /^Practicar: Restas sin llevar/ }).click();
+      await page.getByText('Reto 1 de 6').waitFor();
+      for (let i = 0; i < 5; i++) {
+        await solveMath(page);
+        await page.getByRole('button', { name: 'Siguiente' }).click();
+      }
+      await solveMath(page);
+      let aborted = 0;
+      await page.route('**/api/kid/progress', (route) => {
+        aborted++;
+        return route.abort();
+      });
+      await page.getByRole('button', { name: 'Terminar' }).click();
+      expect(aborted === 1, 'la petición de guardar se cortó');
+      await page.getByText('No pude guardar tu avance. Revisa la conexión e inténtalo otra vez.').waitFor();
+      await shot(page, 'sin-conexion-al-terminar');
+      await page.unroute('**/api/kid/progress');
+      await page.getByRole('button', { name: 'Intentar de nuevo' }).click();
+      await page.getByText('No pude guardar tu avance.').waitFor({ state: 'detached' });
+    });
+  });
+
+  await withServer({ LUCCA_DEMO: '1' }, async (s) => {
+    await run('Q04', 'negativo', 'Sin IA: las restas se practican igual (generador); ciencias dice «la vemos con papá»', async () => {
+      const { page } = await openKid(s);
+      await page.getByRole('button', { name: /^Practicar: Las partes de la planta/ }).click();
+      await page.getByText('Esta tarea la vemos con papá.').waitFor();
+      await page.getByRole('button', { name: /Volver a mi semana/ }).click();
+      await page.getByRole('button', { name: /^Practicar: Restas sin llevar/ }).click();
+      await page.getByText('Reto 1 de 6').waitFor();
+      await shot(page, 'restas-sin-ia');
+    });
+  });
+}
+
+async function pauseGroup() {
+  await withServer({ LUCCA_DEMO: '1', LUCCA_AI: 'recorded' }, async (s) => {
+    const cookie = await H.setupParent(s);
+    await run('W01', 'borde', 'Pausa saludable: papá la pone cada 10 min; tras 10 min de uso propone 5 min para estirarse, se puede saltar y se sigue donde estaba', async () => {
+      const parent = await open(s, { cookie });
+      await goParent(parent.page, s);
+      await parentHeading(parent.page).waitFor();
+      await tab(parent.page, 'Ajustes');
+      await parent.page.getByLabel('Pausa cada (minutos)', { exact: true }).fill('10');
+      await parent.page.getByRole('button', { name: 'Guardar ajustes' }).click();
+      await parent.page.getByText('Ajustes guardados', { exact: true }).waitFor();
+      const { page } = await open(s);
+      await page.clock.install();
+      await page.goto(s.url);
+      await kidHeading(page).waitFor();
+      await startLesson(page, /^(Empezar|Seguir|Repasar): Restas sin llevar/);
+      await lessonNext(page);
+      await page.clock.runFor('09:00');
+      expect((await page.getByRole('dialog').count()) === 0, 'a los 9 minutos aún no');
+      await page.clock.runFor('01:30');
+      await page.getByRole('dialog', { name: '¡Hora de estirarnos!' }).waitFor();
+      expect((await text(page.getByRole('timer'))) === '5:00', 'la pausa dura 5 minutos');
+      await shot(page, 'pausa');
+      await page.clock.runFor('02:00');
+      expect((await text(page.getByRole('timer'))) === '3:00', 'la cuenta atrás avanza');
+      await page.getByRole('button', { name: 'Seguir ahora' }).click();
+      await page.getByText('Paso 2 de 8').waitFor();
+      expect((await page.getByRole('dialog').count()) === 0, 'la pausa se cierra y Lucca sigue en el mismo paso');
+    });
+
+    await run('W02', 'borde', 'Con la pausa en 0 no aparece aunque pasen horas', async () => {
+      const res = await H.api(s, 'PUT', '/api/parent/settings', { cookie, body: { pauseMinutes: 0 } });
+      expect(res.status === 200, 'papá la apaga');
+      const { page } = await open(s);
+      await page.clock.install();
+      await page.goto(s.url);
+      await kidHeading(page).waitFor();
+      await page.clock.runFor('03:00:00');
+      expect((await page.getByRole('dialog').count()) === 0, 'sin recordatorio');
+    });
+  });
+}
+
+async function flowGroup() {
+  const { mkdtempSync, rmSync } = require('node:fs');
+  const os = require('node:os');
+  const path = require('node:path');
+  const dir = mkdtempSync(path.join(os.tmpdir(), 'lucca-flow-'));
+  const db = path.join(dir, 'lucca.db');
+  // Mediodía en Panamá de cada día de la semana del 16 de noviembre; base de datos compartida entre «días».
+  const day = (iso) => ({ LUCCA_AI: 'recorded', LUCCA_DB: db, LUCCA_FAKE_NOW: iso });
+  const MON = '2026-11-16T17:00:00Z', TUE = '2026-11-17T17:00:00Z', WED = '2026-11-18T17:00:00Z', THU = '2026-11-19T17:00:00Z', FRI = '2026-11-20T17:00:00Z', SUN = '2026-11-22T17:00:00Z';
+  const parentLogin = async (s) => (await H.api(s, 'POST', '/api/parent/login', { body: { pin: PIN } })).cookie;
+  try {
+    await withServer(day(MON), async (s) => {
+      await run('F01', 'positivo', 'Lunes · papá: configura el asistente y prepara la semana con dos tareas', async () => {
+        const { page } = await open(s);
+        await goParent(page, s);
+        await fillSetup(page, { name: 'Lucca' });
+        await finishSetup(page);
+        await parentHeading(page).waitFor();
+        await page.getByText('No hay tareas esta semana').waitFor();
+        await openTaskForm(page);
+        await fillTask(page, { subject: 'Matemáticas', title: 'Restas hasta 20', titleEn: 'Subtraction to 20', assigned: '2026-11-16', due: '2026-11-17' });
+        await saveTask(page);
+        await weekGroup(page, 'Lunes 16').getByText('Restas hasta 20').waitFor();
+        await openTaskForm(page);
+        await fillTask(page, { subject: 'Ciencias', title: 'Las partes de la planta', assigned: '2026-11-17', due: '2026-11-18' });
+        await saveTask(page);
+        await weekGroup(page, 'Martes 17').getByText('Las partes de la planta').waitFor();
+        await shot(page, 'semana-preparada');
+      });
+
+      await run('F02', 'positivo', 'Lunes · Lucca: entiende la lección, practica y termina su tarea con la guía (3 estrellas)', async () => {
+        const { page } = await openKid(s);
+        await page.getByRole('heading', { name: 'Restas hasta 20' }).waitFor();
+        await startLesson(page, 'Empezar: Restas hasta 20');
+        for (let i = 0; i < 5; i++) await lessonNext(page);
+        await page.getByRole('button', { name: '5', exact: true }).click();
+        await lessonNext(page);
+        await page.getByRole('button', { name: 'Verdadero' }).click();
+        await lessonNext(page);
+        await page.getByRole('button', { name: '4', exact: true }).click();
+        await page.getByRole('button', { name: 'Terminar' }).click();
+        await page.getByRole('heading', { name: '¡Lo entendiste!' }).waitFor();
+        await page.getByRole('button', { name: /Volver a mi semana/ }).click();
+        await page.getByText('💡 Entendida').waitFor();
+        await page.getByRole('button', { name: 'Practicar: Restas hasta 20' }).click();
+        await page.getByText('Reto 1 de 6').waitFor();
+        for (let i = 0; i < 6; i++) {
+          await solveMath(page);
+          await page.getByRole('button', { name: i === 5 ? 'Terminar' : 'Siguiente' }).click();
+        }
+        await page.getByRole('heading', { name: '¡Práctica terminada!' }).waitFor();
+        await page.getByRole('button', { name: /Volver a mi semana/ }).click();
+        await page.getByRole('button', { name: 'Guíame', exact: true }).click();
+        await page.getByText('Tarea 1 de 1').waitFor();
+        await page.getByRole('button', { name: '¡Ya la hice!', exact: true }).click();
+        await page.getByRole('heading', { name: '¡Terminaste el día!' }).waitFor();
+        await shot(page, 'dia-terminado');
+        await page.getByRole('button', { name: 'Volver a mi semana' }).click();
+        const state = await kidState(s);
+        expect(state.starsThisWeek === 3, `lección + práctica + tarea = 3 estrellas (hay ${state.starsThisWeek})`);
+        expect(taskByTitle(state.tasks, /Restas/).status === 'done', 'la tarea queda lista');
+        await shot(page, 'semana-del-lunes');
+      });
+    });
+
+    await withServer(day(TUE), async (s) => {
+      await run('F03', 'positivo', 'Martes · Lucca: repasa lo del lunes (estrella), y deja la lección de ciencias a medias', async () => {
+        const { page } = await openKid(s);
+        await page.getByText('3 para repasar hoy').waitFor();
+        await page.getByRole('button', { name: 'Repaso rápido' }).click();
+        await page.getByText('Pregunta 1 de 3').waitFor();
+        for (let i = 0; i < 3; i++) {
+          const blocks = page.locator('.lesson-blocks');
+          if (await blocks.getByRole('button', { name: /Verdadero/ }).count()) await blocks.getByRole('button', { name: /Verdadero/ }).click();
+          else await blocks.getByRole('button', { name: i === 0 ? '5' : '4', exact: true }).click();
+          await page.getByRole('button', { name: i === 2 ? 'Terminar' : 'Siguiente' }).click();
+        }
+        await page.getByRole('heading', { name: '¡Repaso terminado!' }).waitFor();
+        await page.getByRole('button', { name: /Volver a mi semana/ }).click();
+        expect((await kidTitles(page)).includes('Las partes de la planta'), 'hoy está la de ciencias');
+        expect(!(await kidTitles(page)).includes('Restas hasta 20'), 'la del lunes, ya lista, no se arrastra a hoy');
+        await startLesson(page, 'Empezar: Las partes de la planta');
+        await lessonNext(page);
+        await lessonNext(page);
+        await page.getByRole('button', { name: /Volver a mi semana/ }).click();
+        await page.getByRole('button', { name: 'Seguir: Las partes de la planta' }).waitFor();
+        const state = await kidState(s);
+        expect(state.starsThisWeek === 4 && taskByTitle(state.tasks, /planta/).status === 'doing', `4 estrellas y ciencias a medias (estrellas ${state.starsThisWeek})`);
+        await shot(page, 'martes');
+      });
+    });
+
+    await withServer(day(WED), async (s) => {
+      const cookie = await parentLogin(s);
+      await run('F04', 'positivo', 'Miércoles · papá revisa el progreso y ajusta: oculta ciencias y pone tema claro; Lucca lo ve', async () => {
+        const { page } = await open(s, { cookie });
+        await goParent(page, s);
+        await parentHeading(page).waitFor();
+        await tab(page, 'Progreso');
+        const week = page.getByRole('region', { name: '16 – 20 de noviembre', exact: true });
+        await week.getByText('4 estrellas', { exact: true }).waitFor();
+        await page.getByRole('region', { name: 'Repaso rápido' }).getByText('3 preguntas guardadas').waitFor();
+        await shot(page, 'papa-revisa');
+        await tab(page, 'Tareas');
+        await page.getByRole('button', { name: 'Ocultar: Las partes de la planta' }).click();
+        await page.getByText('Oculta', { exact: true }).waitFor();
+        await tab(page, 'Ajustes');
+        await page.getByRole('radio', { name: 'Claro' }).check();
+        await page.getByRole('button', { name: 'Guardar ajustes' }).click();
+        await page.getByText('Ajustes guardados', { exact: true }).waitFor();
+        const kid = await openKid(s);
+        expect(!(await kidTitles(kid.page)).includes('Las partes de la planta'), 'Lucca ya no ve la tarea oculta');
+        expect((await kid.page.locator('html').getAttribute('data-theme')) === 'light', 'y ve el tema claro');
+        await shot(kid.page, 'lucca-tras-los-cambios');
+      });
+
+      await run('F08', 'positivo', 'Dos dispositivos a la vez: papá añade una tarea desde el móvil y la tablet de Lucca la muestra al volver a mirarla', async () => {
+        const kid = await openKid(s, { viewport: PORTRAIT });
+        expect(!(await kidTitles(kid.page)).includes('Leer un cuento corto'), 'aún no está');
+        const res = await H.api(s, 'POST', '/api/parent/tasks', { cookie, body: { subject: 'spanish', title: 'Leer un cuento corto', assignedDate: '2026-11-18' } });
+        expect(res.status === 201, 'papá la crea');
+        await kid.page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+        await kid.page.getByRole('heading', { name: 'Leer un cuento corto' }).waitFor();
+        await shot(kid.page, 'tarea-nueva-sin-recargar');
+      });
+    });
+
+    await withServer(day(THU), async (s) => {
+      await run('F05', 'borde', 'Jueves · lo que acertó el martes espera 3 días: hoy no hay repaso', async () => {
+        const { page } = await openKid(s);
+        expect((await page.getByRole('button', { name: 'Repaso rápido' }).count()) === 0, 'sin repaso hoy');
+        expect((await kidState(s)).reviewDue === 0, 'nada pendiente');
+      });
+    });
+
+    await withServer(day(FRI), async (s) => {
+      await run('F06', 'borde', 'Viernes · vuelven las 3 preguntas del lunes (3 días después de acertarlas)', async () => {
+        const { page } = await openKid(s);
+        await page.getByText('3 para repasar hoy').waitFor();
+        await shot(page, 'viernes-repaso');
+      });
+    });
+
+    await withServer(day(SUN), async (s) => {
+      const cookie = await parentLogin(s);
+      await run('F07', 'borde', 'Domingo · Lucca ve la semana siguiente con la tarea que papá preparó, y el repaso que no hizo el viernes sigue esperándolo', async () => {
+        const res = await H.api(s, 'POST', '/api/parent/tasks', { cookie, body: { subject: 'math', title: 'Sumas hasta 50', assignedDate: '2026-11-23' } });
+        expect(res.status === 201, 'tarea para el lunes 23');
+        const { page } = await openKid(s);
+        await page.getByText('23 – 27 de noviembre').first().waitFor();
+        expect((await dayButton(page, /, Hoy/).count()) === 0, 'en domingo no hay «Hoy»');
+        await page.getByRole('heading', { name: 'Sumas hasta 50' }).waitFor();
+        await page.getByText('3 para repasar hoy').waitFor(); // lo del viernes que no hizo sigue esperando: no se pierde
+        await shot(page, 'domingo');
+      });
+    });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 (async () => {
   H.prepareOut();
   browser = await chromium.launch();
@@ -1516,6 +1854,9 @@ async function reviewGroup() {
     await kidGroup();
     await lessonGroup();
     await reviewGroup();
+    await practiceGroup();
+    await pauseGroup();
+    await flowGroup();
     code = H.report();
   } catch (err) {
     console.error('Las pruebas funcionales no pudieron terminar:', err);
