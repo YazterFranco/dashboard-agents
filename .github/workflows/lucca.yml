@@ -1,0 +1,83 @@
+name: Lucca
+
+# Pruebas en cada cambio de lucca/. En main, además, publica el Worker de Cloudflare (lucca.<subdominio>.workers.dev).
+# Railway se conecta a este repositorio por su cuenta (Root Directory: lucca) y despliega el servidor al hacer push.
+on:
+  push:
+    branches: [main, 'claude/**']
+    paths: ['lucca/**', '.github/workflows/lucca.yml']
+  pull_request:
+    paths: ['lucca/**', '.github/workflows/lucca.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: lucca-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: lucca } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: lucca/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - name: Tipos (TypeScript)
+        run: npm run typecheck
+      - name: Pruebas (servidor, web, lector de la agenda y Worker)
+        run: npm test
+      - name: Compilar
+        run: npm run build
+
+  worker:
+    needs: pruebas
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: ¿Está todo configurado?
+        id: listo
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SECRET: ${{ secrets.LUCCA_ORIGIN_SECRET }}
+          ORIGIN: ${{ vars.LUCCA_ORIGIN_URL }}
+          TEAM: ${{ vars.ACCESS_TEAM_DOMAIN }}
+          AUD: ${{ vars.ACCESS_AUD }}
+        run: |
+          missing=""
+          [ -n "$TOKEN" ] || missing="$missing secreto:CLOUDFLARE_API_TOKEN"
+          [ -n "$ACCOUNT" ] || missing="$missing secreto:CLOUDFLARE_ACCOUNT_ID"
+          [ -n "$SECRET" ] || missing="$missing secreto:LUCCA_ORIGIN_SECRET"
+          [ -n "$ORIGIN" ] || missing="$missing variable:LUCCA_ORIGIN_URL"
+          [ -n "$TEAM" ] || missing="$missing variable:ACCESS_TEAM_DOMAIN"
+          [ -n "$AUD" ] || missing="$missing variable:ACCESS_AUD"
+          if [ -n "$missing" ]; then
+            echo "::notice title=Worker sin publicar::Falta en Settings → Secrets and variables → Actions:$missing (ver lucca/README.md, «Publicarlo en internet»)."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Publicar el Worker
+        if: steps.listo.outputs.ok == 'true'
+        uses: cloudflare/wrangler-action@v3
+        env:
+          ORIGIN_SECRET: ${{ secrets.LUCCA_ORIGIN_SECRET }}
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: lucca
+          secrets: |
+            ORIGIN_SECRET
+          command: >-
+            deploy
+            --var ORIGIN_URL:${{ vars.LUCCA_ORIGIN_URL }}
+            --var ACCESS_TEAM_DOMAIN:${{ vars.ACCESS_TEAM_DOMAIN }}
+            --var ACCESS_AUD:${{ vars.ACCESS_AUD }}

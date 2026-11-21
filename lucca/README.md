@@ -126,37 +126,43 @@ Access (firma, aplicación, equipo y caducidad) y responde 503 si le falta confi
 `LUCCA_ORIGIN_SECRET`, rechaza todo lo que no traiga la cabecera secreta (403), aunque alguien encuentre la dirección de
 Railway. Con el secreto la cookie de papá se marca `Secure` y el PIN sigue protegiendo el área de papá.
 
-**1. Railway.** Crea un servicio desde este repositorio (o con `railway up` desde esta carpeta): usa el `Dockerfile` y
-`railway.json` (comprobación en `/api/health`). Añade un **volumen** montado en `/data` y estas variables:
+Todo sale de **GitHub** (`YazterFranco/dashboard-agents`): Railway despliega el servidor en cada push a `main` y el
+flujo `.github/workflows/lucca.yml` pasa las pruebas y publica el Worker. Las claves se guardan en Railway y en los
+secretos de GitHub, nunca en el código.
+
+**1. Railway (servidor + datos).** *New Project → Deploy from GitHub repo →* `YazterFranco/dashboard-agents`. En
+*Settings* del servicio: **Root Directory** `lucca` y rama `main` (usa `lucca/Dockerfile`; si no detecta
+`railway.json`, pon en *Config-as-code* la ruta `/lucca/railway.json`, o la comprobación de salud `/api/health` a mano).
+Añade un **volumen** montado en `/data`, estas variables, y en *Networking* genera el dominio público
+(`https://<servicio>.up.railway.app`; abierto directamente responde 403, y eso está bien):
 
 | Variable | Valor |
 | --- | --- |
-| `LUCCA_ORIGIN_SECRET` | 64 caracteres al azar: `openssl rand -hex 32` |
+| `LUCCA_ORIGIN_SECRET` | 64 caracteres al azar: `openssl rand -hex 32` (guárdalo: va también en GitHub) |
 | `ANTHROPIC_API_KEY` | tu clave de IA (opcional; sin ella las lecciones son genéricas) |
-| `TZ` | `America/Panama` (ya viene en la imagen) |
 
-Genera el dominio público de Railway (`https://<servicio>.up.railway.app`). Abierto directamente, responde 403: está bien.
+**2. Cloudflare Access (quién puede entrar).** En *Zero Trust → Access → Applications → Add → Self-hosted*: dominio
+`lucca.<tu-subdominio>.workers.dev` (tu subdominio está en *Workers & Pages*), política *Allow* con los correos de la
+familia y método «código por correo». Copia el **Application Audience (AUD) Tag** y tu dominio de equipo
+(`<equipo>.cloudflareaccess.com`, en *Settings → Custom Pages* o en la URL de inicio de sesión).
 
-**2. Cloudflare Access.** En Zero Trust → Access → Applications, crea una aplicación *self-hosted* para
-`lucca.<tu-subdominio>.workers.dev` con una política que permita los correos de la familia (método: código por correo).
-Copia el **Application Audience (AUD) Tag** y tu dominio de equipo (`<equipo>.cloudflareaccess.com`).
+**3. GitHub (publica el Worker).** En el repositorio, *Settings → Secrets and variables → Actions*:
 
-**3. Worker.** Completa `[vars]` en `wrangler.toml` (`ORIGIN_URL`, `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD`) y:
+| Tipo | Nombre | Valor |
+| --- | --- | --- |
+| Secreto | `CLOUDFLARE_API_TOKEN` | token de Cloudflare con la plantilla «Edit Cloudflare Workers» |
+| Secreto | `CLOUDFLARE_ACCOUNT_ID` | el ID de tu cuenta (*Workers & Pages*, columna derecha) |
+| Secreto | `LUCCA_ORIGIN_SECRET` | el mismo valor que en Railway |
+| Variable | `LUCCA_ORIGIN_URL` | `https://<servicio>.up.railway.app` |
+| Variable | `ACCESS_TEAM_DOMAIN` | `<equipo>.cloudflareaccess.com` |
+| Variable | `ACCESS_AUD` | el AUD Tag de Access |
 
-```bash
-npx wrangler login
-```
+Con un push a `main` (o *Actions → Lucca → Run workflow*), el flujo pasa las pruebas y publica el Worker. Si falta
+algo, no falla: avisa qué falta. Abre `https://lucca.<tu-subdominio>.workers.dev`: pide el código por correo y luego
+muestra la pantalla de Lucca; el área de papá sigue en `/papa` con su PIN.
 
-```bash
-npx wrangler secret put ORIGIN_SECRET
-```
-
-```bash
-npx wrangler deploy
-```
-
-`ORIGIN_SECRET` es el mismo valor que `LUCCA_ORIGIN_SECRET`. Abre `https://lucca.<tu-subdominio>.workers.dev`: pide el
-código por correo, y después la pantalla de Lucca; el área de papá sigue en `/papa` con su PIN.
+Sin GitHub Actions, desde esta carpeta: completa `[vars]` en `wrangler.toml` y ejecuta `npx wrangler login`,
+`npx wrangler secret put ORIGIN_SECRET` y `npx wrangler deploy`.
 
 Para construir la imagen en tu computadora: `docker build -t lucca .` (si Docker Hub limita las descargas, añade
 `--build-arg NODE_IMAGE=mirror.gcr.io/library/node:22-alpine`).
