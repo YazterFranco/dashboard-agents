@@ -365,3 +365,79 @@ describe('TasksTab lesson preview', () => {
   });
 });
 
+
+describe('TasksTab: importar la agenda en PDF', () => {
+  const pdfFile = (size = 2048, name = 'export-actividades.pdf', type = 'application/pdf') => {
+    const file = new File(['%PDF-1.7'], name, { type });
+    Object.defineProperty(file, 'size', { value: size });
+    return file;
+  };
+  const PREVIEW = {
+    weekStart: '2026-11-22',
+    weekEnd: '2026-11-28',
+    drafts: [
+      { key: 'a', subject: 'math', subjectLabel: 'Matemáticas', title: 'Números romanos', description: '', dueDate: '2026-11-25', kind: '', state: 'new' },
+      { key: 'b', subject: 'science', subjectLabel: 'Science', title: 'Land Habitats', description: '', dueDate: '2026-11-26', kind: '', state: 'new' },
+    ],
+  };
+  const choose = (file: File) => fireEvent.change(screen.getByLabelText('Archivo PDF de la agenda'), { target: { files: [file] } });
+
+  it('al elegir el PDF muestra lo encontrado para revisarlo', async () => {
+    const previewAgenda = vi.fn(async () => PREVIEW);
+    setup(week, { previewAgenda });
+    expect(screen.getByRole('button', { name: 'Importar agenda (PDF)' })).toBeTruthy();
+    const file = pdfFile();
+    choose(file);
+    expect(await screen.findByRole('heading', { name: 'Agenda del 22 al 28 de noviembre' })).toBeTruthy();
+    expect(previewAgenda).toHaveBeenCalledWith(file);
+  });
+
+  it('al añadir dice cuántas y muestra la semana de la agenda', async () => {
+    const importAgenda = vi.fn(async () => ({ added: 2, updated: 0, unchanged: 0, skipped: 0 }));
+    const { onChanged } = setup(week, { previewAgenda: vi.fn(async () => PREVIEW), importAgenda });
+    choose(pdfFile());
+    fireEvent.click(await screen.findByRole('button', { name: 'Añadir 2 tareas' }));
+    expect(await screen.findByText('Listo: 2 tareas nuevas.')).toBeTruthy();
+    expect(onChanged).toHaveBeenCalled();
+    expect(screen.getByText('23 – 27 de noviembre')).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Agenda del 22 al 28 de noviembre' })).toBeNull();
+  });
+
+  it('un archivo que no es PDF ni se envía', () => {
+    const previewAgenda = vi.fn();
+    setup(week, { previewAgenda });
+    choose(pdfFile(100, 'agenda.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'));
+    expect(screen.getByRole('alert').textContent).toBe('Elige el PDF de la agenda (un archivo que termina en .pdf).');
+    expect(previewAgenda).not.toHaveBeenCalled();
+  });
+
+  it('un PDF de más de 5 MB ni se envía', () => {
+    const previewAgenda = vi.fn();
+    setup(week, { previewAgenda });
+    choose(pdfFile(6 * 1024 * 1024));
+    expect(screen.getByRole('alert').textContent).toBe('El PDF pesa más de 5 MB');
+    expect(previewAgenda).not.toHaveBeenCalled();
+  });
+
+  it('si el servidor no encuentra actividades, lo dice', async () => {
+    const message = 'No encontré actividades en este PDF. ¿Es la exportación de la agenda de Mereb («Exportar actividades»)?';
+    setup(week, { previewAgenda: vi.fn(async () => Promise.reject(new ApiError(message, 422))) });
+    choose(pdfFile());
+    expect((await screen.findByRole('alert')).textContent).toBe(message);
+  });
+
+  it('sin conexión al leer el PDF, pide intentarlo otra vez', async () => {
+    setup(week, { previewAgenda: vi.fn(async () => Promise.reject(new TypeError('Failed to fetch'))) });
+    choose(pdfFile());
+    expect((await screen.findByRole('alert')).textContent).toMatch(/No se pudo conectar/);
+  });
+
+  it('Cancelar cierra la revisión sin añadir nada', async () => {
+    const importAgenda = vi.fn();
+    setup(week, { previewAgenda: vi.fn(async () => PREVIEW), importAgenda });
+    choose(pdfFile());
+    fireEvent.click(await screen.findByRole('button', { name: 'Cancelar' }));
+    expect(screen.queryByRole('heading', { name: 'Agenda del 22 al 28 de noviembre' })).toBeNull();
+    expect(importAgenda).not.toHaveBeenCalled();
+  });
+});

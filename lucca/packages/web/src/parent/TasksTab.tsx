@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { SUBJECTS, addDays, mondayOf, weekDays, weekdayOf, workDateOf, type IsoDate, type Task } from '@lucca/shared';
 import { weekRange } from '../i18n';
-import { ApiError, type ParentApi, type TaskBody } from './api';
-import { GENERIC_ERROR, NETWORK_SAVE_ERROR } from './fields';
+import { AgendaImport, importSummary } from './AgendaImport';
+import { ApiError, type AgendaPreviewResponse, type ParentApi, type TaskBody } from './api';
+import { FormError, GENERIC_ERROR, NETWORK_ERROR, NETWORK_SAVE_ERROR } from './fields';
 import { TaskForm } from './TaskForm';
 import { TaskRow, dayHeading } from './TaskRow';
 
@@ -56,6 +57,16 @@ function describe(err: unknown): string | null {
   return err.status === 404 || err.status === 409 ? err.message : GENERIC_ERROR;
 }
 
+const MAX_PDF_BYTES = 5 * 1024 * 1024;
+
+/** Lo que se puede saber del archivo antes de enviarlo; null si parece un PDF razonable. */
+function checkPdf(file: File): string | null {
+  const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+  if (!isPdf) return 'Elige el PDF de la agenda (un archivo que termina en .pdf).';
+  if (file.size > MAX_PDF_BYTES) return 'El PDF pesa más de 5 MB';
+  return null;
+}
+
 function Chevron({ direction }: { direction: 'left' | 'right' }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -74,6 +85,12 @@ export function TasksTab({ tasks, today, onChanged, api, onPreview }: Props) {
   const newButton = useRef<HTMLButtonElement>(null);
   /** Qué botón abrió el formulario ('new' o `edit-<id>`): al cerrarlo, el foco vuelve ahí en vez de perderse. */
   const returnFocus = useRef<string | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const importButton = useRef<HTMLButtonElement>(null);
+  const [agenda, setAgenda] = useState<AgendaPreviewResponse | null>(null);
+  const [agendaBusy, setAgendaBusy] = useState(false);
+  const [agendaError, setAgendaError] = useState<string | null>(null);
+  const [agendaDone, setAgendaDone] = useState<string | null>(null);
 
   useEffect(() => {
     if (editing !== null || returnFocus.current === null) return;
@@ -131,6 +148,41 @@ export function TasksTab({ tasks, today, onChanged, api, onPreview }: Props) {
     },
   });
 
+  async function readAgenda(file: File | undefined) {
+    if (fileInput.current) fileInput.current.value = '';
+    if (!file) return;
+    setAgendaDone(null);
+    const problem = checkPdf(file);
+    if (problem) {
+      setAgendaError(problem);
+      return;
+    }
+    setAgendaError(null);
+    setAgendaBusy(true);
+    try {
+      setEditing(null);
+      setAgenda(await api.previewAgenda(file));
+    } catch (err) {
+      if (!(err instanceof ApiError)) setAgendaError(NETWORK_ERROR);
+      else if (err.status !== 401) setAgendaError(err.status >= 500 ? GENERIC_ERROR : err.message);
+    } finally {
+      setAgendaBusy(false);
+    }
+  }
+
+  function agendaImported(result: Parameters<typeof importSummary>[0], dueDates: IsoDate[]) {
+    setAgenda(null);
+    setAgendaDone(importSummary(result));
+    onChanged();
+    // Ir a la semana de la agenda (la del día del medio), dentro de lo que deja ver la navegación.
+    const middle = [...dueDates].sort()[Math.floor(dueDates.length / 2)];
+    if (middle) {
+      const weeks = Math.round((Date.parse(mondayOf(middle)) - Date.parse(mondayOf(today))) / (7 * 86_400_000));
+      setOffset(Math.max(-1, Math.min(1, weeks)));
+    }
+    importButton.current?.focus();
+  }
+
   async function saveForm(values: TaskBody) {
     if (editing === 'new') await api.createTask(values);
     else if (editing) await api.patchTask(editing.id, values);
@@ -158,20 +210,52 @@ export function TasksTab({ tasks, today, onChanged, api, onPreview }: Props) {
             </button>
           )}
         </div>
-        {editing === null ? (
-          <button
-            ref={newButton}
-            type="button"
-            className="p-btn p-btn-primary"
-            onClick={() => {
-              returnFocus.current = 'new';
-              setEditing('new');
-            }}
-          >
-            Nueva tarea
+        <div className="p-actions">
+          <button ref={importButton} type="button" className="p-btn p-btn-ghost" disabled={agendaBusy} onClick={() => fileInput.current?.click()}>
+            {agendaBusy ? 'Leyendo el PDF…' : 'Importar agenda (PDF)'}
           </button>
-        ) : null}
+          <input
+            ref={fileInput}
+            type="file"
+            accept="application/pdf,.pdf"
+            className="visually-hidden"
+            tabIndex={-1}
+            aria-label="Archivo PDF de la agenda"
+            onChange={(e) => void readAgenda(e.target.files?.[0])}
+          />
+          {editing === null ? (
+            <button
+              ref={newButton}
+              type="button"
+              className="p-btn p-btn-primary"
+              onClick={() => {
+                returnFocus.current = 'new';
+                setEditing('new');
+              }}
+            >
+              Nueva tarea
+            </button>
+          ) : null}
+        </div>
       </div>
+
+      {agendaError ? <FormError>{agendaError}</FormError> : null}
+      {agendaDone ? (
+        <p className="p-status" role="status">
+          {agendaDone}
+        </p>
+      ) : null}
+      {agenda ? (
+        <AgendaImport
+          preview={agenda}
+          api={api}
+          onDone={agendaImported}
+          onCancel={() => {
+            setAgenda(null);
+            importButton.current?.focus();
+          }}
+        />
+      ) : null}
 
       {editing !== null ? (
         <TaskForm

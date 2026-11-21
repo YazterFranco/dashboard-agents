@@ -1,4 +1,4 @@
-import type { Lang, Settings, Task, Theme, WeekProgress } from '@lucca/shared';
+import type { AgendaImportResult, AgendaPreviewItem, Lang, Settings, Task, TaskDraft, Theme, WeekProgress } from '@lucca/shared';
 import { fetchLesson, type LessonAnswer } from '../lesson/api';
 
 /** Respuesta no 2xx del servidor. Un fallo de red NO es un `ApiError`: llega como el `TypeError` del navegador. */
@@ -74,9 +74,26 @@ export interface TaskBody {
   dueDate: string | null;
 }
 
+export interface AgendaPreviewResponse {
+  weekStart: string | null;
+  weekEnd: string | null;
+  drafts: AgendaPreviewItem[];
+}
+
+/** Un archivo (el PDF) va tal cual, con su tipo; lo demás, como JSON. */
+class RawBody {
+  constructor(
+    readonly data: Blob,
+    readonly type: string,
+  ) {}
+}
+
 async function request<T>(method: string, url: string, body?: unknown): Promise<T> {
   const init: RequestInit = { method, credentials: 'same-origin' };
-  if (body !== undefined) {
+  if (body instanceof RawBody) {
+    init.headers = { 'content-type': body.type };
+    init.body = body.data;
+  } else if (body !== undefined) {
     init.headers = { 'content-type': 'application/json' };
     init.body = JSON.stringify(body);
   }
@@ -114,6 +131,9 @@ export const parentApi = {
   /** La lección tal como la ve Lucca (vista previa: no cuenta como progreso). */
   lesson: (taskId: string): Promise<LessonAnswer> => fetchLesson(taskId, 'default', '/api/parent/lessons'),
   regenerateLesson: (taskId: string) => request<LessonAnswer>('POST', `/api/parent/lessons/${encodeURIComponent(taskId)}/regenerate`),
+  /** El PDF «Exportar actividades» de Mereb → tareas propuestas (no guarda nada). */
+  previewAgenda: (file: Blob) => request<AgendaPreviewResponse>('POST', '/api/parent/agenda/pdf', new RawBody(file, 'application/pdf')),
+  importAgenda: (tasks: TaskDraft[]) => request<AgendaImportResult>('POST', '/api/parent/agenda/import', { tasks }),
 };
 export type ParentApi = typeof parentApi;
 

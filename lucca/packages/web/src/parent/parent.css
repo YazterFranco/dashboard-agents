@@ -78,6 +78,13 @@
   background: var(--accent);
   color: var(--on-accent);
 }
+/* Deshabilitado sin transparencia: el texto se sigue leyendo bien (contorno en vez de relleno). */
+.p-btn-primary:disabled {
+  opacity: 1;
+  background: transparent;
+  color: var(--muted);
+  border: 2px dashed var(--line);
+}
 .p-btn-ghost {
   background: transparent;
   color: var(--ink);
@@ -482,4 +489,74 @@ code {
   min-height: auto;
   padding: 0;
   max-width: none;
+}
+
+/* ---------- Agenda en PDF ---------- */
+.p-agenda-day {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.p-agenda-day > legend {
+  padding: 0;
+  margin-bottom: 10px;
+}
+.p-agenda-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+/* Casilla de 28 px dentro de una zona táctil de 44 px (la etiqueta que la envuelve). */
+.p-check-hit {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.p-check {
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.p-agenda-off {
+  background: transparent;
+  border: 2px dashed var(--line);
+}
+.p-agenda-detail summary {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.p-agenda-detail summary::-webkit-details-marker {
+  display: none;
+}
+.p-agenda-detail summary::before {
+  content: '▸';
+  transition: transform 0.15s;
+}
+.p-agenda-detail[open] summary::before {
+  transform: rotate(90deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .p-agenda-detail summary::before {
+    transition: none;
+  }
+}
+.p-agenda-detail p {
+  white-space: pre-line;
+  color: var(--muted);
+  overflow-wrap: anywhere;
 }

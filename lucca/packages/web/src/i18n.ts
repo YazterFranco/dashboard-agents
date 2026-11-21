@@ -295,7 +295,7 @@ export function summaryLine(lang: Lang, a: SummaryArgs): string {
   return `${head} · ${tail}`;
 }
 
-const MONTHS_LONG: Record<Lang, string[]> = {
+export const MONTHS_LONG: Record<Lang, string[]> = {
   es: ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
   en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
 };

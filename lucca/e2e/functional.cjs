@@ -753,9 +753,11 @@ function measureParent() {
     const arrows = [...nav.querySelectorAll('.p-btn-icon')].map((b) => b.getBoundingClientRect().top);
     if (arrows.length === 2 && Math.abs(arrows[0] - arrows[1]) > 8) problems.push('la navegación de semanas se parte en varias filas');
   }
-  for (const el of document.querySelectorAll('button, a.p-btn, select, input:not([type=radio]), textarea, .p-choice-opt span')) {
-    if (!visible(el)) continue;
-    const r = el.getBoundingClientRect();
+  for (const el of document.querySelectorAll('button, a.p-btn, select, input:not([type=radio]), textarea, .p-choice-opt span, summary')) {
+    if (!visible(el) || el.classList.contains('visually-hidden')) continue;
+    // Una casilla cuenta con la zona táctil de la etiqueta que la envuelve.
+    const target = el.matches('input[type=checkbox]') && el.closest('label') ? el.closest('label') : el;
+    const r = target.getBoundingClientRect();
     if (r.height < 43.5 || r.width < 43.5) problems.push(`control pequeño (${Math.round(r.width)}×${Math.round(r.height)}): ${label(el)}`);
   }
   for (const el of document.querySelectorAll('.p-hint, .p-error, .p-chip, .p-due, .p-subject, .p-badge, .p-field label, .p-task-title, .p-lead, .p-status, .p-lock, .p-notice')) {
@@ -1839,6 +1841,161 @@ async function flowGroup() {
   }
 }
 
+// =====================================================================================================
+// Agenda en PDF: el «Exportar actividades» de Mereb → revisar → añadir (con una agenda FICTICIA)
+// =====================================================================================================
+const FIXTURES = require('node:path').join(__dirname, '../packages/server/test/fixtures/mereb');
+const AGENDA = require('node:path').join(FIXTURES, 'agenda-ficticia.pdf');
+
+/** Elige un archivo como lo haría papá: pulsando el botón y respondiendo al selector de archivos. */
+async function chooseAgenda(page, file) {
+  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', { name: 'Importar agenda (PDF)' }).click()]);
+  await chooser.setFiles(file);
+}
+const agendaHeading = (page) => page.getByRole('heading', { name: 'Agenda del 15 al 21 de noviembre' });
+const addButton = (page) => page.getByRole('button', { name: /^Añadir \d+ tareas?$/ });
+
+async function agendaGroup() {
+  const { mkdtempSync, writeFileSync, readFileSync, rmSync } = require('node:fs');
+  const os = require('node:os');
+  const path = require('node:path');
+  const tmp = mkdtempSync(path.join(os.tmpdir(), 'lucca-agenda-'));
+  const notPdf = path.join(tmp, 'agenda.txt');
+  writeFileSync(notPdf, 'Lunes 16/11 Matemáticas: sumas');
+  const broken = path.join(tmp, 'agenda-danada.pdf');
+  writeFileSync(broken, readFileSync(AGENDA).subarray(0, 600));
+  try {
+    await withServer({ LUCCA_AI: 'recorded' }, async (s) => {
+      const cookie = await H.setupParent(s);
+      const goPanel = async (options) => {
+        const o = await open(s, { cookie, ...options });
+        await goParent(o.page, s);
+        await parentHeading(o.page).waitFor();
+        return o;
+      };
+
+      await run('A01', 'negativo', 'Un archivo que no es PDF ni se envía: lo dice junto al botón', async () => {
+        const { page, writes } = await goPanel();
+        await chooseAgenda(page, notPdf);
+        const alert = page.getByRole('alert');
+        await alert.waitFor();
+        expect((await text(alert)) === 'Elige el PDF de la agenda (un archivo que termina en .pdf).', 'mensaje para un archivo que no es PDF');
+        expect(!writes.some((w) => w.includes('/agenda/')), 'no se envió nada al servidor');
+        await shot(page, 'no-es-pdf');
+      });
+
+      await run('A02', 'negativo', 'Un PDF dañado: «No pude leer ese PDF», y no se añade nada', async () => {
+        const { page } = await goPanel();
+        await chooseAgenda(page, broken);
+        await page.getByText('No pude leer ese PDF. Descárgalo otra vez desde Mereb e inténtalo de nuevo.').waitFor();
+        expect((await overviewTasks(s, cookie)).length === 0, 'no se añadió ninguna tarea');
+        await shot(page, 'pdf-danado');
+      });
+
+      await run('A03', 'negativo', 'Una agenda sin actividades: lo explica y no añade nada', async () => {
+        const { page } = await goPanel();
+        await chooseAgenda(page, path.join(FIXTURES, 'agenda-vacia.pdf'));
+        await page.getByText(/^No encontré actividades en este PDF/).waitFor();
+        expect((await agendaHeading(page).count()) === 0, 'no se abre la revisión');
+        await shot(page, 'sin-actividades');
+      });
+
+      await run('A04', 'positivo', 'Papá sube la agenda: ve 5 actividades por día, corrige un título, desmarca una y añade 4', async () => {
+        const { page, writes } = await goPanel();
+        await chooseAgenda(page, AGENDA);
+        await agendaHeading(page).waitFor();
+        await page.getByText('Encontré 5 actividades. Revisa y elige cuáles añadir.').waitFor();
+        expect((await page.getByRole('group', { name: 'Lunes 16' }).getByText('Matemáticas', { exact: true }).count()) === 1, 'lunes: Matemáticas');
+        expect((await page.getByRole('group', { name: 'Martes 17' }).getByRole('checkbox').count()) === 2, 'martes: dos actividades');
+        await page.getByRole('textbox', { name: 'Título: Ejercicio 1: sustantivos comunes y propios, singular y plural' }).waitFor();
+        expect(!writes.some((w) => w.includes('/agenda/import')), 'leer el PDF no añade nada');
+        await shot(page, 'revision', { fullPage: true });
+
+        await page.getByRole('textbox', { name: 'Título: Tamborito' }).fill('Practicar el tamborito');
+        await page.getByRole('checkbox', { name: 'Añadir: My Pet – Reading comprehension' }).uncheck();
+        await page.locator('details', { hasText: 'Ver detalle' }).first().locator('summary').click();
+        await page.getByText('Tipo de actividad: Ejercicio 2.').waitFor();
+        await shot(page, 'detalle-abierto', { scrollTo: page.getByText('Tipo de actividad: Ejercicio 2.') });
+        await page.getByRole('button', { name: 'Añadir 4 tareas' }).click();
+        await page.getByText('Listo: 4 tareas nuevas.').waitFor();
+        expect((await agendaHeading(page).count()) === 0, 'la revisión se cierra');
+        await shot(page, 'anadidas', { fullPage: true });
+
+        const tasks = await overviewTasks(s, cookie);
+        expect(tasks.length === 4 && tasks.every((t) => t.source === 'mereb'), '4 tareas con origen Mereb');
+        expect(tasks.some((t) => t.title === 'Practicar el tamborito'), 'con el título corregido');
+        expect(!tasks.some((t) => /My Pet/.test(t.title)), 'la desmarcada no está');
+        expect(tasks.every((t) => !/https?:|Docente|Prof:/.test(t.title + t.description)), 'sin enlaces ni docentes');
+      });
+
+      await run('A05', 'positivo', 'Lucca ve hoy lo importado (lo atrasado primero) y puede Entender y Practicar las sumas', async () => {
+        const { page } = await openKid(s);
+        const titles = await kidTitles(page);
+        expect(titles.includes('Sumas con llevadas, pág. 24'), `hoy aparecen las sumas (vio: ${titles.join(' | ')})`);
+        expect(titles.includes('Parts of a Plant'), 'y lo de ciencias que se entrega mañana');
+        await shot(page, 'lucca-hoy', { fullPage: true });
+        await page.getByRole('button', { name: /^Practicar: Sumas con llevadas/ }).click();
+        await page.getByText('Reto 1 de 6').waitFor();
+        await shot(page, 'practicar-sumas');
+        await page.goto(s.url);
+        await kidHeading(page).waitFor();
+        await startLesson(page, /^(Empezar|Seguir|Repasar): Sumas con llevadas/);
+        await shot(page, 'entender-sumas');
+      });
+
+      await run('A06', 'borde', 'Volver a subir la misma agenda no duplica: «Ya está igual» y nada marcado', async () => {
+        const { page } = await goPanel();
+        await chooseAgenda(page, AGENDA);
+        await agendaHeading(page).waitFor();
+        expect((await page.getByText('Ya está igual').count()) === 4, 'las 4 añadidas aparecen como iguales');
+        expect(await page.getByRole('checkbox', { name: 'Añadir: My Pet – Reading comprehension' }).isChecked(), 'la que faltaba sigue propuesta');
+        await shot(page, 'reimportar', { fullPage: true });
+        await page.getByRole('button', { name: 'Añadir 1 tarea' }).click();
+        await page.getByText('Listo: 1 tarea nueva.').waitFor();
+        expect((await overviewTasks(s, cookie)).length === 5, 'ahora son 5, sin duplicados');
+      });
+
+      await run('A07', 'borde', 'Una tarea importada que papá borra queda retirada y no vuelve al reimportar', async () => {
+        const { page } = await goPanel();
+        await page.getByRole('button', { name: 'Borrar: Practicar el tamborito' }).click();
+        await page.getByRole('button', { name: 'Sí, borrar' }).click();
+        await page.getByText('Practicar el tamborito').waitFor({ state: 'detached' });
+        await chooseAgenda(page, AGENDA);
+        await agendaHeading(page).waitFor();
+        const removed = page.getByRole('checkbox', { name: 'Añadir: Tamborito' });
+        expect(await removed.isDisabled(), 'no se puede volver a marcar');
+        await page.getByText('La quitaste: no se vuelve a añadir').waitFor();
+        expect((await addButton(page).textContent()).trim() === 'Añadir 0 tareas' && (await addButton(page).isDisabled()), 'nada que añadir');
+        await shot(page, 'retirada-no-vuelve', { scrollTo: removed });
+        await page.getByRole('button', { name: 'Cancelar' }).click();
+        expect((await agendaHeading(page).count()) === 0, 'Cancelar cierra la revisión');
+      });
+
+      await run('A08', 'borde', 'La revisión en el teléfono: sin desplazamiento lateral, controles de 44 px y textos legibles', async () => {
+        const { page } = await goPanel({ viewport: PHONE });
+        await chooseAgenda(page, AGENDA);
+        await agendaHeading(page).waitFor();
+        const problems = await page.evaluate(measureParent);
+        expect(problems.length === 0, `problemas de diseño: ${problems.join('; ')}`);
+        await shot(page, 'telefono', { fullPage: true });
+      });
+
+      await run('A09', 'borde', 'La revisión en tema claro en la tableta: medidas y contraste correctos', async () => {
+        await H.api(s, 'PUT', '/api/parent/settings', { cookie, body: { theme: 'light' } });
+        const { page } = await goPanel({ theme: 'light' });
+        await chooseAgenda(page, AGENDA);
+        await agendaHeading(page).waitFor();
+        const problems = await page.evaluate(measureParent);
+        expect(problems.length === 0, `problemas de diseño: ${problems.join('; ')}`);
+        await shot(page, 'tema-claro', { fullPage: true });
+        await H.api(s, 'PUT', '/api/parent/settings', { cookie, body: { theme: 'dark' } });
+      });
+    });
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
 (async () => {
   H.prepareOut();
   browser = await chromium.launch();
@@ -1857,6 +2014,7 @@ async function flowGroup() {
     await practiceGroup();
     await pauseGroup();
     await flowGroup();
+    await agendaGroup();
     code = H.report();
   } catch (err) {
     console.error('Las pruebas funcionales no pudieron terminar:', err);

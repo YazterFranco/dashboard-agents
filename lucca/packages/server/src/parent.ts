@@ -35,6 +35,7 @@ import {
 import type { Config } from './config.js';
 import type { LuccaDb } from './db.js';
 import type { LessonService } from './lessons.js';
+import { registerAgendaRoutes } from './agenda/routes.js';
 import { reviewSummary } from './review.js';
 
 declare module 'fastify' {
@@ -177,6 +178,8 @@ export function registerParentRoutes(app: FastifyInstance, deps: ParentDeps): vo
       return { ok: true };
     });
 
+    registerAgendaRoutes(scope, { db, config, now });
+
     scope.get('/api/parent/overview', async () => {
       const today = localDate(now(), config.tz);
       return {
@@ -227,6 +230,10 @@ export function registerParentRoutes(app: FastifyInstance, deps: ParentDeps): vo
       // El resultado combinado también tiene que cumplir el orden de las fechas (mover un solo día puede romperlo).
       if (!datesInOrder(next.assignedDate, next.dueDate)) {
         return reply.code(400).send({ error: 'Datos inválidos', fields: { dueDate: DATES_MESSAGE } });
+      }
+      // Si cambió de qué trata, la lección guardada ya no sirve: se hará otra cuando Lucca la abra.
+      if (next.title !== task.title || next.description !== task.description || next.subject !== task.subject) {
+        db.deleteLessons(task.id);
       }
       db.upsertTask(next);
       return next;

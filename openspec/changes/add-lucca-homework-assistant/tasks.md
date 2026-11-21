@@ -50,6 +50,7 @@
 - [ ] 3.9 Descargar los adjuntos de Mereb y verificar con el Mereb falso que una ficha PDF queda guardada en la tarea
 - [ ] 3.10 Implementar el progreso semanal, los ajustes y el medidor de gasto de IA con tope (aviso al 80 %, corte al 100 %), y verificar con pruebas el escenario "Tope alcanzado" _(hecho: progreso semanal —tareas listas, estrellas, pistas y «Necesita ayuda»— y ajustes de nombre, grado, idioma, voz, tema y velocidad, con pruebas unitarias y 45 escenarios funcionales en `lucca/docs/pruebas-funcionales/`; pendiente: tiempo de uso por día, voz por idioma, recordatorio de pausa, plazo de borrado de fotos y el medidor de gasto de IA, que llegan con el cliente de IA)_
 - [ ] 3.11 Documentar en `lucca/README.md` cómo conectar Mereb y qué hacer si falla, y verificar que los pasos coinciden con la primera configuración
+- [x] 3.12 Importar el PDF «Exportar actividades» de la agenda de Mereb (lectura local por posiciones con pdf.js, revisión del padre, idempotente, sin docentes ni enlaces) y verificar con pruebas sobre una agenda real anonimizada, una agenda ficticia en PDF y 9 escenarios funcionales con capturas _(también cubre parte de 3.4: id estable, actualización conservando progreso y retiradas que no vuelven; queda «retirar con progreso» cuando una actividad desaparece de Mereb, que necesita el lector automático)_
 
 ## 4. Cliente de IA y controles de contenido
 

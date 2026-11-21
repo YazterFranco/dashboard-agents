@@ -76,6 +76,36 @@ El padre SHALL poder subir una o varias imágenes de la agenda. El sistema extra
 - **WHEN** la imagen no permite leer ninguna tarea
 - **THEN** el sistema pide otra imagen con consejos (más luz, enfocar, recortar) y no añade nada
 
+### Requirement: Importar el PDF de la agenda
+El padre SHALL poder subir el PDF «Exportar actividades» de Mereb. El sistema SHALL leerlo localmente, sin IA ni red, y proponer una tarea por actividad con su materia, título, tipo de evaluación, descripción y entrega el día de la agenda. Nada se añade hasta que el padre pulsa "Añadir tareas".
+
+#### Scenario: Agenda semanal en PDF
+- **WHEN** el padre sube el PDF de la semana del 22 al 28 de noviembre con 10 actividades (una repetida)
+- **THEN** el sistema propone 10 tareas agrupadas por día y no guarda ninguna hasta que el padre pulsa "Añadir tareas"
+
+#### Scenario: Archivo que no es la agenda
+- **WHEN** el padre sube un archivo que no es PDF, un PDF dañado o un PDF sin actividades
+- **THEN** el sistema explica el problema y no añade nada
+
+#### Scenario: Sin datos de docentes ni enlaces
+- **WHEN** la agenda trae el nombre del docente y enlaces a videos
+- **THEN** ninguna tarea guarda el nombre ni los enlaces, y la descripción dice que hay un video en Mereb
+
+### Requirement: Reimportar la agenda sin duplicados
+Subir otra vez una agenda SHALL ser idempotente: el padre ve qué está igual, qué cambió y qué había quitado, y solo se añade lo que marca.
+
+#### Scenario: Reimportar la misma agenda
+- **WHEN** el padre sube otra vez la misma agenda
+- **THEN** las tareas aparecen como "Ya está igual", sin marcar, y el número de tareas no cambia
+
+#### Scenario: La docente cambia el día
+- **WHEN** la agenda reimportada trae otro día para una tarea ya añadida
+- **THEN** la tarea aparece como "Cambió en la agenda" y al añadirla se actualiza conservando el progreso de Lucca
+
+#### Scenario: Tarea borrada por el padre
+- **WHEN** el padre borra una tarea importada y vuelve a subir la agenda
+- **THEN** la actividad aparece como retirada, no se puede marcar y no vuelve a crearse
+
 ### Requirement: Tareas manuales
 El padre SHALL poder crear, editar, mover de día, ocultar y borrar tareas desde su área, aunque provengan de Mereb.
 

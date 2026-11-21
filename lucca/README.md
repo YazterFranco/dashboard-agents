@@ -156,6 +156,33 @@ y un PIN correcto durante el bloqueo no entra). Un PIN con formato inválido no 
 | **Progreso** | Las últimas 4 semanas: tareas listas, estrellas, pistas usadas, las tareas donde Lucca pidió ayuda y el Repaso rápido (preguntas guardadas, aprendidas y para hoy). |
 | **Ajustes** | Nombre, grado, idioma, modo de voz, tema, velocidad de la voz (0,7 a 1,2; se acepta «1,1» o «1.1»), pausa cada N minutos (10 a 60, o 0) y tope mensual de IA (1 a 200 USD). También el estado de las conexiones, el gasto de IA del mes (aviso al 80 %, corte al 100 %), las lecciones de respaldo y el cambio de PIN. |
 
+### Importar la agenda de la semana (PDF de Mereb)
+
+En Mereb, la agenda tiene **«Exportar actividades»**: descarga un PDF con la semana (encabezado «Semana del 22 al 28
+de noviembre…», un apartado por día y, por actividad, la materia, el tipo de evaluación y las columnas *Tema*,
+*Detalle de evaluación* y *Sugerencia de estudio*). En **Tareas → Importar agenda (PDF)** eliges ese archivo y:
+
+1. El asistente lo lee **en tu computadora, sin IA y sin internet** (en menos de un segundo), y te muestra cada
+   actividad agrupada por día: materia, tipo («Ejercicio 3», «Test 1»…), título editable y «Ver detalle».
+2. Nada se guarda todavía. Corriges el título si quieres, desmarcas lo que no quieras y pulsas **«Añadir N tareas»**.
+3. Cada actividad queda como tarea de origen Mereb con **entrega el día que dice la agenda**; Lucca la trabaja el día
+   escolar anterior (la del lunes aparece el viernes o el mismo lunes si aún no está hecha).
+
+Qué hace con el contenido: la materia se reconoce aunque venga en inglés o sin tildes (*Reading*, *Spelling/Phonics*,
+*Writing and Grammar* → Inglés; *Science* → Ciencias; *Folklore/Danza* y *Art and Music* → Música…) y conserva el nombre
+original; un tema genérico como «EJERCICIO 1-ESPAÑOL» se completa con los conceptos del detalle; un tema largo se acorta
+y queda entero en la descripción; una rúbrica en tabla se resume en una línea con los puntos; se repara el texto partido
+entre páginas. **No se guardan los nombres de los docentes ni los enlaces** (quedan como «(video en Mereb)»); los
+adjuntos siguen en Mereb y la tarea dice cuáles son.
+
+Volver a subir la misma agenda **no duplica**: lo que ya está igual aparece como «Ya está igual» y sin marcar; si la
+docente cambió el día o el detalle, aparece «Cambió en la agenda» y al añadirla se actualiza **conservando el progreso de
+Lucca** (y su lección se vuelve a preparar). Una tarea importada que borraste queda retirada y no vuelve. Límite: 5 MB.
+
+Con la clave de IA, «Entender» y «Practicar» se preparan a partir del título y el detalle de cada actividad (por ejemplo,
+las palabras de *Long O*). **Sin la clave**, las tareas se importan igual, pero sus lecciones son genéricas: el contenido
+específico de cada tema llega con la IA.
+
 Los ajustes de papá son los valores por defecto: si Lucca elige idioma, voz o tema en su tablet, lo suyo manda para esa
 opción, y lo que nunca eligió sigue los cambios de papá desde la siguiente carga.
 
@@ -169,7 +196,7 @@ Borra el PIN y cierra todas las sesiones (no toca las tareas ni el progreso). En
 enseguida para crear uno nuevo. Si la base de datos no está en `./data/lucca.db`, indícala con
 `LUCCA_DB=/ruta/lucca.db npm run reset-pin`.
 
-**Todavía no incluye:** la conexión con Mereb y su sincronización, subir la foto de la agenda, ocultar lecciones o
+**Todavía no incluye:** la conexión automática con Mereb (por ahora se sube el PDF exportado), subir la foto de la agenda, ocultar lecciones o
 «Revisar antes de mostrar» y el tiempo de uso por día; llegan con las funciones que los necesitan.
 
 ## Pruebas
@@ -195,7 +222,7 @@ También recorre el plan de la semana y la guía, y termina un día completo con
 npm run build && npm run e2e:functional
 ```
 
-`npm run e2e:functional` son las **pruebas funcionales**: 77 escenarios en un navegador real contra el servidor real,
+`npm run e2e:functional` son las **pruebas funcionales**: 86 escenarios en un navegador real contra el servidor real,
 con el reloj fijo en el miércoles 18 de noviembre de 2026 (`LUCCA_FAKE_NOW`) para que se repitan igual cualquier día.
 Cada escenario es **positivo**, **negativo** o de **borde** (acceso y bloqueo con PIN, crear/mover/ocultar/borrar tareas,
 progreso, ajustes, cambio de PIN, móvil/tablet/escritorio en oscuro y claro, uso solo con teclado, y la pantalla de
@@ -204,7 +231,11 @@ bloques, inglés/español, pistas, otra explicación, sin IA, vista previa de pa
 días simulados sobre la misma base de datos; «Practicar» con subida y bajada de nivel; la pausa con un reloj simulado;
 y **flujos de una semana completa**: el lunes papá configura y prepara la semana, Lucca entiende, practica y termina su
 tarea; el martes repasa; el miércoles papá revisa y ajusta; del jueves al domingo el repaso espaciado y la semana
-siguiente; y papá y Lucca usando dos dispositivos a la vez). Las capturas y el informe quedan en
+siguiente; y papá y Lucca usando dos dispositivos a la vez; y la **agenda en PDF** con una agenda ficticia con la misma
+forma que la de Mereb: archivo que no es PDF, PDF dañado, agenda vacía, revisar/corregir/desmarcar y añadir, Lucca
+entendiendo y practicando lo importado, reimportar sin duplicar, una tarea borrada que no vuelve, móvil y tema claro).
+La agenda ficticia se regenera con `node scripts/make-fake-agenda.cjs`; en el repositorio no se guarda ninguna agenda
+real (las pruebas del lector usan las posiciones del texto de una agenda real con los nombres de los docentes cambiados). Las capturas y el informe quedan en
 [`docs/pruebas-funcionales/`](docs/pruebas-funcionales/index.html) (`index.html`, `results.json` y un JPEG por momento clave).
 Para repetir solo algunos: `ONLY=P60,K03 npm run e2e:functional`.
 

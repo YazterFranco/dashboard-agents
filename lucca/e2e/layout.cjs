@@ -131,7 +131,8 @@ async function check(page, label, failures) {
   mkdirSync(OUT, { recursive: true });
   const server = spawn(process.execPath, [path.join(ROOT, 'packages/server/dist/lucca.mjs')], {
     stdio: ['ignore', 'ignore', 'inherit'],
-    env: { ...process.env, LUCCA_DEMO: '1', LUCCA_DB: ':memory:', LUCCA_PORT: PORT, LUCCA_HOST: '127.0.0.1', NODE_OPTIONS: '--disable-warning=ExperimentalWarning' },
+    // Reloj fijo (miércoles 18): con el reloj real, un fin de semana cambia las pantallas y la prueba deja de ser repetible.
+    env: { ...process.env, LUCCA_DEMO: '1', LUCCA_DB: ':memory:', LUCCA_PORT: PORT, LUCCA_HOST: '127.0.0.1', LUCCA_FAKE_NOW: '2026-11-18T17:00:00Z', NODE_OPTIONS: '--disable-warning=ExperimentalWarning' },
   });
   let browser;
   let code = 1;

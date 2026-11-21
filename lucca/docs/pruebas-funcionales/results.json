@@ -1,9 +1,160 @@
 {
   "clock": "2026-11-18T17:00:00Z",
-  "total": 77,
-  "passed": 77,
+  "total": 86,
+  "passed": 86,
   "failed": 0,
   "results": [
+    {
+      "id": "A01",
+      "kind": "negativo",
+      "title": "Un archivo que no es PDF ni se envía: lo dice junto al botón",
+      "ok": true,
+      "shots": [
+        {
+          "name": "no-es-pdf",
+          "file": "A01-no-es-pdf.jpg"
+        }
+      ],
+      "checks": 4,
+      "problems": [],
+      "ms": 272
+    },
+    {
+      "id": "A02",
+      "kind": "negativo",
+      "title": "Un PDF dañado: «No pude leer ese PDF», y no se añade nada",
+      "ok": true,
+      "shots": [
+        {
+          "name": "pdf-danado",
+          "file": "A02-pdf-danado.jpg"
+        }
+      ],
+      "checks": 3,
+      "problems": [],
+      "ms": 277
+    },
+    {
+      "id": "A03",
+      "kind": "negativo",
+      "title": "Una agenda sin actividades: lo explica y no añade nada",
+      "ok": true,
+      "shots": [
+        {
+          "name": "sin-actividades",
+          "file": "A03-sin-actividades.jpg"
+        }
+      ],
+      "checks": 3,
+      "problems": [],
+      "ms": 333
+    },
+    {
+      "id": "A04",
+      "kind": "positivo",
+      "title": "Papá sube la agenda: ve 5 actividades por día, corrige un título, desmarca una y añade 4",
+      "ok": true,
+      "shots": [
+        {
+          "name": "revision",
+          "file": "A04-revision.jpg"
+        },
+        {
+          "name": "detalle-abierto",
+          "file": "A04-detalle-abierto.jpg"
+        },
+        {
+          "name": "anadidas",
+          "file": "A04-anadidas.jpg"
+        }
+      ],
+      "checks": 14,
+      "problems": [],
+      "ms": 848
+    },
+    {
+      "id": "A05",
+      "kind": "positivo",
+      "title": "Lucca ve hoy lo importado (lo atrasado primero) y puede Entender y Practicar las sumas",
+      "ok": true,
+      "shots": [
+        {
+          "name": "lucca-hoy",
+          "file": "A05-lucca-hoy.jpg"
+        },
+        {
+          "name": "practicar-sumas",
+          "file": "A05-practicar-sumas.jpg"
+        },
+        {
+          "name": "entender-sumas",
+          "file": "A05-entender-sumas.jpg"
+        }
+      ],
+      "checks": 8,
+      "problems": [],
+      "ms": 561
+    },
+    {
+      "id": "A06",
+      "kind": "borde",
+      "title": "Volver a subir la misma agenda no duplica: «Ya está igual» y nada marcado",
+      "ok": true,
+      "shots": [
+        {
+          "name": "reimportar",
+          "file": "A06-reimportar.jpg"
+        }
+      ],
+      "checks": 5,
+      "problems": [],
+      "ms": 529
+    },
+    {
+      "id": "A07",
+      "kind": "borde",
+      "title": "Una tarea importada que papá borra queda retirada y no vuelve al reimportar",
+      "ok": true,
+      "shots": [
+        {
+          "name": "retirada-no-vuelve",
+          "file": "A07-retirada-no-vuelve.jpg"
+        }
+      ],
+      "checks": 5,
+      "problems": [],
+      "ms": 636
+    },
+    {
+      "id": "A08",
+      "kind": "borde",
+      "title": "La revisión en el teléfono: sin desplazamiento lateral, controles de 44 px y textos legibles",
+      "ok": true,
+      "shots": [
+        {
+          "name": "telefono",
+          "file": "A08-telefono.jpg"
+        }
+      ],
+      "checks": 3,
+      "problems": [],
+      "ms": 514
+    },
+    {
+      "id": "A09",
+      "kind": "borde",
+      "title": "La revisión en tema claro en la tableta: medidas y contraste correctos",
+      "ok": true,
+      "shots": [
+        {
+          "name": "tema-claro",
+          "file": "A09-tema-claro.jpg"
+        }
+      ],
+      "checks": 3,
+      "problems": [],
+      "ms": 622
+    },
     {
       "id": "E01",
       "kind": "positivo",
@@ -29,7 +180,7 @@
       ],
       "checks": 13,
       "problems": [],
-      "ms": 1121
+      "ms": 1189
     },
     {
       "id": "E02",
@@ -48,7 +199,7 @@
       ],
       "checks": 6,
       "problems": [],
-      "ms": 850
+      "ms": 807
     },
     {
       "id": "E03",
@@ -67,7 +218,7 @@
       ],
       "checks": 5,
       "problems": [],
-      "ms": 533
+      "ms": 454
     },
     {
       "id": "E04",
@@ -90,7 +241,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 860
+      "ms": 854
     },
     {
       "id": "E05",
@@ -121,7 +272,7 @@
       ],
       "checks": 11,
       "problems": [],
-      "ms": 2257
+      "ms": 2368
     },
     {
       "id": "E06",
@@ -131,7 +282,7 @@
       "shots": [],
       "checks": 2,
       "problems": [],
-      "ms": 483
+      "ms": 422
     },
     {
       "id": "E07",
@@ -146,7 +297,7 @@
       ],
       "checks": 3,
       "problems": [],
-      "ms": 393
+      "ms": 361
     },
     {
       "id": "E08",
@@ -165,7 +316,7 @@
       ],
       "checks": 6,
       "problems": [],
-      "ms": 878
+      "ms": 795
     },
     {
       "id": "E09",
@@ -180,7 +331,7 @@
       ],
       "checks": 4,
       "problems": [],
-      "ms": 493
+      "ms": 437
     },
     {
       "id": "E10",
@@ -199,7 +350,7 @@
       ],
       "checks": 5,
       "problems": [],
-      "ms": 648
+      "ms": 633
     },
     {
       "id": "E11",
@@ -214,7 +365,7 @@
       ],
       "checks": 4,
       "problems": [],
-      "ms": 523
+      "ms": 465
     },
     {
       "id": "F01",
@@ -229,7 +380,7 @@
       ],
       "checks": 2,
       "problems": [],
-      "ms": 685
+      "ms": 638
     },
     {
       "id": "F02",
@@ -248,7 +399,7 @@
       ],
       "checks": 6,
       "problems": [],
-      "ms": 1756
+      "ms": 1480
     },
     {
       "id": "F03",
@@ -263,7 +414,7 @@
       ],
       "checks": 5,
       "problems": [],
-      "ms": 893
+      "ms": 746
     },
     {
       "id": "F04",
@@ -282,7 +433,7 @@
       ],
       "checks": 6,
       "problems": [],
-      "ms": 1199
+      "ms": 891
     },
     {
       "id": "F05",
@@ -292,7 +443,7 @@
       "shots": [],
       "checks": 2,
       "problems": [],
-      "ms": 183
+      "ms": 176
     },
     {
       "id": "F06",
@@ -307,7 +458,7 @@
       ],
       "checks": 2,
       "problems": [],
-      "ms": 313
+      "ms": 283
     },
     {
       "id": "F07",
@@ -322,7 +473,7 @@
       ],
       "checks": 4,
       "problems": [],
-      "ms": 314
+      "ms": 300
     },
     {
       "id": "F08",
@@ -337,7 +488,7 @@
       ],
       "checks": 4,
       "problems": [],
-      "ms": 302
+      "ms": 329
     },
     {
       "id": "K01",
@@ -368,7 +519,7 @@
       ],
       "checks": 13,
       "problems": [],
-      "ms": 1160
+      "ms": 1190
     },
     {
       "id": "K02",
@@ -387,7 +538,7 @@
       ],
       "checks": 6,
       "problems": [],
-      "ms": 452
+      "ms": 456
     },
     {
       "id": "K03",
@@ -406,7 +557,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 453
+      "ms": 496
     },
     {
       "id": "K04",
@@ -425,7 +576,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 583
+      "ms": 622
     },
     {
       "id": "K05",
@@ -440,7 +591,7 @@
       ],
       "checks": 4,
       "problems": [],
-      "ms": 303
+      "ms": 351
     },
     {
       "id": "K06",
@@ -455,7 +606,7 @@
       ],
       "checks": 5,
       "problems": [],
-      "ms": 277
+      "ms": 387
     },
     {
       "id": "K07",
@@ -474,7 +625,7 @@
       ],
       "checks": 9,
       "problems": [],
-      "ms": 601
+      "ms": 631
     },
     {
       "id": "K08",
@@ -493,7 +644,7 @@
       ],
       "checks": 8,
       "problems": [],
-      "ms": 636
+      "ms": 699
     },
     {
       "id": "P01",
@@ -508,7 +659,7 @@
       ],
       "checks": 5,
       "problems": [],
-      "ms": 336
+      "ms": 323
     },
     {
       "id": "P02",
@@ -523,7 +674,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 344
+      "ms": 450
     },
     {
       "id": "P03",
@@ -538,7 +689,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 345
+      "ms": 361
     },
     {
       "id": "P04",
@@ -553,7 +704,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 348
+      "ms": 361
     },
     {
       "id": "P05",
@@ -568,7 +719,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 375
+      "ms": 376
     },
     {
       "id": "P06",
@@ -583,7 +734,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 345
+      "ms": 359
     },
     {
       "id": "P06b",
@@ -598,7 +749,7 @@
       ],
       "checks": 3,
       "problems": [],
-      "ms": 369
+      "ms": 354
     },
     {
       "id": "P07",
@@ -617,7 +768,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 522
+      "ms": 499
     },
     {
       "id": "P08",
@@ -636,7 +787,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 650
+      "ms": 627
     },
     {
       "id": "P09",
@@ -651,7 +802,7 @@
       ],
       "checks": 5,
       "problems": [],
-      "ms": 410
+      "ms": 343
     },
     {
       "id": "P10",
@@ -670,7 +821,7 @@
       ],
       "checks": 6,
       "problems": [],
-      "ms": 468
+      "ms": 439
     },
     {
       "id": "P11",
@@ -689,7 +840,7 @@
       ],
       "checks": 10,
       "problems": [],
-      "ms": 1045
+      "ms": 996
     },
     {
       "id": "P12",
@@ -704,7 +855,7 @@
       ],
       "checks": 13,
       "problems": [],
-      "ms": 261
+      "ms": 212
     },
     {
       "id": "P13",
@@ -723,7 +874,7 @@
       ],
       "checks": 4,
       "problems": [],
-      "ms": 847
+      "ms": 795
     },
     {
       "id": "P14",
@@ -742,7 +893,7 @@
       ],
       "checks": 9,
       "problems": [],
-      "ms": 588
+      "ms": 574
     },
     {
       "id": "P20",
@@ -769,7 +920,7 @@
       ],
       "checks": 10,
       "problems": [],
-      "ms": 922
+      "ms": 1012
     },
     {
       "id": "P21",
@@ -784,7 +935,7 @@
       ],
       "checks": 8,
       "problems": [],
-      "ms": 526
+      "ms": 470
     },
     {
       "id": "P22",
@@ -803,7 +954,7 @@
       ],
       "checks": 10,
       "problems": [],
-      "ms": 807
+      "ms": 765
     },
     {
       "id": "P23",
@@ -822,7 +973,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 771
+      "ms": 660
     },
     {
       "id": "P24",
@@ -841,7 +992,7 @@
       ],
       "checks": 6,
       "problems": [],
-      "ms": 835
+      "ms": 826
     },
     {
       "id": "P25",
@@ -856,7 +1007,7 @@
       ],
       "checks": 5,
       "problems": [],
-      "ms": 447
+      "ms": 455
     },
     {
       "id": "P26",
@@ -871,7 +1022,7 @@
       ],
       "checks": 4,
       "problems": [],
-      "ms": 647
+      "ms": 655
     },
     {
       "id": "P27",
@@ -890,7 +1041,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 644
+      "ms": 676
     },
     {
       "id": "P28",
@@ -913,7 +1064,7 @@
       ],
       "checks": 9,
       "problems": [],
-      "ms": 894
+      "ms": 1104
     },
     {
       "id": "P29",
@@ -932,7 +1083,7 @@
       ],
       "checks": 6,
       "problems": [],
-      "ms": 776
+      "ms": 824
     },
     {
       "id": "P30",
@@ -955,7 +1106,7 @@
       ],
       "checks": 38,
       "problems": [],
-      "ms": 1042
+      "ms": 1147
     },
     {
       "id": "P31",
@@ -970,7 +1121,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 444
+      "ms": 509
     },
     {
       "id": "P40",
@@ -985,7 +1136,7 @@
       ],
       "checks": 2,
       "problems": [],
-      "ms": 331
+      "ms": 305
     },
     {
       "id": "P41",
@@ -1000,7 +1151,7 @@
       ],
       "checks": 9,
       "problems": [],
-      "ms": 408
+      "ms": 394
     },
     {
       "id": "P50",
@@ -1019,7 +1170,7 @@
       ],
       "checks": 4,
       "problems": [],
-      "ms": 710
+      "ms": 682
     },
     {
       "id": "P51",
@@ -1038,7 +1189,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 772
+      "ms": 783
     },
     {
       "id": "P51b",
@@ -1053,7 +1204,7 @@
       ],
       "checks": 6,
       "problems": [],
-      "ms": 420
+      "ms": 391
     },
     {
       "id": "P52",
@@ -1068,7 +1219,7 @@
       ],
       "checks": 8,
       "problems": [],
-      "ms": 388
+      "ms": 395
     },
     {
       "id": "P53",
@@ -1087,7 +1238,7 @@
       ],
       "checks": 8,
       "problems": [],
-      "ms": 922
+      "ms": 1059
     },
     {
       "id": "P54",
@@ -1102,7 +1253,7 @@
       ],
       "checks": 5,
       "problems": [],
-      "ms": 664
+      "ms": 627
     },
     {
       "id": "P60",
@@ -1169,7 +1320,7 @@
       ],
       "checks": 35,
       "problems": [],
-      "ms": 6725
+      "ms": 6900
     },
     {
       "id": "P61",
@@ -1192,7 +1343,7 @@
       ],
       "checks": 10,
       "problems": [],
-      "ms": 709
+      "ms": 661
     },
     {
       "id": "Q01",
@@ -1215,7 +1366,7 @@
       ],
       "checks": 9,
       "problems": [],
-      "ms": 921
+      "ms": 886
     },
     {
       "id": "Q02",
@@ -1230,7 +1381,7 @@
       ],
       "checks": 5,
       "problems": [],
-      "ms": 786
+      "ms": 720
     },
     {
       "id": "Q03",
@@ -1245,7 +1396,7 @@
       ],
       "checks": 3,
       "problems": [],
-      "ms": 326
+      "ms": 308
     },
     {
       "id": "Q04",
@@ -1260,7 +1411,7 @@
       ],
       "checks": 2,
       "problems": [],
-      "ms": 432
+      "ms": 426
     },
     {
       "id": "Q05",
@@ -1283,7 +1434,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 1674
+      "ms": 1765
     },
     {
       "id": "Q06",
@@ -1298,7 +1449,7 @@
       ],
       "checks": 3,
       "problems": [],
-      "ms": 876
+      "ms": 885
     },
     {
       "id": "R01",
@@ -1313,7 +1464,7 @@
       ],
       "checks": 5,
       "problems": [],
-      "ms": 324
+      "ms": 323
     },
     {
       "id": "R02",
@@ -1336,7 +1487,7 @@
       ],
       "checks": 7,
       "problems": [],
-      "ms": 901
+      "ms": 861
     },
     {
       "id": "R03",
@@ -1346,7 +1497,7 @@
       "shots": [],
       "checks": 2,
       "problems": [],
-      "ms": 5
+      "ms": 4
     },
     {
       "id": "R04",
@@ -1361,7 +1512,7 @@
       ],
       "checks": 3,
       "problems": [],
-      "ms": 279
+      "ms": 305
     },
     {
       "id": "R05",
@@ -1376,7 +1527,7 @@
       ],
       "checks": 2,
       "problems": [],
-      "ms": 332
+      "ms": 323
     },
     {
       "id": "W01",
@@ -1391,7 +1542,7 @@
       ],
       "checks": 6,
       "problems": [],
-      "ms": 1358
+      "ms": 1322
     },
     {
       "id": "W02",
@@ -1401,7 +1552,7 @@
       "shots": [],
       "checks": 2,
       "problems": [],
-      "ms": 184
+      "ms": 210
     }
   ]
 }
