@@ -81,12 +81,12 @@
 
 ## 7. "Practicar"
 
-- [ ] 7.1 Implementar la sesión de práctica (5 a 8 retos desde el banco, ≥ 2 tipos de juego, dificultad adaptable 2/2, repaso de lo fallado, sin quitar estrellas) y verificar con pruebas los escenarios de practice-games
-- [ ] 7.2 Implementar el cierre de la sesión (resumen hablado, "Otra ronda" y "Volver a mi semana") y verificar con e2e
+- [x] 7.1 Implementar la sesión de práctica (5 a 8 retos desde el banco, ≥ 2 tipos de juego, dificultad adaptable 2/2, repaso de lo fallado, sin quitar estrellas) y verificar con pruebas los escenarios de practice-games _(hecho: 6 retos, ≥ 2 tipos de juego, adaptación 2/2, sin quitar estrellas; el banco sale de un generador de sumas y restas por niveles (sin IA) o de los juegos de la lección, en lugar del banco de 20 retos de P2)_
+- [x] 7.2 Implementar el cierre de la sesión (resumen hablado, "Otra ronda" y "Volver a mi semana") y verificar con e2e _(hecho: resumen («Hiciste N retos. M a la primera.», leído si hay voz), «Otra ronda» y «Volver a mi semana», con e2e)_
 
 ## 8. Bienestar, respaldos y contenedor
 
-- [ ] 8.1 Implementar el recordatorio de pausa (25 min, configurable) y el límite diario con ampliación por PIN, y verificar con pruebas usando un reloj simulado
+- [ ] 8.1 Implementar el recordatorio de pausa (25 min, configurable) y el límite diario con ampliación por PIN, y verificar con pruebas usando un reloj simulado _(parcial: recordatorio de pausa configurable (0 o 10–60 min, 5 min que se pueden saltar) con reloj simulado en pruebas y e2e; pendiente el límite diario con ampliación por PIN)_
 - [ ] 8.2 Implementar los mensajes amables de la mascota ante fallos o rechazos de la IA (sin detalles técnicos para Lucca, con detalle para el padre), y verificar con e2e simulando un error de la IA
 - [ ] 8.3 Implementar el respaldo diario (conserva 7) y la descarga y restauración desde el área del padre, y verificar con pruebas
 - [ ] 8.4 Crear `lucca/Dockerfile` (multietapa, imagen de Playwright de la misma versión, usuario sin privilegios, `/data`, `HEALTHCHECK`), `docker-compose.yml` (`4830:4830`, `env_file`, `restart: unless-stopped`, TZ) y el quadlet de Podman, y verificar que `docker compose up -d` arranca y `/api/health` responde
@@ -109,4 +109,6 @@
 - [x] 10.2 Pistas tras el primer fallo con control de fuga de la respuesta, verificado con pruebas
 - [x] 10.3 Mensajes que elogian el esfuerzo y la constancia, no el talento
 - [x] 10.4 Tocar cualquier texto de la lección para oírlo, con la voz de cada idioma
+- [x] 10.5 Guardar el final de una lección o práctica sin conexión: aviso y reintento (la estrella no se pierde)
+- [x] 10.6 Pruebas de flujo de una semana completa (varios días simulados sobre la misma base de datos, dos dispositivos a la vez) y pruebas unitarias estables bajo carga
 

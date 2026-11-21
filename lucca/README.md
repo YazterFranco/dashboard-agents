@@ -29,10 +29,19 @@ La propuesta completa (por qué, qué, cómo y las tareas) está en
   esfuerzo, tocar cualquier texto para oírlo y una estrella al terminar.
 - **Repaso rápido**: las preguntas de cada lección terminada vuelven al día siguiente; si Lucca acierta a la primera,
   vuelven a los 3, 7 y 14 días; si falla, al día siguiente. Como mucho 5 al día y una estrella diaria.
+- **Practicar**: 6 retos por ronda que empiezan fáciles; dos aciertos a la primera suben de nivel (hasta 3) y dos
+  fallos bajan uno, con un mensaje amable y sin quitar nada. Sumas y restas salen de un generador por niveles (sin IA:
+  hasta 10 con recta numérica, dos cifras sin llevar y con llevadas, y respeta «sin llevar» si la tarea lo dice); las
+  demás materias usan los juegos de su lección. Resumen al final, «Otra ronda» y una estrella por tarea.
+- **Pausa saludable**: tras 25 minutos de uso (papá elige de 10 a 60, o 0 para apagarla) la mascota propone 5 minutos
+  para estirarse y tomar agua; se puede saltar y Lucca sigue donde estaba.
+- **Si se cae la conexión** al terminar una lección o práctica, lo dice y deja reintentar: la estrella no se pierde.
+- Cada tarjeta marca **«Entendida»** cuando la lección se terminó, y al terminar algo hay una pequeña celebración
+  (quieta si el dispositivo pide reducir el movimiento).
 - **Gasto de IA** con tope mensual (20 USD por defecto) visible en Ajustes, y vista previa de cada lección para papá.
 
-Todavía **no** están: la lectura automática de Mereb, la ayuda con fotos de la tarea, los juegos de práctica con
-dificultad adaptable ni el contenedor Docker. Llegan en las siguientes fases del plan.
+Todavía **no** están: la lectura automática de Mereb, la ayuda con fotos de la tarea, el límite diario de uso, los
+respaldos ni el contenedor Docker. Llegan en las siguientes fases del plan.
 
 ### Por qué funciona así
 
@@ -145,7 +154,7 @@ y un PIN correcto durante el bloqueo no entra). Un PIN con formato inválido no 
 | --- | --- |
 | **Tareas** | Semana anterior, actual y siguiente. «Ver lección» la muestra como la ve Lucca (sin contar progreso) y permite regenerarla. Crear tareas (con título en inglés opcional), editar, mover de día, ocultar y mostrar, marcar lista (sin dar estrella) y borrar. Una tarea manual se borra del todo; una que venga de otro origen se retira para que no vuelva. |
 | **Progreso** | Las últimas 4 semanas: tareas listas, estrellas, pistas usadas, las tareas donde Lucca pidió ayuda y el Repaso rápido (preguntas guardadas, aprendidas y para hoy). |
-| **Ajustes** | Nombre, grado, idioma, modo de voz, tema, velocidad de la voz (0,7 a 1,2; se acepta «1,1» o «1.1») y tope mensual de IA (1 a 200 USD). También el estado de las conexiones, el gasto de IA del mes (aviso al 80 %, corte al 100 %), las lecciones de respaldo y el cambio de PIN. |
+| **Ajustes** | Nombre, grado, idioma, modo de voz, tema, velocidad de la voz (0,7 a 1,2; se acepta «1,1» o «1.1»), pausa cada N minutos (10 a 60, o 0) y tope mensual de IA (1 a 200 USD). También el estado de las conexiones, el gasto de IA del mes (aviso al 80 %, corte al 100 %), las lecciones de respaldo y el cambio de PIN. |
 
 Los ajustes de papá son los valores por defecto: si Lucca elige idioma, voz o tema en su tablet, lo suyo manda para esa
 opción, y lo que nunca eligió sigue los cambios de papá desde la siguiente carga.
@@ -186,13 +195,16 @@ También recorre el plan de la semana y la guía, y termina un día completo con
 npm run build && npm run e2e:functional
 ```
 
-`npm run e2e:functional` son las **pruebas funcionales**: 61 escenarios en un navegador real contra el servidor real,
+`npm run e2e:functional` son las **pruebas funcionales**: 77 escenarios en un navegador real contra el servidor real,
 con el reloj fijo en el miércoles 18 de noviembre de 2026 (`LUCCA_FAKE_NOW`) para que se repitan igual cualquier día.
 Cada escenario es **positivo**, **negativo** o de **borde** (acceso y bloqueo con PIN, crear/mover/ocultar/borrar tareas,
 progreso, ajustes, cambio de PIN, móvil/tablet/escritorio en oscuro y claro, uso solo con teclado, y la pantalla de
 Lucca: guía, sin conexión, errores al marcar, domingo y cambio de día en Panamá; «Entender»: lección completa,
 bloques, inglés/español, pistas, otra explicación, sin IA, vista previa de papá y gasto; «Repaso rápido» con varios
-días simulados sobre la misma base de datos). Las capturas y el informe quedan en
+días simulados sobre la misma base de datos; «Practicar» con subida y bajada de nivel; la pausa con un reloj simulado;
+y **flujos de una semana completa**: el lunes papá configura y prepara la semana, Lucca entiende, practica y termina su
+tarea; el martes repasa; el miércoles papá revisa y ajusta; del jueves al domingo el repaso espaciado y la semana
+siguiente; y papá y Lucca usando dos dispositivos a la vez). Las capturas y el informe quedan en
 [`docs/pruebas-funcionales/`](docs/pruebas-funcionales/index.html) (`index.html`, `results.json` y un JPEG por momento clave).
 Para repetir solo algunos: `ONLY=P60,K03 npm run e2e:functional`.
 

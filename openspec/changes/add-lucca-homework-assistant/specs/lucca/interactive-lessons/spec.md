@@ -121,3 +121,10 @@ Con la voz activa ("Escuchar" o "Ambos"), cada texto de la lección SHALL poder 
 - **WHEN** Lucca toca "Una planta es un ser vivo"
 - **THEN** la frase se lee en voz alta
 
+### Requirement: Guardar el final sin perder la estrella
+Si al terminar una lección o una práctica no se puede guardar el avance (sin conexión), el sistema SHALL decirlo con un mensaje amable y SHALL ofrecer "Intentar de nuevo"; al lograrlo, Lucca recibe su estrella.
+
+#### Scenario: Conexión caída al terminar
+- **WHEN** Lucca pulsa "Terminar" y la tablet no puede guardar
+- **THEN** ve "No pude guardar tu avance. Revisa la conexión e inténtalo otra vez." y, al reintentar con conexión, gana su estrella
+
