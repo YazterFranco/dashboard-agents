@@ -12,7 +12,7 @@
   },
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc -p packages/shared && tsc -p packages/server && tsc -p packages/web",
+    "typecheck": "tsc -p packages/shared && tsc -p packages/server && tsc -p packages/web && tsc -p cloudflare",
     "dev:server": "NODE_OPTIONS=--disable-warning=ExperimentalWarning LUCCA_DEMO=1 tsx packages/server/src/index.ts",
     "dev:web": "npm run dev -w @lucca/web",
     "build": "npm run build -w @lucca/web && npm run build -w @lucca/server",

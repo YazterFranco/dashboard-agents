@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
-import { randomUUID } from 'node:crypto';
-import Fastify, { type FastifyInstance } from 'fastify';
+import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
+import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import fastifyStatic from '@fastify/static';
 import { z } from 'zod';
 import {
@@ -30,6 +30,17 @@ import { isPrivateAddress } from './privateNet.js';
 
 export const VERSION = '0.1.0';
 
+/** Cabecera con la que el Worker de Cloudflare demuestra que la petición pasó por él. */
+export const ORIGIN_HEADER = 'x-lucca-origin';
+
+/** Comparación en tiempo constante (no revela cuántos caracteres coinciden). */
+function sameSecret(given: string | string[] | undefined, expected: string): boolean {
+  if (typeof given !== 'string') return false;
+  const a = createHash('sha256').update(given).digest();
+  const b = createHash('sha256').update(expected).digest();
+  return timingSafeEqual(a, b);
+}
+
 export interface BuildAppOptions {
   db: LuccaDb;
   config: Config;
@@ -57,10 +68,22 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
   const now = opts.now ?? (() => new Date());
   const app = Fastify({ bodyLimit: 16 * 1024, logger: opts.logger ?? false });
 
-  // Solo la propia computadora o la red de la casa. Es la protección principal: no abras el puerto en el router.
-  app.addHook('onRequest', async (req, reply) => {
-    if (!isPrivateAddress(req.ip)) return reply.code(403).send({ error: 'solo red local' });
-  });
+  const fromOrigin = (req: FastifyRequest): boolean => config.originSecret !== null && sameSecret(req.headers[ORIGIN_HEADER], config.originSecret);
+
+  if (config.originSecret === null) {
+    // Solo la propia computadora o la red de la casa. Es la protección principal: no abras el puerto en el router.
+    app.addHook('onRequest', async (req, reply) => {
+      if (!isPrivateAddress(req.ip)) return reply.code(403).send({ error: 'solo red local' });
+    });
+  } else {
+    // Publicado: solo lo que llega por el Worker de Cloudflare (que ya pasó por Cloudflare Access) trae la cabecera.
+    // La comprobación de salud de Railway entra sin ella, pero sin detalles.
+    app.addHook('onRequest', async (req, reply) => {
+      if (fromOrigin(req)) return;
+      if (req.method === 'GET' && req.url === '/api/health') return reply.send({ ok: true });
+      return reply.code(403).send({ error: 'acceso no permitido' });
+    });
+  }
 
   const starsNow = (): number => {
     const today = localDate(now(), config.tz);

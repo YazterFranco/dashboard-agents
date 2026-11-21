@@ -60,6 +60,7 @@ export function registerParentRoutes(app: FastifyInstance, deps: ParentDeps): vo
   const { db, config, now, throttle, lessons } = deps;
   const nowMs = (): number => now().getTime();
   const connections = () => ({ ai: config.aiConfigured, mereb: config.merebConfigured });
+  const secureCookies = config.originSecret !== null;
 
   /** La sesión de la petición, o null si no hay cookie, no existe o pasó el tiempo sin actividad (entonces se borra). */
   const sessionIdOf = (req: FastifyRequest, touch: boolean): string | null => {
@@ -80,7 +81,7 @@ export function registerParentRoutes(app: FastifyInstance, deps: ParentDeps): vo
     db.deleteSessionsIdleSince(new Date(nowMs() - SESSION_IDLE_MS).toISOString());
     const token = newToken();
     db.createSession(tokenId(token), now().toISOString());
-    reply.header('set-cookie', sessionCookie(token));
+    reply.header('set-cookie', sessionCookie(token, secureCookies));
   };
 
   const locked = (reply: FastifyReply, retryAfterSeconds: number) =>
@@ -146,7 +147,7 @@ export function registerParentRoutes(app: FastifyInstance, deps: ParentDeps): vo
   app.post('/api/parent/logout', async (req, reply) => {
     const token = readCookie(req.headers.cookie, COOKIE_NAME);
     if (token) db.deleteSession(tokenId(token));
-    reply.header('set-cookie', clearedCookie());
+    reply.header('set-cookie', clearedCookie(secureCookies));
     return reply.code(204).send();
   });
 
@@ -155,7 +156,7 @@ export function registerParentRoutes(app: FastifyInstance, deps: ParentDeps): vo
     scope.addHook('onRequest', async (req, reply) => {
       const id = sessionIdOf(req, true);
       if (id === null) {
-        if (readCookie(req.headers.cookie, COOKIE_NAME)) reply.header('set-cookie', clearedCookie());
+        if (readCookie(req.headers.cookie, COOKIE_NAME)) reply.header('set-cookie', clearedCookie(secureCookies));
         return reply.code(401).send(NEEDS_PIN);
       }
       req.parentSessionId = id;

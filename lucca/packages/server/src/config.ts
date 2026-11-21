@@ -12,6 +12,21 @@ export interface Config {
   merebConfigured: boolean;
   /** De dónde salen las lecciones: la IA real (hay clave), las grabadas (`LUCCA_AI=recorded`) o ninguna. */
   aiMode: 'live' | 'recorded' | 'off';
+  /**
+   * Publicado detrás de Cloudflare (`LUCCA_ORIGIN_SECRET`): solo entran las peticiones con la cabecera secreta que
+   * añade el Worker. Sin secreto, solo la red de casa.
+   */
+  originSecret: string | null;
+}
+
+const MIN_SECRET = 32;
+
+function parseSecret(raw: string | undefined): string | null {
+  if (!raw) return null;
+  if (raw.length < MIN_SECRET) {
+    throw new Error(`LUCCA_ORIGIN_SECRET demasiado corto: usa al menos ${MIN_SECRET} caracteres al azar (por ejemplo, openssl rand -hex 32)`);
+  }
+  return raw;
 }
 
 function parsePort(raw: string | undefined): number {
@@ -36,7 +51,8 @@ function parseTz(raw: string | undefined): string {
 export function loadConfig(env: NodeJS.ProcessEnv): Config {
   return {
     host: env.LUCCA_HOST || '0.0.0.0',
-    port: parsePort(env.LUCCA_PORT),
+    // Railway (y otros) dicen el puerto en PORT; LUCCA_PORT manda si están las dos.
+    port: parsePort(env.LUCCA_PORT || env.PORT),
     dbPath: env.LUCCA_DB || './data/lucca.db',
     tz: parseTz(env.TZ),
     demo: env.LUCCA_DEMO === '1',
@@ -45,6 +61,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
     aiConfigured: Boolean(env.ANTHROPIC_API_KEY),
     merebConfigured: Boolean(env.MEREB_URL && env.MEREB_USER && env.MEREB_PASSWORD),
     aiMode: env.LUCCA_AI === 'recorded' ? 'recorded' : env.LUCCA_AI === 'off' || !env.ANTHROPIC_API_KEY ? 'off' : 'live',
+    originSecret: parseSecret(env.LUCCA_ORIGIN_SECRET),
   };
 }
 

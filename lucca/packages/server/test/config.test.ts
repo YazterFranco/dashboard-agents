@@ -14,6 +14,7 @@ describe('loadConfig', () => {
       aiConfigured: false,
       merebConfigured: false,
       aiMode: 'off',
+      originSecret: null,
     });
   });
 

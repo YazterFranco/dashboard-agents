@@ -110,6 +110,57 @@ La web de desarrollo queda en <http://localhost:5173> y usa el servidor de `4830
 
 Si la tablet no conecta, revisa que el firewall de tu computadora permita conexiones entrantes al puerto `4830`.
 
+## Publicarlo en internet (Railway + Cloudflare Access)
+
+Para usarlo fuera de casa sin abrir puertos: el servidor y la base de datos van en **Railway** (Docker con un volumen
+en `/data`) y delante va un **Worker de Cloudflare** en `lucca.<tu-subdominio>.workers.dev` con **Cloudflare Access**:
+solo entran los correos que autorices, con un código que llega por email. Es el mismo esquema que PintaKids.
+
+```
+tablet / teléfono ──► Cloudflare Access (código por correo) ──► Worker «lucca» ──► Railway (Docker + /data)
+                                                                 añade la cabecera secreta     solo acepta esa cabecera
+```
+
+Tres candados, por si uno falla: Access no deja pasar a quien no autorizaste; el Worker vuelve a comprobar el token de
+Access (firma, aplicación, equipo y caducidad) y responde 503 si le falta configuración; y el servidor, con
+`LUCCA_ORIGIN_SECRET`, rechaza todo lo que no traiga la cabecera secreta (403), aunque alguien encuentre la dirección de
+Railway. Con el secreto la cookie de papá se marca `Secure` y el PIN sigue protegiendo el área de papá.
+
+**1. Railway.** Crea un servicio desde este repositorio (o con `railway up` desde esta carpeta): usa el `Dockerfile` y
+`railway.json` (comprobación en `/api/health`). Añade un **volumen** montado en `/data` y estas variables:
+
+| Variable | Valor |
+| --- | --- |
+| `LUCCA_ORIGIN_SECRET` | 64 caracteres al azar: `openssl rand -hex 32` |
+| `ANTHROPIC_API_KEY` | tu clave de IA (opcional; sin ella las lecciones son genéricas) |
+| `TZ` | `America/Panama` (ya viene en la imagen) |
+
+Genera el dominio público de Railway (`https://<servicio>.up.railway.app`). Abierto directamente, responde 403: está bien.
+
+**2. Cloudflare Access.** En Zero Trust → Access → Applications, crea una aplicación *self-hosted* para
+`lucca.<tu-subdominio>.workers.dev` con una política que permita los correos de la familia (método: código por correo).
+Copia el **Application Audience (AUD) Tag** y tu dominio de equipo (`<equipo>.cloudflareaccess.com`).
+
+**3. Worker.** Completa `[vars]` en `wrangler.toml` (`ORIGIN_URL`, `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD`) y:
+
+```bash
+npx wrangler login
+```
+
+```bash
+npx wrangler secret put ORIGIN_SECRET
+```
+
+```bash
+npx wrangler deploy
+```
+
+`ORIGIN_SECRET` es el mismo valor que `LUCCA_ORIGIN_SECRET`. Abre `https://lucca.<tu-subdominio>.workers.dev`: pide el
+código por correo, y después la pantalla de Lucca; el área de papá sigue en `/papa` con su PIN.
+
+Para construir la imagen en tu computadora: `docker build -t lucca .` (si Docker Hub limita las descargas, añade
+`--build-arg NODE_IMAGE=mirror.gcr.io/library/node:22-alpine`).
+
 ## Configuración
 
 Copia `.env.example` a `.env` y completa lo que necesites. **Nunca subas `.env` a git.**
@@ -124,6 +175,8 @@ Copia `.env.example` a `.env` y completa lo que necesites. **Nunca subas `.env` 
 | `TZ` | Zona horaria (define "hoy" y la semana de las estrellas) | `America/Panama` |
 | `ANTHROPIC_API_KEY` | Activa las lecciones con IA (Claude Opus 5.5). Sin ella, Lucca ve «Esta tarea la vemos con papá» | vacía |
 | `LUCCA_AI` | `recorded` usa lecciones grabadas (demo y pruebas, sin coste); `off` apaga la IA aunque haya clave | según la clave |
+| `LUCCA_ORIGIN_SECRET` | Publicado detrás de Cloudflare: solo acepta peticiones con este secreto en la cabecera `x-lucca-origin` (mínimo 32 caracteres). Sin él, solo la red de casa | vacía |
+| `PORT` | Puerto que dan Railway y similares (`LUCCA_PORT` manda si están las dos) | — |
 | `LUCCA_FAKE_NOW` | **Solo para pruebas**: fija el "ahora" del servidor (instante ISO, p. ej. `2026-11-18T17:00:00Z`) | el reloj real |
 
 `MEREB_*` y `LUCCA_PUBLIC_URL` ya están en `.env.example` porque se usarán en las fases siguientes.

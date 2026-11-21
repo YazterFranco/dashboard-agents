@@ -1,0 +1,13 @@
+# Worker delante de Railway, en lucca.<tu-subdominio>.workers.dev, protegido con Cloudflare Access.
+# Variables: ORIGIN_URL, ACCESS_TEAM_DOMAIN y ACCESS_AUD (aquí abajo). El secreto se guarda aparte:
+#   npx wrangler secret put ORIGIN_SECRET      (el mismo valor que LUCCA_ORIGIN_SECRET en Railway)
+name = "lucca"
+main = "cloudflare/worker.ts"
+compatibility_date = "2026-01-01"
+workers_dev = true
+preview_urls = false
+
+[vars]
+ORIGIN_URL = ""
+ACCESS_TEAM_DOMAIN = ""
+ACCESS_AUD = ""

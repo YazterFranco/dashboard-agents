@@ -8,7 +8,7 @@ export default defineConfig({
     },
   },
   test: {
-    include: ['packages/*/test/**/*.test.ts', 'packages/web/src/**/*.test.{ts,tsx}'],
+    include: ['packages/*/test/**/*.test.ts', 'packages/web/src/**/*.test.{ts,tsx}', 'cloudflare/**/*.test.ts'],
     testTimeout: 15000,
   },
 });

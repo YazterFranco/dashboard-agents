@@ -92,10 +92,11 @@ export function readCookie(header: string | undefined, name: string): string | n
 }
 
 /** HttpOnly: los scripts no la leen. SameSite=Strict: otras webs no la envían. Sin Secure: la red de casa va por HTTP. */
-export function sessionCookie(token: string): string {
-  return `${COOKIE_NAME}=${token}; HttpOnly; SameSite=Strict; Path=/`;
+/** `secure`: publicado en internet (siempre por HTTPS), la cookie solo viaja cifrada. En casa es http y no puede llevarla. */
+export function sessionCookie(token: string, secure = false): string {
+  return `${COOKIE_NAME}=${token}; HttpOnly; SameSite=Strict; Path=/${secure ? '; Secure' : ''}`;
 }
 
-export function clearedCookie(): string {
-  return `${COOKIE_NAME}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0`;
+export function clearedCookie(secure = false): string {
+  return `${COOKIE_NAME}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0${secure ? '; Secure' : ''}`;
 }

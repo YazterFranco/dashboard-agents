@@ -5,3 +5,4 @@ data/
 *.db
 *.db-*
 e2e/out/
+.wrangler/
