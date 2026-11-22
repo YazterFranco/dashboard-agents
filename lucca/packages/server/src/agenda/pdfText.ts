@@ -1,9 +1,19 @@
-import * as pdfjsWorker from 'pdfjs-dist/legacy/build/pdf.worker.mjs';
-import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
-
-// En Node pdf.js usa un «worker falso»: si ya está en globalThis no lo busca con un import dinámico,
-// que dejaría de funcionar al empaquetar el servidor en un solo archivo.
-(globalThis as { pdfjsWorker?: unknown }).pdfjsWorker ??= pdfjsWorker;
+/**
+ * pdf.js se carga al leer el primer PDF, no al arrancar: si un dispositivo no pudiera cargarlo, solo falla
+ * «Importar agenda» (con un mensaje claro) y no el resto del asistente.
+ */
+type PdfJs = typeof import('pdfjs-dist/legacy/build/pdf.mjs');
+let pdfjs: Promise<PdfJs> | null = null;
+function loadPdfJs(): Promise<PdfJs> {
+  pdfjs ??= (async () => {
+    const worker = await import('pdfjs-dist/legacy/build/pdf.worker.mjs');
+    // En Node (y en la app) pdf.js usa un «worker falso»: si ya está en globalThis no lo busca con un import dinámico,
+    // que dejaría de funcionar al empaquetar el servidor en un solo archivo.
+    (globalThis as { pdfjsWorker?: unknown }).pdfjsWorker ??= worker;
+    return import('pdfjs-dist/legacy/build/pdf.mjs');
+  })();
+  return pdfjs;
+}
 
 /** Un trozo de texto del PDF con su posición en puntos, medida desde arriba a la izquierda de su página. */
 export interface PdfItem {
@@ -26,6 +36,13 @@ const MAX_PAGES = 20;
 
 /** Texto con posiciones de un PDF. No ejecuta scripts del PDF ni carga nada de la red. */
 export async function readPdfText(data: Uint8Array): Promise<PdfText> {
+  let getDocument: PdfJs['getDocument'];
+  try {
+    ({ getDocument } = await loadPdfJs());
+  } catch {
+    pdfjs = null;
+    throw new PdfReadError('No se pudo preparar el lector de PDF');
+  }
   const task = getDocument({
     data: new Uint8Array(data),
     useSystemFonts: false,

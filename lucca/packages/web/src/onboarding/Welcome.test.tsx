@@ -9,7 +9,7 @@ vi.mock('../appMode', () => ({
   get IS_APP() {
     return appMode.value;
   },
-  openExternal: async (url: string) => {
+  openExternal: (url: string) => {
     opened.push(url);
   },
 }));
@@ -77,8 +77,18 @@ describe('guía de bienvenida', () => {
     expect(screen.getByText(/no guarda tu contraseña de Mereb/)).toBeTruthy();
     fireEvent.change(screen.getByLabelText('Dirección de Mereb del colegio'), { target: { value: 'https://colegio.mereb.example' } });
     click('Abrir Mereb');
-    await waitFor(() => expect(opened).toEqual(['https://colegio.mereb.example']));
-    expect(api.saveAppConfig).toHaveBeenCalledWith({ merebUrl: 'https://colegio.mereb.example' });
+    expect(opened).toEqual(['https://colegio.mereb.example']); // en el mismo toque, sin esperar
+    await waitFor(() => expect(api.saveAppConfig).toHaveBeenCalledWith({ merebUrl: 'https://colegio.mereb.example' }));
+  });
+
+  it('Mereb: una dirección http (insegura) no se abre y se explica', async () => {
+    setup();
+    click('Empezar');
+    click('Siguiente');
+    fireEvent.change(await screen.findByLabelText('Dirección de Mereb del colegio'), { target: { value: 'http://colegio.example' } });
+    click('Abrir Mereb');
+    expect(await screen.findByText('Escribe la dirección de Mereb, empezando por https://')).toBeTruthy();
+    expect(opened).toEqual([]);
   });
 
   it('Mereb: una dirección vacía avisa junto al campo y no abre nada', async () => {

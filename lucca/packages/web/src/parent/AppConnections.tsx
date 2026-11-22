@@ -12,6 +12,16 @@ function errorText(err: unknown, field: 'aiKey' | 'merebUrl'): { field?: string;
   return { general: err.status === 400 ? err.message : GENERIC_ERROR };
 }
 
+/** La dirección tal como la guardará la app (https y sin barra final), o null si no es válida. */
+function httpsUrl(raw: string): string | null {
+  try {
+    const u = new URL(raw.trim());
+    return u.protocol === 'https:' ? u.toString().replace(/\/+$/, '') : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Cómo llega la agenda de Mereb a Lucca. La contraseña de Mereb se escribe solo en la página de Mereb. */
 export function MerebSteps() {
   return (
@@ -70,9 +80,15 @@ export function MerebLink({ api, config, onSaved }: MerebProps) {
     }
   }
 
-  async function open() {
-    const target = config.merebUrl === url.trim().replace(/\/+$/, '') ? config.merebUrl : (await save())?.merebUrl;
-    if (target) await openExternal(target);
+  /** Abre enseguida (dentro del toque, para que no lo bloqueen) y guarda la dirección después. */
+  function open() {
+    const target = httpsUrl(url);
+    if (!target) {
+      setError('Escribe la dirección de Mereb, empezando por https://');
+      return;
+    }
+    openExternal(target);
+    if (target !== config.merebUrl) void save();
   }
 
   return (
@@ -100,7 +116,7 @@ export function MerebLink({ api, config, onSaved }: MerebProps) {
         </p>
       ) : null}
       <div className="p-actions">
-        <button type="button" className="p-btn p-btn-primary" disabled={busy} onClick={() => void open()} {...keepFocus}>
+        <button type="button" className="p-btn p-btn-primary" disabled={busy} onClick={open} {...keepFocus}>
           Abrir Mereb
         </button>
         <button type="submit" className="p-btn p-btn-ghost" disabled={busy} {...keepFocus}>
@@ -196,7 +212,7 @@ export function AiKeyForm({ api, config, onSaved }: AiProps) {
         <button type="submit" className="p-btn p-btn-primary" disabled={busy} {...keepFocus}>
           Guardar clave
         </button>
-        <button type="button" className="p-btn p-btn-ghost" onClick={() => void openExternal(AI_KEYS_URL)}>
+        <button type="button" className="p-btn p-btn-ghost" onClick={() => openExternal(AI_KEYS_URL)}>
           Conseguir una clave
         </button>
         {config.aiKeySet ? (

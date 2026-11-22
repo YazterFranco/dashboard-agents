@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { BACK_EVENT } from '../nav';
 import {
   dayTasks,
   defaultDayOf,
@@ -107,6 +108,20 @@ export function WeekScreen({ state, prefs, speaker, onPrefs, onOpenTask, onProgr
     (returnFocus.current === 'plan' ? planButton : guideButton).current?.focus();
     returnFocus.current = null;
   }, [view]);
+
+  // «Atrás» de Android con el plan o la guía abiertos: vuelve a Mi semana.
+  const viewRef = useRef(view);
+  viewRef.current = view;
+  useEffect(() => {
+    const onBack = (event: Event) => {
+      if (event.defaultPrevented || viewRef.current === 'week') return;
+      event.preventDefault();
+      speaker.stop();
+      setView('week');
+    };
+    window.addEventListener(BACK_EVENT, onBack);
+    return () => window.removeEventListener(BACK_EVENT, onBack);
+  }, [speaker]);
 
   const openPlan = () => {
     returnFocus.current = 'plan';

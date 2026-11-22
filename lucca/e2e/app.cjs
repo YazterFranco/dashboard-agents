@@ -31,7 +31,11 @@ async function device(kind = PHONE) {
 }
 function watchPage(page) {
   page.setDefaultTimeout(15000);
-  page.on('pageerror', (e) => H.problem(`error de página: ${e}`));
+  page.on('pageerror', (e) => {
+    // X12 simula un WebView sin SQLite en WebAssembly: sql.js avisa de ese fallo esperado y la app sigue con JavaScript.
+    if (page.context().__expectWasmAbort && /Aborted\(both async and sync fetching of the wasm failed\)/.test(String(e))) return;
+    H.problem(`error de página: ${e}`);
+  });
   page.on('request', (r) => {
     const u = new URL(r.url());
     if (u.protocol.startsWith('http') && u.origin !== app.url && !page.__allowOffsite) H.problem(`petición fuera del dispositivo: ${r.url()}`);
@@ -326,6 +330,35 @@ function measure() {
       await button(again, 'Entrar').click();
       await parentHeading(again).waitFor();
       expect((await again.getByRole('button', { name: /^Marcar por hacer: Parts of a Plant/ }).count()) === 1, 'la tarea sigue marcada como lista');
+    });
+
+    await run('X12', 'borde', 'Tablet con el WebView antiguo (sin SQLite en WebAssembly): la app abre igual con la versión en JavaScript y guarda los datos', async () => {
+      const context = await device(TABLET);
+      context.__expectWasmAbort = true;
+      // Igual que en Chrome 83: el .wasm de SQLite no sirve, así que la app debe usar sql.js en JavaScript puro.
+      await context.route('**/*.wasm', (route) => route.abort());
+      const page = await firstRun(context);
+      expect((await page.locator('.task-title').count()) >= 4, 'Lucca ve sus tareas');
+      await page.close();
+      const again = await open(context);
+      await kidHeading(again).waitFor();
+      expect((await again.locator('.task-title').count()) >= 4, 'y siguen guardadas al volver a abrir');
+      await shot(again, 'webview-antiguo');
+    });
+
+    await run('X13', 'borde', 'El botón «atrás» de Android cierra la práctica abierta y vuelve a Mi semana', async () => {
+      const context = await device(PHONE);
+      const page = await firstRun(context);
+      await page.getByRole('button', { name: /^Practicar: Sumas con llevadas/ }).click();
+      await page.getByText('Reto 1 de 6').waitFor();
+      const handled = await page.evaluate(() => {
+        const event = new Event('lucca:back', { cancelable: true });
+        window.dispatchEvent(event);
+        return event.defaultPrevented;
+      });
+      expect(handled, 'la pantalla atiende el «atrás»');
+      await kidHeading(page).waitFor();
+      expect((await page.getByText('Reto 1 de 6').count()) === 0, 'la práctica se cerró');
     });
 
     code = H.report();

@@ -2,15 +2,13 @@
  * El «servidor» de la app de Android, dentro del propio dispositivo: las mismas rutas que el servidor de casa
  * (registerApi), con SQLite en WebAssembly (sql.js) guardado en el dispositivo. Sin red, salvo la IA si hay clave.
  */
-import Anthropic from '@anthropic-ai/sdk';
 import type { Config } from '../../../server/src/config';
 import { LuccaDb } from '../../../server/src/db';
 import { sqlJsHandle, type SqlJsDatabaseLike } from '../../../server/src/sqlHandle';
 import { buildLocalApp } from '../../../server/src/local/localApp';
 import type { LocalRequestInit, LocalResponse, MiniFastify } from '../../../server/src/local/miniFastify';
-import { ClaudeLessonModel } from '../../../server/src/ai/claude';
 import { RecordedLessonModel } from '../../../server/src/ai/recorded';
-import type { LessonModel } from '../../../server/src/ai/generate';
+import type { LessonModel, LessonRequest, ModelResult } from '../../../server/src/ai/generate';
 import { COOKIE_NAME, SESSION_IDLE_MS, readCookie, tokenId } from '../../../server/src/auth';
 import type { KeyValueStore } from './storage';
 
@@ -48,10 +46,27 @@ export interface AppConfigView {
 
 const asString = (v: Uint8Array | string | null): string | null => (typeof v === 'string' && v ? v : null);
 
+/** Claude, cargado la primera vez que hace falta una lección: arrancar la app no depende del SDK de la IA. */
+class LazyClaudeModel implements LessonModel {
+  private inner: Promise<LessonModel> | null = null;
+  constructor(private readonly apiKey: string) {}
+  async generate(req: LessonRequest): Promise<ModelResult> {
+    this.inner ??= Promise.all([import('@anthropic-ai/sdk'), import('../../../server/src/ai/claude')]).then(
+      ([{ default: Anthropic }, { ClaudeLessonModel }]) => new ClaudeLessonModel(new Anthropic({ apiKey: this.apiKey, dangerouslyAllowBrowser: true })),
+    );
+    try {
+      return await (await this.inner).generate(req);
+    } catch (err) {
+      this.inner = null; // la próxima vez se vuelve a intentar cargar
+      throw err;
+    }
+  }
+}
+
 function defaultLessonModel(aiKey: string | null): LessonModel {
   // Sin clave, las lecciones grabadas: la app sirve desde el primer momento. Con clave, Claude prepara cada lección.
   if (!aiKey) return new RecordedLessonModel();
-  return new ClaudeLessonModel(new Anthropic({ apiKey: aiKey, dangerouslyAllowBrowser: true }));
+  return new LazyClaudeModel(aiKey);
 }
 
 function appConfig(aiKey: string | null, merebUrl: string | null): Config {

@@ -15,6 +15,7 @@ import { changedPrefs, loadPrefs, savePrefs, type Prefs } from './prefs';
 import type { ProgressResult } from './progress';
 import { createNativeSpeaker, createSpeaker } from './speaker';
 import { nativeVoice } from './nativeVoice';
+import { BACK_EVENT } from './nav';
 
 const FALLBACK: Prefs = { lang: SettingsSchema.parse({}).lang, voiceMode: 'both', theme: 'dark' };
 
@@ -116,6 +117,36 @@ export function App() {
     requestAnimationFrame(() => opener.current?.focus());
   };
 
+  const closePractice = () => {
+    setPracticeTaskId(null);
+    requestAnimationFrame(() => opener.current?.focus());
+  };
+  const closeReview = () => {
+    setReviewing(false);
+    // Las estrellas y lo que queda por repasar cambian: se vuelve a pedir el estado.
+    load();
+    requestAnimationFrame(() => opener.current?.focus());
+  };
+
+  // «Atrás» de Android: primero se cierra lo que está encima (práctica, repaso o lección). Va en captura para
+  // atenderlo antes que «Mi semana», que está debajo.
+  const back = useRef<() => boolean>(() => false);
+  back.current = () => {
+    if (practiceTaskId) closePractice();
+    else if (reviewing) closeReview();
+    else if (openTaskId) closeLesson();
+    else return false;
+    speaker.stop();
+    return true;
+  };
+  useEffect(() => {
+    const onBack = (event: Event) => {
+      if (!event.defaultPrevented && back.current()) event.preventDefault();
+    };
+    window.addEventListener(BACK_EVENT, onBack, { capture: true });
+    return () => window.removeEventListener(BACK_EVENT, onBack, { capture: true });
+  }, []);
+
   if (state) {
     return (
       <PauseGate minutes={state.settings.pauseMinutes} lang={prefs.lang}>
@@ -149,10 +180,7 @@ export function App() {
             speaker={speaker}
             load={() => fetchPractice(practiceTask.id)}
             onProgress={onProgress}
-            onClose={() => {
-              setPracticeTaskId(null);
-              requestAnimationFrame(() => opener.current?.focus());
-            }}
+            onClose={closePractice}
           />
         ) : null}
         {reviewing ? (
@@ -161,12 +189,7 @@ export function App() {
             voiceMode={prefs.voiceMode}
             speaker={speaker}
             api={reviewApi}
-            onClose={() => {
-              setReviewing(false);
-              // Las estrellas y lo que queda por repasar cambian: se vuelve a pedir el estado.
-              load();
-              requestAnimationFrame(() => opener.current?.focus());
-            }}
+            onClose={closeReview}
           />
         ) : null}
         {openTask ? (

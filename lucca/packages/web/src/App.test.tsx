@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { SettingsSchema } from '@lucca/shared';
 import { demoState } from './testFixtures';
 import { App } from './App';
+import { BACK_EVENT } from './nav';
 
 const okResponse = () => ({ ok: true, json: async () => demoState() });
 
@@ -149,5 +150,46 @@ describe('App opens a lesson from a task card', () => {
     fireEvent.click(screen.getByRole('button', { name: /Volver a mi semana/ }));
     expect(screen.getByRole('button', { name: /^Miércoles 18/ }).getAttribute('aria-pressed')).toBe('true');
     await waitFor(() => expect((document.activeElement as HTMLElement).getAttribute('aria-label')).toBe('Empezar: Lectura: “My Pet”'));
+  });
+
+  it('el botón «atrás» de Android cierra la lección y vuelve a Mi semana (sin cerrar la app)', async () => {
+    vi.stubGlobal('fetch', routedFetch());
+    render(<App />);
+    await screen.findByText('¡Hola, Lucca!');
+    fireEvent.click(screen.getByRole('button', { name: /^Miércoles 18/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Empezar: Lectura: “My Pet”' }));
+    await screen.findByText('Paso 1 de 5');
+    const back = new Event(BACK_EVENT, { cancelable: true });
+    act(() => {
+      window.dispatchEvent(back);
+    });
+    expect(back.defaultPrevented).toBe(true);
+    expect(screen.queryByText('Paso 1 de 5')).toBeNull();
+    expect(screen.getByText('¡Hola, Lucca!')).toBeTruthy();
+  });
+
+  it('en Mi semana sin nada abierto, «atrás» no lo atiende la pantalla (la app pasa a segundo plano)', async () => {
+    vi.stubGlobal('fetch', routedFetch());
+    render(<App />);
+    await screen.findByText('¡Hola, Lucca!');
+    const back = new Event(BACK_EVENT, { cancelable: true });
+    act(() => {
+      window.dispatchEvent(back);
+    });
+    expect(back.defaultPrevented).toBe(false);
+  });
+
+  it('«atrás» desde el plan de la semana vuelve a Mi semana', async () => {
+    vi.stubGlobal('fetch', routedFetch());
+    render(<App />);
+    await screen.findByText('¡Hola, Lucca!');
+    fireEvent.click(screen.getByRole('button', { name: 'Plan de la semana' }));
+    await screen.findByRole('heading', { level: 1, name: 'Plan de la semana' });
+    const back = new Event(BACK_EVENT, { cancelable: true });
+    act(() => {
+      window.dispatchEvent(back);
+    });
+    expect(back.defaultPrevented).toBe(true);
+    expect(screen.queryByRole('heading', { level: 1, name: 'Plan de la semana' })).toBeNull();
   });
 });

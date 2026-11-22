@@ -20,6 +20,7 @@ export default defineConfig(({ mode }) => {
         { find: '@lucca/shared', replacement: here('../shared/src/index.ts') },
         ...(app
           ? [
+              { find: /^\.\/polyfills$/, replacement: here('src/app/polyfills.ts') },
               { find: /^node:crypto$/, replacement: here('src/app/shims/nodeCrypto.ts') },
               { find: /^node:fs$/, replacement: here('src/app/shims/nodeFs.ts') },
               { find: /^node:path$/, replacement: here('src/app/shims/nodePath.ts') },
@@ -35,7 +36,9 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: app ? 'dist-app' : 'dist',
       emptyOutDir: true,
-      target: 'es2022',
+      // La app también debe abrir en tablets con el WebView sin actualizar (desde Chrome 80): la sintaxis nueva
+      // (??=, campos privados…) se convierte. La web de casa se queda en código moderno.
+      target: app ? ['es2020', 'chrome80'] : 'es2022',
       chunkSizeWarningLimit: 4000,
     },
   };

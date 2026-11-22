@@ -24,3 +24,17 @@ export function interceptInternalLinks(): void {
     navigate(url.pathname);
   });
 }
+
+/**
+ * Botón «atrás» de Android. La pantalla abierta lo atiende (cierra la lección, la práctica, el repaso, el plan o la
+ * guía) y lo marca con `preventDefault()`. Si nadie lo atiende, la app vuelve a la pantalla de Lucca o, si ya está
+ * en ella, pasa a segundo plano: nunca se cierra a mitad de algo.
+ */
+export const BACK_EVENT = 'lucca:back';
+
+/** true si alguna pantalla atendió el «atrás». */
+export function dispatchBack(): boolean {
+  const event = new Event(BACK_EVENT, { cancelable: true });
+  window.dispatchEvent(event);
+  return event.defaultPrevented;
+}

@@ -1,3 +1,4 @@
+import './polyfills';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@fontsource/andika/latin-400.css';
@@ -48,6 +49,8 @@ if (import.meta.env.VITE_LUCCA_APP === '1') {
     .then(({ bootApp }) => bootApp())
     .then(startScreens)
     .catch((err: unknown) => {
+      // Para diagnosticar desde las herramientas del WebView (no se muestra a Lucca).
+      (window as { __luccaBootError?: unknown }).__luccaBootError = err;
       root.render(<BootError detail={err instanceof Error ? err.message : String(err)} />);
     });
 } else {

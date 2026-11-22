@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@capacitor-community/text-to-speech": "6.1.0",
+    "@capacitor/app": "7.1.2",
     "@capacitor/browser": "7.0.5",
     "@capacitor/core": "7.6.10",
     "@fontsource/andika": "^5.3.0",
@@ -16,6 +17,7 @@
     "@lucca/shared": "0.1.0",
     "@noble/hashes": "2.4.0",
     "buffer": "6.0.3",
+    "core-js": "3.51.0",
     "pdfjs-dist": "6.4.299",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",

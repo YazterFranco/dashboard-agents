@@ -23,7 +23,15 @@ const MIN_FONT = 19;
 async function waitForHealth() {
   for (let i = 0; i < 50; i++) {
     try {
-      if ((await fetch(`${ORIGIN}/api/health`)).ok) return;
+      if ((await fetch(`${ORIGIN}/api/health`)).ok) {
+        // Sin PIN, la app abre la guía de bienvenida: aquí se revisa la pantalla de Lucca ya configurada.
+        await fetch(`${ORIGIN}/api/parent/setup`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ pin: '482913', childName: 'Lucca', grade: 2, lang: 'es', theme: 'dark' }),
+        });
+        return;
+      }
     } catch {}
     await new Promise((r) => setTimeout(r, 200));
   }
