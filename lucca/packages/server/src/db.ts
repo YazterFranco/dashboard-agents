@@ -1,7 +1,7 @@
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createRequire } from 'node:module';
-import type { DatabaseSync } from 'node:sqlite';
+import { sqlJsHandle, type SqlHandle } from './sqlHandle.js';
 import { LessonDocSchema, QuizBlockSchema, SettingsSchema, TaskSchema, type LessonDoc, type QuizBlock, type Subject, type ProgressEvent, type ProgressKind, type Settings, type Task, type TaskStatus } from '@lucca/shared';
 
 /** Cada migración sube `PRAGMA user_version` en uno. No se editan las antiguas: se añade una nueva. */
@@ -124,16 +124,30 @@ function taskFromRow(r: Row): Task {
   });
 }
 
-/** Almacén SQLite de Lucca (node:sqlite, sin dependencias nativas). */
-export class LuccaDb {
-  private db: DatabaseSync;
+/**
+ * Pruebas del modo app: si una configuración de prueba deja aquí sql.js, `new LuccaDb(':memory:')` lo usa en lugar de
+ * node:sqlite, y así las mismas pruebas de la API comprueban la base de datos de la app.
+ */
+const testSqlJs = () => (globalThis as { __luccaTestSqlJs?: { Database: new () => import('./sqlHandle.js').SqlJsDatabaseLike } }).__luccaTestSqlJs;
 
-  constructor(path: string) {
-    if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
-    // Se carga aquí para poder silenciar el ExperimentalWarning de node:sqlite antes de que salga.
-    const sqlite = createRequire(import.meta.url)('node:sqlite') as typeof import('node:sqlite');
-    this.db = new sqlite.DatabaseSync(path);
-    this.db.exec('PRAGMA journal_mode = WAL;');
+/** Almacén SQLite de Lucca: node:sqlite en la computadora (sin dependencias nativas) o sql.js en la app. */
+export class LuccaDb {
+  private db: SqlHandle;
+
+  constructor(pathOrHandle: string | SqlHandle) {
+    if (typeof pathOrHandle !== 'string') {
+      this.db = pathOrHandle;
+    } else if (pathOrHandle === ':memory:' && testSqlJs()) {
+      this.db = sqlJsHandle(new (testSqlJs()!.Database)());
+    } else {
+      const path = pathOrHandle;
+      if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
+      // Se carga aquí para poder silenciar el ExperimentalWarning de node:sqlite antes de que salga.
+      const sqlite = createRequire(import.meta.url)('node:sqlite') as typeof import('node:sqlite');
+      const handle = new sqlite.DatabaseSync(path);
+      handle.exec('PRAGMA journal_mode = WAL;');
+      this.db = handle as unknown as SqlHandle;
+    }
     this.migrate();
   }
 

@@ -1,0 +1,122 @@
+import { randomUUID } from 'node:crypto';
+import type { FastifyInstance } from 'fastify';
+import { z } from 'zod';
+import {
+  KidStateSchema,
+  ProgressKindSchema,
+  STAR_KINDS,
+  lessonBank,
+  mathBank,
+  mathKind,
+  localDate,
+  mondayOf,
+  nextStatus,
+  starsForWeek,
+  type KidState,
+} from '@lucca/shared';
+import type { Config } from './config.js';
+import type { LuccaDb } from './db.js';
+import { LoginThrottle } from './auth.js';
+import { registerParentRoutes } from './parent.js';
+import type { LessonModel } from './ai/generate.js';
+import { LessonService } from './lessons.js';
+import { addLessonToReview, registerReviewRoutes, reviewSummary } from './review.js';
+
+export const VERSION = '0.1.0';
+
+export interface ApiOptions {
+  db: LuccaDb;
+  config: Config;
+  now: () => Date;
+  /** Fuente de lecciones ya resuelta: IA real, grabadas o ninguna (`null`). */
+  lessonModel: LessonModel | null;
+  lessonTimeoutMs?: number;
+}
+
+const VariantSchema = z.object({ variant: z.enum(['default', 'alternative']).default('default') });
+
+const ProgressBodySchema = z.object({ taskId: z.string().min(1), kind: ProgressKindSchema });
+
+/**
+ * Todas las rutas de la API. Las usa el servidor (Fastify, en la computadora de casa o en Railway) y la app de
+ * Android, que las ejecuta dentro del propio teléfono o tablet sin servidor: así ambas se comportan igual.
+ */
+export function registerApi(app: FastifyInstance, opts: ApiOptions): void {
+  const { db, config, now } = opts;
+
+  const starsNow = (): number => {
+    const today = localDate(now(), config.tz);
+    return starsForWeek(db.listProgress(), mondayOf(today), config.tz);
+  };
+
+  app.get('/api/health', async () => ({
+    ok: true,
+    version: VERSION,
+    db: 'ok',
+    ai: config.aiConfigured ? 'configured' : 'unconfigured',
+  }));
+
+  app.get('/api/kid/state', async (): Promise<KidState> => {
+    const today = localDate(now(), config.tz);
+    return KidStateSchema.parse({
+      today,
+      weekStart: mondayOf(today),
+      settings: { ...db.getSettings(), tz: config.tz },
+      tasks: db.listTasks().filter((t) => !t.hidden && !t.retired),
+      starsThisWeek: starsNow(),
+      reviewDue: reviewSummary(db, today).due,
+      understood: [...new Set(db.listProgress().filter((e) => e.kind === 'lesson_done').map((e) => e.taskId))],
+    });
+  });
+
+  app.post('/api/kid/progress', async (req, reply) => {
+    const body = ProgressBodySchema.safeParse(req.body);
+    if (!body.success) return reply.code(400).send({ error: 'solicitud inválida' });
+    const task = db.getTask(body.data.taskId);
+    if (!task || task.hidden || task.retired) return reply.code(404).send({ error: 'tarea no encontrada' });
+
+    // Una estrella se gana una sola vez por tarea y tipo: repetir "¡Terminé!" (un reintento de red, o repasar
+    // una tarea ya hecha otra semana) no suma otra. Los demás eventos (pistas, pasos) siempre se registran.
+    const alreadyEarned = STAR_KINDS.includes(body.data.kind) && db.hasProgress(task.id, body.data.kind);
+    if (!alreadyEarned) db.addProgress({ id: randomUUID(), taskId: task.id, kind: body.data.kind, at: now().toISOString() });
+    const status = nextStatus(task.status, body.data.kind);
+    if (status !== task.status) db.setTaskStatus(task.id, status);
+    if (body.data.kind === 'lesson_done') addLessonToReview(db, task.id, localDate(now(), config.tz));
+    return { status, starsThisWeek: starsNow() };
+  });
+
+  const lessons = new LessonService({
+    db,
+    model: opts.lessonModel,
+    mode: config.aiMode,
+    now,
+    tz: config.tz,
+    timeoutMs: opts.lessonTimeoutMs,
+  });
+
+  // «Entender»: la lección de una tarea (la guardada, o se prepara ahora con una espera máxima).
+  app.get<{ Params: { taskId: string } }>('/api/kid/lessons/:taskId', async (req, reply) => {
+    const q = VariantSchema.safeParse(req.query ?? {});
+    if (!q.success) return reply.code(400).send({ error: 'solicitud inválida' });
+    const answer = await lessons.get(req.params.taskId, q.data.variant);
+    if (answer.status === 'not-found') return reply.code(404).send({ error: 'tarea no encontrada' });
+    return answer;
+  });
+
+  // «Practicar»: el banco de retos de una tarea. Sumas y restas salen del generador (sin IA); lo demás, de su lección.
+  app.get<{ Params: { taskId: string } }>('/api/kid/practice/:taskId', async (req, reply) => {
+    const task = db.getTask(req.params.taskId);
+    if (!task || task.hidden || task.retired) return reply.code(404).send({ error: 'tarea no encontrada' });
+    const kind = mathKind(task.title, task.description);
+    if (kind) return { status: 'ready', source: 'math', items: mathBank(kind, task.id, /sin llevar|without carrying|no carry/i.test(`${task.title} ${task.description}`)) };
+    const stored = [db.getLesson(task.id, 'default'), db.getLesson(task.id, 'alternative')].flatMap((l) => (l ? [l.doc] : []));
+    if (stored.length) return { status: 'ready', source: 'lesson', items: lessonBank(stored) };
+    const answer = await lessons.get(task.id, 'default');
+    if (answer.status === 'ready') return { status: 'ready', source: 'lesson', items: lessonBank([answer.lesson.doc]) };
+    if (answer.status === 'not-found') return reply.code(404).send({ error: 'tarea no encontrada' });
+    return answer;
+  });
+
+  registerReviewRoutes(app, { db, config, now });
+  registerParentRoutes(app, { db, config, now, throttle: new LoginThrottle(), lessons });
+}

@@ -8,6 +8,9 @@ import { buildApp } from '../src/app.js';
 import { loadConfig } from '../src/config.js';
 import { LuccaDb } from '../src/db.js';
 
+/** En el modo app (sql.js + MiniFastify) no hay red ni archivos que servir: estas dos solo valen para el servidor. */
+const APP_MODE = Boolean((globalThis as { __luccaTestSqlJs?: unknown }).__luccaTestSqlJs);
+
 // 2026-11-18T03:00:00Z = martes 17 a las 22:00 en Panamá.
 const NOW = new Date('2026-11-18T03:00:00Z');
 let clock = NOW;
@@ -45,7 +48,7 @@ describe('app', () => {
     expect(res.body).not.toContain('/secret/path');
   });
 
-  it('rejects public addresses and accepts the home network', async () => {
+  it.skipIf(APP_MODE)('rejects public addresses and accepts the home network', async () => {
     await setup();
     const pub = await app.inject({ method: 'GET', url: '/api/health', remoteAddress: '8.8.8.8' });
     expect(pub.statusCode).toBe(403);
@@ -121,7 +124,7 @@ describe('app', () => {
     expect((await post({ kind: 'task_done' })).statusCode).toBe(400);
   });
 
-  it('serves index.html for unknown non-api routes when webDir is set', async () => {
+  it.skipIf(APP_MODE)('serves index.html for unknown non-api routes when webDir is set', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'lucca-web-'));
     dirs.push(dir);
     writeFileSync(join(dir, 'index.html'), '<!doctype html><title>Lucca</title><div id="root"></div>');
