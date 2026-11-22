@@ -1514,6 +1514,7 @@ async function reviewGroup() {
 
   await withServer({ LUCCA_DEMO: '1', LUCCA_AI: 'recorded' }, async (s) => {
     await run('E11', 'positivo', 'Tocar un texto de la lección lo lee en voz alta (con su idioma); en modo «Leer» no es tocable', async () => {
+      await H.setupParent(s); // sin configurar, la pantalla abre la guía de bienvenida
       const { page, context } = await open(s);
       await context.addInitScript(() => {
         window.__spoken = [];
