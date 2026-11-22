@@ -1,3 +1,4 @@
+import { navigate } from '../nav';
 import { useCallback, useEffect, useState } from 'react';
 import type { Task } from '@lucca/shared';
 import { ApiError, type Overview, type ParentApi } from './api';
@@ -6,6 +7,7 @@ import { NETWORK_ERROR } from './fields';
 import { ProgressTab } from './ProgressTab';
 import { SettingsTab } from './SettingsTab';
 import { TasksTab } from './TasksTab';
+import { Welcome } from '../onboarding/Welcome';
 
 type Tab = 'tasks' | 'progress' | 'settings';
 const TABS: { id: Tab; label: string }[] = [
@@ -25,6 +27,7 @@ export function Dashboard({ api, onLogout }: Props) {
   const [problem, setProblem] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('tasks');
   const [preview, setPreview] = useState<Task | null>(null);
+  const [guide, setGuide] = useState(false);
 
   const load = useCallback(async () => {
     setProblem(null);
@@ -45,6 +48,22 @@ export function Dashboard({ api, onLogout }: Props) {
     if (overview) document.documentElement.dataset.theme = overview.settings.theme;
   }, [overview]);
 
+  if (guide) {
+    const close = () => {
+      setGuide(false);
+      void load();
+    };
+    return (
+      <Welcome
+        api={api}
+        setupDone
+        connections={overview?.connections ?? { ai: false, mereb: false }}
+        onClose={close}
+        onFinish={(dest) => (dest === 'kid' ? navigate('/') : close())}
+      />
+    );
+  }
+
   return (
     <main className="p-shell">
       <header className="p-top">
@@ -60,6 +79,9 @@ export function Dashboard({ api, onLogout }: Props) {
           <a className="p-btn p-btn-ghost" href="/">
             Ver la pantalla de Lucca
           </a>
+          <button type="button" className="p-btn p-btn-ghost" onClick={() => setGuide(true)}>
+            Guía de uso
+          </button>
           <button type="button" className="p-btn p-btn-ghost" onClick={onLogout}>
             Salir
           </button>
@@ -89,7 +111,7 @@ export function Dashboard({ api, onLogout }: Props) {
           </nav>
           {tab === 'tasks' ? <TasksTab tasks={overview.tasks} today={overview.today} onChanged={() => void load()} api={api} onPreview={setPreview} /> : null}
           {tab === 'progress' ? <ProgressTab api={api} /> : null}
-          {tab === 'settings' ? <SettingsTab settings={overview.settings} connections={overview.connections} ai={overview.ai} onSaved={() => void load()} api={api} /> : null}
+          {tab === 'settings' ? <SettingsTab settings={overview.settings} connections={overview.connections} ai={overview.ai} onSaved={() => void load()} onConnectionsChanged={() => void load()} api={api} /> : null}
         </>
       ) : null}
       {!overview && !problem ? <p className="p-lead">Un momento…</p> : null}

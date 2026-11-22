@@ -74,6 +74,13 @@ export interface TaskBody {
   dueDate: string | null;
 }
 
+/** Configuración propia de la app de Android (en el servidor de casa esto va en el archivo .env). */
+export interface AppConfigView {
+  aiKeySet: boolean;
+  aiKeyHint: string | null;
+  merebUrl: string | null;
+}
+
 export interface AgendaPreviewResponse {
   weekStart: string | null;
   weekEnd: string | null;
@@ -134,6 +141,9 @@ export const parentApi = {
   /** El PDF «Exportar actividades» de Mereb → tareas propuestas (no guarda nada). */
   previewAgenda: (file: Blob) => request<AgendaPreviewResponse>('POST', '/api/parent/agenda/pdf', new RawBody(file, 'application/pdf')),
   importAgenda: (tasks: TaskDraft[]) => request<AgendaImportResult>('POST', '/api/parent/agenda/import', { tasks }),
+  /** Solo en la app: clave de IA y dirección de Mereb guardadas en el dispositivo. */
+  appConfig: () => request<AppConfigView>('GET', '/api/app/config'),
+  saveAppConfig: (body: { aiKey?: string | null; merebUrl?: string | null }) => request<AppConfigView>('PUT', '/api/app/config', body),
 };
 export type ParentApi = typeof parentApi;
 

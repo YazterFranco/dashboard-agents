@@ -100,7 +100,7 @@ export async function startBackend(opts: BackendOptions): Promise<AppBackend> {
     return saving;
   };
   const scheduleSave = () => {
-    if (saveTimer === null) saveTimer = setTimeout(() => void save(), opts.saveDelayMs ?? 120);
+    if (saveTimer === null) saveTimer = setTimeout(() => void save(), opts.saveDelayMs ?? 30);
   };
 
   const db = new LuccaDb(sqlJsHandle(raw, scheduleSave));

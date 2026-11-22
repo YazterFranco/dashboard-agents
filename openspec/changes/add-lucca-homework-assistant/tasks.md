@@ -113,3 +113,14 @@
 - [x] 10.5 Guardar el final de una lección o práctica sin conexión: aviso y reintento (la estrella no se pierde)
 - [x] 10.6 Pruebas de flujo de una semana completa (varios días simulados sobre la misma base de datos, dos dispositivos a la vez) y pruebas unitarias estables bajo carga
 
+
+## 11. App de Android
+
+- [x] 11.1 Separar las rutas de la API de Fastify (`routes.ts`) y ejecutarlas dentro de la app con `MiniFastify` y SQLite en WebAssembly (sql.js) guardado en IndexedDB, y verificar ejecutando todas las pruebas de la API también contra ese motor
+- [x] 11.2 Equivalentes de navegador para `node:crypto` (scrypt, sha256) con los mismos resultados que Node, y verificar con pruebas que un PIN guardado en la computadora se comprueba igual en la app
+- [x] 11.3 Guía de uso al abrir por primera vez (qué es, cómo se usa, PIN, Mereb, IA, listo) y reabrible desde el área de papá, y verificar con pruebas de componente y en navegador
+- [x] 11.4 Mereb sin guardar la contraseña (dirección + «Abrir Mereb») y recibir el PDF compartido («Abrir con» / «Compartir») con un plugin nativo, y verificar con pruebas JVM, de componente y del flujo
+- [x] 11.5 Voz nativa de Android (motor de texto a voz) con la misma interfaz que la del navegador, y verificar con pruebas
+- [x] 11.6 Navegación entre pantallas sin recargar (para que lo recién guardado no se pierda) y verificar con el escenario «cambio justo antes de cerrar»
+- [x] 11.7 Proyecto Capacitor 7, icono, llave de firma fuera del repositorio, `npm run apk` y flujo de GitHub «Lucca · APK de Android», y verificar el APK (firma, manifiesto, permisos, contenido)
+- [ ] 11.8 Probar el APK instalado en la tablet de Lucca (voz, compartir PDF, abrir Mereb) y anotar lo que haya que ajustar

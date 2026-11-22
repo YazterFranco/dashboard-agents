@@ -1,0 +1,189 @@
+{
+  "clock": "2026-11-18T17:00:00Z",
+  "total": 11,
+  "passed": 11,
+  "failed": 0,
+  "results": [
+    {
+      "id": "X01",
+      "kind": "positivo",
+      "title": "Primera vez: la app abre la guía, se crea el PIN, se importa la agenda y Lucca ve sus tareas",
+      "ok": true,
+      "shots": [
+        {
+          "name": "1-bienvenida",
+          "file": "X01-1-bienvenida.jpg"
+        },
+        {
+          "name": "2-como-se-usa",
+          "file": "X01-2-como-se-usa.jpg"
+        },
+        {
+          "name": "3-pin",
+          "file": "X01-3-pin.jpg"
+        },
+        {
+          "name": "4-mereb",
+          "file": "X01-4-mereb.jpg"
+        },
+        {
+          "name": "5-revision-agenda",
+          "file": "X01-5-revision-agenda.jpg"
+        },
+        {
+          "name": "6-ia",
+          "file": "X01-6-ia.jpg"
+        },
+        {
+          "name": "7-listo",
+          "file": "X01-7-listo.jpg"
+        },
+        {
+          "name": "8-lucca",
+          "file": "X01-8-lucca.jpg"
+        }
+      ],
+      "checks": 19,
+      "problems": [],
+      "ms": 1675
+    },
+    {
+      "id": "X02",
+      "kind": "positivo",
+      "title": "Cerrar y volver a abrir la app: todo sigue guardado en el dispositivo; el área de papá pide el PIN otra vez",
+      "ok": true,
+      "shots": [
+        {
+          "name": "reabierta",
+          "file": "X02-reabierta.jpg"
+        },
+        {
+          "name": "pide-pin",
+          "file": "X02-pide-pin.jpg"
+        }
+      ],
+      "checks": 7,
+      "problems": [],
+      "ms": 1904
+    },
+    {
+      "id": "X03",
+      "kind": "negativo",
+      "title": "PIN incorrecto al volver: avisa los intentos y no entra",
+      "ok": true,
+      "shots": [
+        {
+          "name": "pin-incorrecto",
+          "file": "X03-pin-incorrecto.jpg"
+        }
+      ],
+      "checks": 3,
+      "problems": [],
+      "ms": 1637
+    },
+    {
+      "id": "X04",
+      "kind": "positivo",
+      "title": "Ajustes → App: guardar la dirección de Mereb y la clave de IA (solo se ven los últimos 4 caracteres) y quitarla",
+      "ok": true,
+      "shots": [
+        {
+          "name": "app-configurada",
+          "file": "X04-app-configurada.jpg"
+        }
+      ],
+      "checks": 3,
+      "problems": [],
+      "ms": 1406
+    },
+    {
+      "id": "X05",
+      "kind": "negativo",
+      "title": "Una clave de IA o una dirección de Mereb mal escritas se explican junto al campo",
+      "ok": true,
+      "shots": [
+        {
+          "name": "errores",
+          "file": "X05-errores.jpg"
+        }
+      ],
+      "checks": 2,
+      "problems": [],
+      "ms": 1355
+    },
+    {
+      "id": "X06",
+      "kind": "positivo",
+      "title": "«Abrir Mereb» abre la página del colegio fuera de la app (allí se escribe la contraseña)",
+      "ok": true,
+      "shots": [],
+      "checks": 1,
+      "problems": [],
+      "ms": 732
+    },
+    {
+      "id": "X07",
+      "kind": "borde",
+      "title": "Sin internet: Lucca abre la app, entiende una lección, practica y gana su estrella",
+      "ok": true,
+      "shots": [
+        {
+          "name": "practicar-sin-internet",
+          "file": "X07-practicar-sin-internet.jpg"
+        },
+        {
+          "name": "leccion-sin-internet",
+          "file": "X07-leccion-sin-internet.jpg"
+        }
+      ],
+      "checks": 5,
+      "problems": [],
+      "ms": 16651
+    },
+    {
+      "id": "X08",
+      "kind": "borde",
+      "title": "La guía se puede volver a abrir desde el área de papá (sin repetir el PIN) y cerrar",
+      "ok": true,
+      "shots": [
+        {
+          "name": "guia-desde-papa",
+          "file": "X08-guia-desde-papa.jpg"
+        }
+      ],
+      "checks": 2,
+      "problems": [],
+      "ms": 1222
+    },
+    {
+      "id": "X09",
+      "kind": "borde",
+      "title": "Medidas en teléfono y tablet: sin desplazamiento lateral, controles de 44 px y textos legibles en cada paso de la guía",
+      "ok": true,
+      "shots": [],
+      "checks": 12,
+      "problems": [],
+      "ms": 1406
+    },
+    {
+      "id": "X10",
+      "kind": "borde",
+      "title": "Datos de dos «teléfonos» distintos no se mezclan (cada dispositivo tiene su base)",
+      "ok": true,
+      "shots": [],
+      "checks": 1,
+      "problems": [],
+      "ms": 1287
+    },
+    {
+      "id": "X11",
+      "kind": "borde",
+      "title": "Un cambio hecho justo antes de cambiar de pantalla y cerrar la app no se pierde",
+      "ok": true,
+      "shots": [],
+      "checks": 1,
+      "problems": [],
+      "ms": 1699
+    }
+  ]
+}

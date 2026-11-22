@@ -58,7 +58,29 @@ const focusedId = (page) => page.evaluate(() => document.activeElement && docume
 const parentHeading = (page) => page.getByRole('heading', { name: 'Área de papá', exact: true });
 const goParent = async (page, server) => page.goto(`${server.url}/papa`);
 
+/** La primera vez se abre la guía de bienvenida: los dos primeros pasos explican, el tercero es la configuración. */
+async function passIntro(page) {
+  const intro = page.getByRole('button', { name: 'Empezar', exact: true });
+  const pin = page.getByLabel('PIN', { exact: true });
+  // La pantalla primero pregunta si ya hay PIN: se espera a ver la guía o el formulario.
+  await Promise.race([intro.waitFor(), pin.waitFor()]);
+  if (await intro.isVisible().catch(() => false)) {
+    await intro.click();
+    await page.getByRole('button', { name: 'Siguiente', exact: true }).click();
+  }
+}
+
+/** Tras crear el PIN, la guía sigue (Mereb, IA, listo): se salta hasta el área de papá. */
+async function skipGuideToPanel(page) {
+  await page.getByRole('heading', { name: 'Conecta la agenda de Mereb' }).waitFor();
+  await page.getByRole('button', { name: 'Lo hago después' }).click();
+  await page.getByRole('button', { name: 'Ahora no' }).click();
+  await page.getByRole('button', { name: 'Ir al área de papá' }).click();
+}
+
 async function fillSetup(page, { pin = PIN, pin2 = pin, name = 'Lucca', grade, lang, theme } = {}) {
+  await passIntro(page);
+  await page.getByLabel('PIN', { exact: true }).waitFor();
   await page.getByLabel('PIN', { exact: true }).fill(pin);
   await page.getByLabel('Repite el PIN', { exact: true }).fill(pin2);
   await page.getByLabel('Nombre del niño', { exact: true }).fill(name);
@@ -80,6 +102,8 @@ async function login(page, pin = PIN) {
 // ---------- Pantalla de Lucca: ayudas ----------
 const kidHeading = (page) => page.getByRole('heading', { level: 1, name: /^(¡Hola, |Hi, )/ });
 async function openKid(server, options) {
+  // Sin configurar, la app abre la guía de bienvenida: las pruebas de Lucca parten de un asistente ya configurado.
+  if (!(await H.api(server, 'GET', '/api/parent/status')).json.setupDone) await H.setupParent(server);
   const o = await open(server, options);
   await o.page.goto(server.url);
   await kidHeading(o.page).waitFor();
@@ -98,6 +122,9 @@ async function accessGroup() {
     await run('P01', 'positivo', 'Primera vez: aparece el asistente de configuración y la falta de IA/Mereb no bloquea', async () => {
       const { page } = await open(s);
       await goParent(page, s);
+      await page.getByRole('heading', { name: '¡Bienvenido al asistente de tareas de Lucca!' }).waitFor();
+      await shot(page, 'guia-bienvenida', { fullPage: true });
+      await passIntro(page);
       await page.getByRole('heading', { name: 'Configura el asistente de Lucca' }).waitFor();
       await page.getByText('ANTHROPIC_API_KEY').waitFor();
       await page.getByText('MEREB_URL').waitFor();
@@ -135,6 +162,7 @@ async function accessGroup() {
       await fillSetup(page, { grade: 3 });
       await shot(page, 'asistente-lleno', { fullPage: true });
       await finishSetup(page);
+      await skipGuideToPanel(page);
       await parentHeading(page).waitFor();
       expect((await page.getByText('Lucca', { exact: true }).count()) === 1, 'el panel debe mostrar el nombre del niño');
       await page.getByText('3.º grado').waitFor();
@@ -226,6 +254,7 @@ async function accessGroup() {
       expect(name.length === 30, 'el nombre de prueba debe tener 30 caracteres');
       await fillSetup(page, { name });
       await finishSetup(page);
+      await skipGuideToPanel(page);
       await parentHeading(page).waitFor();
       await page.getByText(name, { exact: true }).waitFor();
       await shot(page, 'nombre-30-en-movil');
@@ -863,6 +892,9 @@ async function responsiveGroup() {
 
         let o = await open(fresh, { viewport, theme });
         await goParent(o.page, fresh);
+        await o.page.getByRole('heading', { name: '¡Bienvenido al asistente de tareas de Lucca!' }).waitFor();
+        await snap(o.page, 'bienvenida');
+        await passIntro(o.page);
         await o.page.getByRole('heading', { name: 'Configura el asistente de Lucca' }).waitFor();
         await snap(o.page, 'configuracion');
 
@@ -1697,6 +1729,7 @@ async function flowGroup() {
         await goParent(page, s);
         await fillSetup(page, { name: 'Lucca' });
         await finishSetup(page);
+        await skipGuideToPanel(page);
         await parentHeading(page).waitFor();
         await page.getByText('No hay tareas esta semana').waitFor();
         await openTaskForm(page);

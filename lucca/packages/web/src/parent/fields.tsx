@@ -1,4 +1,5 @@
 import type { MouseEvent, ReactNode } from 'react';
+import { IS_APP } from '../appMode';
 import type { Connections } from './api';
 
 export interface ControlProps {
@@ -96,12 +97,25 @@ export function ConnectionsPanel({ connections, footer }: { connections: Connect
   return (
     <section className="p-connections" aria-label="Conexiones">
       <h2>Conexiones</h2>
-      <ConnectionRow label="Inteligencia artificial" ok={connections.ai}>
-        Añade <code>ANTHROPIC_API_KEY</code> al archivo <code>.env</code> y reinicia el asistente. Hasta entonces las lecciones con IA no estarán disponibles.
-      </ConnectionRow>
-      <ConnectionRow label="Mereb" ok={connections.mereb}>
-        Añade <code>MEREB_URL</code>, <code>MEREB_USER</code> y <code>MEREB_PASSWORD</code> al archivo <code>.env</code>. Mientras tanto puedes añadir las tareas a mano.
-      </ConnectionRow>
+      {IS_APP ? (
+        <>
+          <ConnectionRow label="Inteligencia artificial" ok={connections.ai}>
+            Opcional. Pega tu clave de IA en Ajustes → App. Sin ella, las lecciones son ejemplos sencillos.
+          </ConnectionRow>
+          <ConnectionRow label="Mereb" ok={connections.mereb}>
+            Guarda la dirección de Mereb en Ajustes → App y trae la agenda con «Importar agenda (PDF)».
+          </ConnectionRow>
+        </>
+      ) : (
+        <>
+          <ConnectionRow label="Inteligencia artificial" ok={connections.ai}>
+            Añade <code>ANTHROPIC_API_KEY</code> al archivo <code>.env</code> y reinicia el asistente. Hasta entonces las lecciones con IA no estarán disponibles.
+          </ConnectionRow>
+          <ConnectionRow label="Mereb" ok={connections.mereb}>
+            Añade <code>MEREB_URL</code>, <code>MEREB_USER</code> y <code>MEREB_PASSWORD</code> al archivo <code>.env</code>. Mientras tanto puedes añadir las tareas a mano.
+          </ConnectionRow>
+        </>
+      )}
       {footer}
     </section>
   );

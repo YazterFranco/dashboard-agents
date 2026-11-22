@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { SUBJECTS, addDays, mondayOf, weekDays, weekdayOf, workDateOf, type IsoDate, type Task } from '@lucca/shared';
 import { weekRange } from '../i18n';
 import { AgendaImport, importSummary } from './AgendaImport';
+import { checkPdf } from './pdfFile';
+import { IS_APP } from '../appMode';
 import { ApiError, type AgendaPreviewResponse, type ParentApi, type TaskBody } from './api';
 import { FormError, GENERIC_ERROR, NETWORK_ERROR, NETWORK_SAVE_ERROR } from './fields';
 import { TaskForm } from './TaskForm';
@@ -55,16 +57,6 @@ function describe(err: unknown): string | null {
   const field = Object.values(err.fields)[0];
   if (field) return field;
   return err.status === 404 || err.status === 409 ? err.message : GENERIC_ERROR;
-}
-
-const MAX_PDF_BYTES = 5 * 1024 * 1024;
-
-/** Lo que se puede saber del archivo antes de enviarlo; null si parece un PDF razonable. */
-function checkPdf(file: File): string | null {
-  const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
-  if (!isPdf) return 'Elige el PDF de la agenda (un archivo que termina en .pdf).';
-  if (file.size > MAX_PDF_BYTES) return 'El PDF pesa más de 5 MB';
-  return null;
 }
 
 function Chevron({ direction }: { direction: 'left' | 'right' }) {
@@ -148,6 +140,23 @@ export function TasksTab({ tasks, today, onChanged, api, onPreview }: Props) {
     },
   });
 
+  // App de Android: un PDF compartido con Lucca («Abrir con» / «Compartir») se abre aquí solo, tras el PIN.
+  const readAgendaRef = useRef<(file: File | undefined) => Promise<void>>(async () => {});
+  useEffect(() => {
+    if (!IS_APP) return;
+    const take = async () => {
+      const [{ takeShared }, { indexedDbStore }] = await Promise.all([import('../app/sharedPdf'), import('../app/storage')]);
+      const shared = await takeShared(indexedDbStore());
+      if (!shared) return;
+      if ('error' in shared) setAgendaError(shared.error);
+      else await readAgendaRef.current(shared.file);
+    };
+    void take().catch(() => {});
+    const onShared = () => void take().catch(() => {});
+    window.addEventListener('lucca:shared-pdf', onShared);
+    return () => window.removeEventListener('lucca:shared-pdf', onShared);
+  }, []);
+
   async function readAgenda(file: File | undefined) {
     if (fileInput.current) fileInput.current.value = '';
     if (!file) return;
@@ -169,6 +178,8 @@ export function TasksTab({ tasks, today, onChanged, api, onPreview }: Props) {
       setAgendaBusy(false);
     }
   }
+
+  readAgendaRef.current = readAgenda;
 
   function agendaImported(result: Parameters<typeof importSummary>[0], dueDates: IsoDate[]) {
     setAgenda(null);

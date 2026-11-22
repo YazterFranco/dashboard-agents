@@ -8,12 +8,30 @@ import wasmUrl from 'sql.js/dist/sql-wasm.wasm?url';
 import { startBackend } from './backend';
 import { cookieJar, localFetch } from './fetchShim';
 import { indexedDbStore } from './storage';
+import { watchSharedPdf } from './sharedPdf';
+import { setNativeVoice } from '../nativeVoice';
+
+/** En el teléfono: el motor de voz del sistema y los idiomas que tiene instalados. */
+async function prepareVoice(): Promise<void> {
+  const { Capacitor } = await import('@capacitor/core');
+  if (!Capacitor.isNativePlatform()) return;
+  const { TextToSpeech } = await import('@capacitor-community/text-to-speech');
+  let languages: string[] = [];
+  try {
+    languages = (await TextToSpeech.getSupportedLanguages()).languages;
+  } catch {
+    languages = [];
+  }
+  setNativeVoice(TextToSpeech, languages);
+}
 
 export async function bootApp(): Promise<void> {
   // El código del servidor usa Buffer (cuerpo del PDF, claves): en el WebView no existe.
   (globalThis as { Buffer?: unknown }).Buffer ??= Buffer;
   const sql = await initSqlJs({ locateFile: () => wasmUrl });
-  const backend = await startBackend({ store: indexedDbStore(), sql });
+  await prepareVoice().catch(() => {});
+  const store = indexedDbStore();
+  const backend = await startBackend({ store, sql });
   let session: Storage | null = null;
   try {
     session = window.sessionStorage;
@@ -27,4 +45,6 @@ export async function bootApp(): Promise<void> {
     if (document.visibilityState === 'hidden') flush();
   });
   window.addEventListener('pagehide', flush);
+  // PDF de la agenda compartido desde otra app (Descargas, Chrome…): no debe impedir que la app abra.
+  void watchSharedPdf(store).catch(() => {});
 }

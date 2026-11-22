@@ -13,7 +13,8 @@ import { WeekScreen } from './components/WeekScreen';
 import { t } from './i18n';
 import { changedPrefs, loadPrefs, savePrefs, type Prefs } from './prefs';
 import type { ProgressResult } from './progress';
-import { createSpeaker } from './speaker';
+import { createNativeSpeaker, createSpeaker } from './speaker';
+import { nativeVoice } from './nativeVoice';
 
 const FALLBACK: Prefs = { lang: SettingsSchema.parse({}).lang, voiceMode: 'both', theme: 'dark' };
 
@@ -30,7 +31,12 @@ export function App() {
   const [prefs, setPrefs] = useState<Prefs>(() => loadPrefs(FALLBACK));
   // La velocidad de la voz la elige papá (0,7 a 1,2); mientras no llegan los ajustes se usa 0,9.
   const speechRate = state?.settings.speechRate ?? 0.9;
-  const speaker = useMemo(() => createSpeaker(typeof speechSynthesis === 'undefined' ? undefined : speechSynthesis, speechRate), [speechRate]);
+  const speaker = useMemo(() => {
+    // En Android el WebView no trae voz: se usa el motor de texto a voz del sistema.
+    const native = nativeVoice();
+    if (native) return createNativeSpeaker(native.tts, speechRate, native.languages);
+    return createSpeaker(typeof speechSynthesis === 'undefined' ? undefined : speechSynthesis, speechRate);
+  }, [speechRate]);
   const firstLoad = useRef(true);
   /** El último estado, para calcular cuántas estrellas ganó un avance sin depender del orden de los renders. */
   const stateRef = useRef<KidState | null>(null);

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pruebas de la app de Android · Asistente de Lucca</title>
+<style>
+:root{color-scheme:light dark;--bg:#0f1626;--card:#1b2436;--ink:#f4f6fb;--muted:#a9b4c8;--line:#4a5670;--ok:#8be28b;--bad:#ff9b8f;--accent:#c6f432}
+@media (prefers-color-scheme:light){:root{--bg:#eef1f6;--card:#fff;--ink:#101828;--muted:#4a5568;--line:#b8c2d2;--ok:#166534;--bad:#b42318;--accent:#3b2ee0}}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:24px 16px 64px}
+h1{margin:0 0 4px;font-size:28px}
+.sum{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 24px}
+.sum span{padding:4px 12px;border-radius:999px;border:2px solid var(--line);font-weight:700}
+article{background:var(--card);border-radius:20px;padding:16px;margin:0 0 16px;border:2px solid var(--line)}
+article.bad{border-color:var(--bad)}
+article header{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+article h2{margin:0;font-size:18px;flex:1 1 280px}
+.id{font:700 15px ui-monospace,monospace}
+.kind{padding:2px 10px;border-radius:999px;font-size:14px;font-weight:700;border:2px solid var(--line)}
+.kind-positivo{color:var(--ok)}.kind-negativo{color:var(--bad)}.kind-borde{color:var(--accent)}
+.res{font-weight:700}.ok .res{color:var(--ok)}.bad .res{color:var(--bad)}
+.meta{margin:4px 0 8px;color:var(--muted);font-size:14px}
+pre{white-space:pre-wrap;color:var(--bad)}
+.shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.shots a{display:block;color:var(--muted);text-decoration:none;font-size:14px}
+.shots img{width:100%;height:auto;border-radius:10px;border:2px solid var(--line);display:block;margin-bottom:4px}
+</style></head><body><main>
+<h1>Pruebas funcionales · Asistente de Lucca</h1>
+<p>Navegador real (Chromium) contra el servidor real, con el reloj fijo en el miércoles 18 de noviembre de 2026 (mediodía, Panamá).</p>
+<div class="sum"><span>11 escenarios</span><span style="color:var(--ok)">11 pasaron</span><span style="color:var(--muted)">0 fallaron</span><span>4 positivos</span><span>2 negativos</span><span>5 bordes</span></div>
+<article class="ok" id="X01">
+  <header><span class="id">X01</span><span class="kind kind-positivo">positivo</span><h2>Primera vez: la app abre la guía, se crea el PIN, se importa la agenda y Lucca ve sus tareas</h2><span class="res">✔ pasó</span></header>
+  <p class="meta">19 comprobaciones · 1.7 s</p>
+  
+  <div class="shots"><a href="X01-1-bienvenida.jpg" target="_blank" rel="noopener"><img loading="lazy" src="X01-1-bienvenida.jpg" alt="X01 1-bienvenida"><span>1-bienvenida</span></a><a href="X01-2-como-se-usa.jpg" target="_blank" rel="noopener"><img loading="lazy" src="X01-2-como-se-usa.jpg" alt="X01 2-como-se-usa"><span>2-como-se-usa</span></a><a href="X01-3-pin.jpg" target="_blank" rel="noopener"><img loading="lazy" src="X01-3-pin.jpg" alt="X01 3-pin"><span>3-pin</span></a><a href="X01-4-mereb.jpg" target="_blank" rel="noopener"><img loading="lazy" src="X01-4-mereb.jpg" alt="X01 4-mereb"><span>4-mereb</span></a><a href="X01-5-revision-agenda.jpg" target="_blank" rel="noopener"><img loading="lazy" src="X01-5-revision-agenda.jpg" alt="X01 5-revision-agenda"><span>5-revision-agenda</span></a><a href="X01-6-ia.jpg" target="_blank" rel="noopener"><img loading="lazy" src="X01-6-ia.jpg" alt="X01 6-ia"><span>6-ia</span></a><a href="X01-7-listo.jpg" target="_blank" rel="noopener"><img loading="lazy" src="X01-7-listo.jpg" alt="X01 7-listo"><span>7-listo</span></a><a href="X01-8-lucca.jpg" target="_blank" rel="noopener"><img loading="lazy" src="X01-8-lucca.jpg" alt="X01 8-lucca"><span>8-lucca</span></a></div>
+</article>
+<article class="ok" id="X02">
+  <header><span class="id">X02</span><span class="kind kind-positivo">positivo</span><h2>Cerrar y volver a abrir la app: todo sigue guardado en el dispositivo; el área de papá pide el PIN otra vez</h2><span class="res">✔ pasó</span></header>
+  <p class="meta">7 comprobaciones · 1.9 s</p>
+  
+  <div class="shots"><a href="X02-reabierta.jpg" target="_blank" rel="noopener"><img loading="lazy" src="X02-reabierta.jpg" alt="X02 reabierta"><span>reabierta</span></a><a href="X02-pide-pin.jpg" target="_blank" rel="noopener"><img loading="lazy" src="X02-pide-pin.jpg" alt="X02 pide-pin"><span>pide-pin</span></a></div>
+</article>
+<article class="ok" id="X03">
+  <header><span class="id">X03</span><span class="kind kind-negativo">negativo</span><h2>PIN incorrecto al volver: avisa los intentos y no entra</h2><span class="res">✔ pasó</span></header>
+  <p class="meta">3 comprobaciones · 1.6 s</p>
+  
+  <div class="shots"><a href="X03-pin-incorrecto.jpg" target="_blank" rel="noopener"><img loading="lazy" src="X03-pin-incorrecto.jpg" alt="X03 pin-incorrecto"><span>pin-incorrecto</span></a></div>
+</article>
+<article class="ok" id="X04">
+  <header><span class="id">X04</span><span class="kind kind-positivo">positivo</span><h2>Ajustes → App: guardar la dirección de Mereb y la clave de IA (solo se ven los últimos 4 caracteres) y quitarla</h2><span class="res">✔ pasó</span></header>
+  <p class="meta">3 comprobaciones · 1.4 s</p>
+  
+  <div class="shots"><a href="X04-app-configurada.jpg" target="_blank" rel="noopener"><img loading="lazy" src="X04-app-configurada.jpg" alt="X04 app-configurada"><span>app-configurada</span></a></div>
+</article>
+<article class="ok" id="X05">
+  <header><span class="id">X05</span><span class="kind kind-negativo">negativo</span><h2>Una clave de IA o una dirección de Mereb mal escritas se explican junto al campo</h2><span class="res">✔ pasó</span></header>
+  <p class="meta">2 comprobaciones · 1.4 s</p>
+  
+  <div class="shots"><a href="X05-errores.jpg" target="_blank" rel="noopener"><img loading="lazy" src="X05-errores.jpg" alt="X05 errores"><span>errores</span></a></div>
+</article>
+<article class="ok" id="X06">
+  <header><span class="id">X06</span><span class="kind kind-positivo">positivo</span><h2>«Abrir Mereb» abre la página del colegio fuera de la app (allí se escribe la contraseña)</h2><span class="res">✔ pasó</span></header>
+  <p class="meta">1 comprobaciones · 0.7 s</p>
+  
+  <div class="shots"></div>
+</article>
+<article class="ok" id="X07">
+  <header><span class="id">X07</span><span class="kind kind-borde">borde</span><h2>Sin internet: Lucca abre la app, entiende una lección, practica y gana su estrella</h2><span class="res">✔ pasó</span></header>
+  <p class="meta">5 comprobaciones · 16.7 s</p>
+  
+  <div class="shots"><a href="X07-practicar-sin-internet.jpg" target="_blank" rel="noopener"><img loading="lazy" src="X07-practicar-sin-internet.jpg" alt="X07 practicar-sin-internet"><span>practicar-sin-internet</span></a><a href="X07-leccion-sin-internet.jpg" target="_blank" rel="noopener"><img loading="lazy" src="X07-leccion-sin-internet.jpg" alt="X07 leccion-sin-internet"><span>leccion-sin-internet</span></a></div>
+</article>
+<article class="ok" id="X08">
+  <header><span class="id">X08</span><span class="kind kind-borde">borde</span><h2>La guía se puede volver a abrir desde el área de papá (sin repetir el PIN) y cerrar</h2><span class="res">✔ pasó</span></header>
+  <p class="meta">2 comprobaciones · 1.2 s</p>
+  
+  <div class="shots"><a href="X08-guia-desde-papa.jpg" target="_blank" rel="noopener"><img loading="lazy" src="X08-guia-desde-papa.jpg" alt="X08 guia-desde-papa"><span>guia-desde-papa</span></a></div>
+</article>
+<article class="ok" id="X09">
+  <header><span class="id">X09</span><span class="kind kind-borde">borde</span><h2>Medidas en teléfono y tablet: sin desplazamiento lateral, controles de 44 px y textos legibles en cada paso de la guía</h2><span class="res">✔ pasó</span></header>
+  <p class="meta">12 comprobaciones · 1.4 s</p>
+  
+  <div class="shots"></div>
+</article>
+<article class="ok" id="X10">
+  <header><span class="id">X10</span><span class="kind kind-borde">borde</span><h2>Datos de dos «teléfonos» distintos no se mezclan (cada dispositivo tiene su base)</h2><span class="res">✔ pasó</span></header>
+  <p class="meta">1 comprobaciones · 1.3 s</p>
+  
+  <div class="shots"></div>
+</article>
+<article class="ok" id="X11">
+  <header><span class="id">X11</span><span class="kind kind-borde">borde</span><h2>Un cambio hecho justo antes de cambiar de pantalla y cerrar la app no se pierde</h2><span class="res">✔ pasó</span></header>
+  <p class="meta">1 comprobaciones · 1.7 s</p>
+  
+  <div class="shots"></div>
+</article>
+</main></body></html>

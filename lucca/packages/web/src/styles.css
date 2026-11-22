@@ -1048,3 +1048,20 @@ h3 {
 @media (prefers-reduced-motion: reduce) {
   .confetti span { animation: none; top: 8px; opacity: 0.9; }
 }
+
+/* Si la app no pudo abrir sus datos (raro): mensaje tranquilo y reintentar. */
+.boot-error {
+  max-width: 520px;
+  margin: 15vh auto 0;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: center;
+  color: var(--ink);
+}
+.boot-error-detail {
+  font-size: 14px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}

@@ -1,0 +1,12 @@
+{
+  "appId": "com.yazterfranco.lucca",
+  "appName": "Lucca",
+  "webDir": "dist-app",
+  "android": {
+    "backgroundColor": "#0F1626",
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "CapacitorHttp": { "enabled": false }
+  }
+}

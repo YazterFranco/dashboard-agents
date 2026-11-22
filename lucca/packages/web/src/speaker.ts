@@ -118,3 +118,72 @@ export function createSpeaker(synth: SpeechSynthesis | undefined, rate = 0.9): S
 
 export const shouldAutoSpeak = (mode: VoiceMode): boolean => mode === 'audio' || mode === 'both';
 export const showSpeakerButtons = (mode: VoiceMode): boolean => mode === 'audio' || mode === 'both';
+
+/** Lo que se usa del plugin de voz nativo (Android no trae voz en su WebView). */
+export interface NativeTts {
+  speak(options: { text: string; lang?: string; rate?: number }): Promise<void>;
+  stop(): Promise<void>;
+  addListener?(event: 'onRangeStart', listener: (info: { start: number; end: number; spokenWord: string }) => void): Promise<{ remove(): Promise<void> }>;
+}
+
+/**
+ * Voz nativa de Android (motor de texto a voz del sistema) con la misma interfaz que la del navegador:
+ * fragmento a fragmento, cada uno en su idioma, y aviso de cada palabra para resaltarla.
+ * `languages` son las etiquetas que el teléfono tiene instaladas (vacía = no se sabe: se intenta igual).
+ */
+export function createNativeSpeaker(tts: NativeTts, rate = 0.9, languages: readonly string[] = []): Speaker {
+  let speaking = false;
+  let generation = 0;
+  let current: { index: number; onWord?: SpeakHandlers['onWord']; mine: number } | null = null;
+  void tts.addListener?.('onRangeStart', (info) => {
+    if (current && current.mine === generation) current.onWord?.(current.index, info.start, info.end - info.start);
+  });
+  const voices = languages.map((lang) => ({ lang, name: lang }));
+  const tagFor = (lang: Lang): string => (voices.length ? (pickVoice(voices, lang)?.lang ?? FALLBACK_TAG[lang]) : FALLBACK_TAG[lang]);
+
+  const stop = (): void => {
+    generation++;
+    speaking = false;
+    current = null;
+    void tts.stop().catch(() => {});
+  };
+
+  return {
+    available(lang) {
+      return voices.length === 0 || pickVoice(voices, lang) !== null;
+    },
+    get speaking() {
+      return speaking;
+    },
+    stop,
+    speak(segments, handlers = {}) {
+      stop();
+      const mine = generation;
+      const playable = segments.map((segment, index) => ({ segment, index })).filter(({ segment }) => segment.text.trim() && this.available(segment.lang));
+      if (playable.length === 0) {
+        handlers.onEnd?.();
+        return;
+      }
+      speaking = true;
+      void (async () => {
+        for (const { segment, index } of playable) {
+          if (mine !== generation) return;
+          current = { index, onWord: handlers.onWord, mine };
+          try {
+            await tts.speak({ text: segment.text, lang: tagFor(segment.lang), rate });
+          } catch {
+            if (mine === generation) speaking = false;
+            return;
+          }
+          if (mine !== generation) return;
+          handlers.onSegmentEnd?.(index);
+        }
+        if (mine === generation) {
+          speaking = false;
+          current = null;
+          handlers.onEnd?.();
+        }
+      })();
+    },
+  };
+}

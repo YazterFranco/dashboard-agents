@@ -1,9 +1,10 @@
+import { navigate } from '../nav';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import './parent.css';
 import { parentApi, withExpiry, type Connections, type ParentApi } from './api';
 import { Dashboard } from './Dashboard';
 import { LoginForm } from './LoginForm';
-import { SetupForm } from './SetupForm';
+import { Welcome } from '../onboarding/Welcome';
 
 type Phase =
   | { kind: 'loading' }
@@ -76,7 +77,15 @@ export function ParentApp({ api: base = parentApi }: { api?: ParentApi }) {
         </main>
       );
     case 'setup':
-      return <SetupForm api={api} connections={phase.connections} onDone={() => void load()} />;
+      // Primera vez: la guía de uso, que incluye crear el PIN, conectar Mereb y (si se quiere) la IA.
+      return (
+        <Welcome
+          api={api}
+          setupDone={false}
+          connections={phase.connections}
+          onFinish={(dest) => (dest === 'kid' ? navigate('/') : void load())}
+        />
+      );
     case 'login':
       return <LoginForm key={phase.stamp} api={api} retryAfterSeconds={phase.retryAfterSeconds} notice={phase.notice} onSuccess={() => void load()} />;
     case 'panel':

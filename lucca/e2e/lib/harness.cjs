@@ -6,7 +6,8 @@ const { mkdirSync, readdirSync, rmSync, writeFileSync, statSync } = require('nod
 const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '../..');
-const OUT = path.join(ROOT, 'docs/pruebas-funcionales');
+// Carpeta de capturas e informe; la suite de la app usa otra (LUCCA_E2E_OUT) para no borrar la de la web.
+const OUT = process.env.LUCCA_E2E_OUT ? path.resolve(process.env.LUCCA_E2E_OUT) : path.join(ROOT, 'docs/pruebas-funcionales');
 /** Miércoles 18 de noviembre de 2026, mediodía en Panamá (UTC-5): todas las capturas se repiten igual cualquier día. */
 const FAKE_NOW = '2026-11-18T17:00:00Z';
 const KINDS = ['positivo', 'negativo', 'borde'];
@@ -188,7 +189,7 @@ function report() {
     .join('\n');
   const html = `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Pruebas funcionales · Asistente de Lucca</title>
+<title>${esc(process.env.LUCCA_E2E_TITLE || 'Pruebas funcionales · Asistente de Lucca')}</title>
 <style>
 :root{color-scheme:light dark;--bg:#0f1626;--card:#1b2436;--ink:#f4f6fb;--muted:#a9b4c8;--line:#4a5670;--ok:#8be28b;--bad:#ff9b8f;--accent:#c6f432}
 @media (prefers-color-scheme:light){:root{--bg:#eef1f6;--card:#fff;--ink:#101828;--muted:#4a5568;--line:#b8c2d2;--ok:#166534;--bad:#b42318;--accent:#3b2ee0}}
@@ -220,7 +221,7 @@ ${rows}
   const bytes = readdirSync(OUT)
     .filter((f) => f.endsWith('.jpg'))
     .reduce((n, f) => n + statSync(path.join(OUT, f)).size, 0);
-  console.log(`\n${generated.passed}/${generated.total} escenarios pasaron · capturas: ${(bytes / 1e6).toFixed(1)} MB · informe: docs/pruebas-funcionales/index.html`);
+  console.log(`\n${generated.passed}/${generated.total} escenarios pasaron · capturas: ${(bytes / 1e6).toFixed(1)} MB · informe: ${path.relative(ROOT, path.join(OUT, "index.html"))}`);
   return failed.length === 0 ? 0 : 1;
 }
 

@@ -40,9 +40,15 @@ describe('ParentApp', () => {
     expect(screen.getByText('Un momento…')).toBeTruthy();
   });
 
-  it('shows the setup when nothing is configured', async () => {
+  it('shows the welcome guide when nothing is configured, and the setup after the two intro steps', async () => {
     render(<ParentApp api={fakeApi({ status: async () => status({ setupDone: false }) })} />);
-    expect(await screen.findByRole('heading', { name: 'Configura el asistente de Lucca' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: '¡Bienvenido al asistente de tareas de Lucca!' })).toBeTruthy();
+    expect(screen.getByText('Paso 1 de 6')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Empezar' }));
+    expect(screen.getByRole('heading', { name: 'Cómo se usa' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
+    expect(screen.getByRole('heading', { name: 'Configura el asistente de Lucca' })).toBeTruthy();
+    expect(screen.getByText('Paso 3 de 6')).toBeTruthy();
   });
 
   it('asks for the PIN when it is configured but there is no session', async () => {
@@ -111,13 +117,22 @@ describe('ParentApp', () => {
     expect(await screen.findByLabelText('PIN')).toBeTruthy();
   });
 
-  it('after finishing the setup it shows the panel', async () => {
+  it('after the setup the guide continues (Mereb, IA, listo) and ends in the panel', async () => {
     const statusFn = vi.fn().mockResolvedValueOnce(status({ setupDone: false })).mockResolvedValue(status({ authenticated: true }));
     render(<ParentApp api={fakeApi({ status: statusFn })} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Empezar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
     fireEvent.change(await screen.findByLabelText('PIN'), { target: { value: '482913' } });
     fireEvent.change(screen.getByLabelText('Repite el PIN'), { target: { value: '482913' } });
     fireEvent.change(screen.getByLabelText('Nombre del niño'), { target: { value: 'Lucca' } });
     fireEvent.click(screen.getByRole('button', { name: 'Terminar configuración' }));
+    expect(await screen.findByRole('heading', { name: 'Conecta la agenda de Mereb' })).toBeTruthy();
+    expect(screen.getByText(/Exportar actividades/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Lo hago después' }));
+    expect(screen.getByRole('heading', { name: /Lecciones con IA/ })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Ahora no' }));
+    expect(screen.getByRole('heading', { name: '¡Todo listo!' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Ir al área de papá' }));
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Área de papá' })).toBeTruthy());
   });
 

@@ -7,6 +7,58 @@ Lucca nunca escribe instrucciones a una IA. Está en español e inglés, con mod
 La propuesta completa (por qué, qué, cómo y las tareas) está en
 [`../openspec/changes/add-lucca-homework-assistant/`](../openspec/changes/add-lucca-homework-assistant/).
 
+## App de Android (APK)
+
+Además de la versión web con servidor en casa, Lucca es una **app de Android** que funciona sola, como los demás
+juegos: se instala en la tablet o el teléfono y **no necesita computadora ni servidor**. Todo lo que hace el servidor
+(base de datos, PIN de papá, lector de la agenda en PDF, lecciones, repaso, práctica) corre dentro del propio
+dispositivo; los datos se guardan en el almacenamiento privado de la app. Solo sale a internet para la IA (si pones
+una clave) y para abrir Mereb.
+
+**Instalar.** Copia `lucca.apk` al dispositivo y ábrelo (Android pedirá permitir «instalar apps de origen
+desconocido» para el navegador o el gestor de archivos). Las versiones nuevas, firmadas con la misma llave, se
+instalan encima **sin perder los datos**.
+
+**La primera vez** se abre una **guía de uso**: qué es el asistente, cómo lo usan Lucca y papá, crear el **PIN de
+papá**, **conectar Mereb** y, si quieres, la **clave de IA**. Se puede volver a ver en el área de papá → «Guía de uso».
+
+**Mereb.** Mereb no ofrece una conexión oficial para otras apps, así que Lucca **no guarda tu contraseña de Mereb**:
+1. En la guía (o en Ajustes → App) guarda la dirección de Mereb del colegio y pulsa **Abrir Mereb**: se abre en el
+   navegador del teléfono, donde entras con tu usuario y contraseña de siempre.
+2. En la **Agenda**, pulsa **Exportar actividades** (se descarga un PDF).
+3. Abre ese PDF **con Lucca** (desde Descargas: *Abrir con* o *Compartir* → Lucca). La app pide el PIN y muestra la
+   revisión de la agenda. También puedes ir a Tareas → **Importar agenda (PDF)** y elegir el archivo.
+
+**Clave de IA (opcional).** En la guía o en Ajustes → App. Se guarda solo en el dispositivo y se muestran sus últimos
+4 caracteres. Sin clave, las lecciones son ejemplos sencillos; con clave, cada tarea tiene la suya (con el tope
+mensual de gasto de Ajustes).
+
+**Voz.** En Android se usa el motor de texto a voz del sistema (instala las voces de español e inglés en
+Ajustes del teléfono → Accesibilidad → Texto a voz, si no están).
+
+**Compilar el APK.** Requiere Node 22, JDK 17 o superior y el SDK de Android (`ANDROID_HOME`):
+
+```bash
+npm run apk
+```
+
+Sin llave sale un APK de prueba (`dist/lucca.apk`). Para el APK firmado, la llave va **fuera del repositorio**:
+
+```bash
+LUCCA_KEYSTORE=/ruta/lucca.jks LUCCA_KEYSTORE_PASSWORD='…' LUCCA_VERSION_CODE=2 LUCCA_VERSION_NAME=1.0.1 npm run apk
+```
+
+En GitHub: *Actions → «Lucca · APK de Android» → Run workflow*. Con los secretos `LUCCA_KEYSTORE_BASE64`
+(`base64 -w0 lucca.jks`) y `LUCCA_KEYSTORE_PASSWORD` lo firma con tu llave y lo publica en *Releases*. **Guarda la
+llave y su contraseña en un lugar seguro**: sin ellas no se puede actualizar la app sin desinstalarla (y desinstalar
+borra los datos de Lucca).
+
+**Cómo está hecha.** `vite build --mode app` empaqueta la web con el servidor dentro: las mismas rutas
+(`packages/server/src/routes.ts`) sobre un Fastify mínimo (`local/miniFastify.ts`), SQLite en WebAssembly (sql.js)
+guardado en IndexedDB, y equivalentes de navegador para `node:crypto` (mismos resultados: el PIN se comprueba igual).
+Capacitor 7 la envuelve (`packages/web/android`), con un plugin propio para recibir el PDF compartido
+(`SharedPdfPlugin.java`). Las pruebas de la API se ejecutan dos veces: contra el servidor y contra este motor.
+
 ## Qué funciona hoy (fase 1)
 
 - Pantalla **Mi semana** en estilo Bento (modo oscuro y claro): días de lunes a viernes, tareas del día,

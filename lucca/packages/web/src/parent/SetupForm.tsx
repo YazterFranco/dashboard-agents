@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { PinSchema, SettingsFields, type Lang, type Theme } from '@lucca/shared';
 import { ApiError, type Connections, type ParentApi } from './api';
 import { Choice, ConnectionsPanel, Field, FormError, GENERIC_ERROR, NETWORK_SAVE_ERROR, keepFocus } from './fields';
@@ -24,10 +24,12 @@ interface Props {
   api: ParentApi;
   connections: Connections;
   onDone(): void;
+  /** Dentro de la guía de bienvenida: el indicador «Paso 3 de 6» sobre el título. */
+  stepLabel?: ReactNode;
 }
 
 /** Primera configuración: PIN, nombre, grado, idioma y tema. Las conexiones se explican pero nunca impiden terminar. */
-export function SetupForm({ api, connections, onDone }: Props) {
+export function SetupForm({ api, connections, onDone, stepLabel }: Props) {
   const [pin, setPin] = useState('');
   const [pin2, setPin2] = useState('');
   const [name, setName] = useState('');
@@ -117,6 +119,7 @@ export function SetupForm({ api, connections, onDone }: Props) {
 
   return (
     <main className="p-shell p-narrow">
+      {stepLabel}
       <h1>Configura el asistente de Lucca</h1>
       <p className="p-lead">Solo se hace una vez. El PIN protege esta área; Lucca no la ve.</p>
       <form className="p-card p-form" onSubmit={submit} noValidate>

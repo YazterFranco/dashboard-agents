@@ -1,0 +1,87 @@
+# APK de Android de Lucca: la app lleva dentro el servidor (sql.js + las mismas rutas) y funciona sin computadora.
+# Se ejecuta a mano: Actions → «Lucca · APK de Android» → Run workflow.
+#
+# Con la llave fija (secretos LUCCA_KEYSTORE_BASE64 y LUCCA_KEYSTORE_PASSWORD) cada versión se firma igual y se
+# instala encima de la anterior sin perder los datos de Lucca. Sin la llave sale un APK de prueba (no actualizable).
+name: Lucca · APK de Android
+
+on:
+  workflow_dispatch:
+    inputs:
+      novedades:
+        description: 'Novedades de esta versión (opcional)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: lucca-apk
+  cancel-in-progress: false
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: lucca } }
+    env:
+      HAS_KEY: ${{ secrets.LUCCA_KEYSTORE_BASE64 != '' && secrets.LUCCA_KEYSTORE_PASSWORD != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Número de versión
+        # La primera versión se compiló a mano como 1.0.0 (código 1): las de aquí siguen por encima.
+        run: |
+          echo "LUCCA_VERSION_CODE=$((GITHUB_RUN_NUMBER + 1))" >> "$GITHUB_ENV"
+          echo "LUCCA_VERSION_NAME=1.0.$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: lucca/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - run: npm ci --no-audit --no-fund
+
+      - name: Pruebas (incluye las de la API contra el motor de la app)
+        run: npm test
+
+      - name: Restaurar la llave de firma
+        if: env.HAS_KEY == 'true'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.LUCCA_KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/lucca.jks"
+          echo "LUCCA_KEYSTORE=$RUNNER_TEMP/lucca.jks" >> "$GITHUB_ENV"
+
+      - name: Compilar el APK
+        env:
+          LUCCA_KEYSTORE_PASSWORD: ${{ secrets.LUCCA_KEYSTORE_PASSWORD }}
+        run: |
+          if [ "$HAS_KEY" != "true" ]; then
+            echo "::warning::Faltan los secretos LUCCA_KEYSTORE_BASE64 y LUCCA_KEYSTORE_PASSWORD: este APK es de prueba y no se instala encima del firmado."
+          fi
+          scripts/build-apk.sh
+          "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner" verify --print-certs dist/lucca.apk | head -3
+          rm -f "$RUNNER_TEMP/lucca.jks"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lucca-apk
+          path: lucca/dist/lucca.apk
+
+      - name: Publicar en Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NOVEDADES: ${{ inputs.novedades }}
+        run: |
+          TAG="lucca-v$LUCCA_VERSION_NAME"
+          cp dist/lucca.apk "dist/lucca-$LUCCA_VERSION_NAME.apk"
+          NOTES="APK de Android del asistente de Lucca, versión $LUCCA_VERSION_NAME. ${NOVEDADES:-}"
+          gh release create "$TAG" "dist/lucca-$LUCCA_VERSION_NAME.apk" --target "$GITHUB_SHA" --title "Lucca $LUCCA_VERSION_NAME" --notes "$NOTES" \
+            || gh release upload "$TAG" "dist/lucca-$LUCCA_VERSION_NAME.apk" --clobber

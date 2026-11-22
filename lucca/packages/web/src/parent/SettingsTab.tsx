@@ -1,6 +1,8 @@
+import { IS_APP } from '../appMode';
+import { AiKeyForm, MerebLink, MerebSteps } from './AppConnections';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { PinSchema, SettingsFields, type Lang, type Settings, type Theme, type VoiceMode } from '@lucca/shared';
-import { ApiError, type AiSummary, type Connections, type ParentApi } from './api';
+import { ApiError, type AiSummary, type AppConfigView, type Connections, type ParentApi } from './api';
 import { Choice, ConnectionsPanel, Field, FormError, GENERIC_ERROR, NETWORK_SAVE_ERROR } from './fields';
 import { clock } from './LoginForm';
 
@@ -25,16 +27,41 @@ interface Props {
   ai?: AiSummary;
   onSaved(): void;
   api: ParentApi;
+  /** La app guardó la clave de IA o la dirección de Mereb: el resumen de conexiones cambia. */
+  onConnectionsChanged?(): void;
 }
 
 const usd = (n: number) => `US$ ${n.toFixed(2).replace('.', ',')}`;
 const MODE: Record<AiSummary['mode'], string> = {
   live: 'Con IA (Claude). Las lecciones nuevas se preparan al abrirlas.',
-  recorded: 'Lecciones grabadas (modo de prueba, sin coste).',
+  recorded: IS_APP ? 'Lecciones de ejemplo, sin coste. Con una clave de IA (arriba) cada tarea tiene la suya.' : 'Lecciones grabadas (modo de prueba, sin coste).',
   off: 'Sin IA: falta ANTHROPIC_API_KEY en el archivo .env. Lucca verá «Esta tarea la vemos con papá».',
 };
 
 /** Modo de la IA, gasto del mes frente al tope y lecciones que salieron de respaldo. */
+/** Solo en la app: Mereb y la clave de IA se guardan en el dispositivo (en el servidor de casa van en el .env). */
+function AppSettings({ api, onChanged }: { api: ParentApi; onChanged?(): void }) {
+  const [config, setConfig] = useState<AppConfigView | null>(null);
+  useEffect(() => {
+    api.appConfig().then(setConfig, () => {});
+  }, [api]);
+  if (!config) return null;
+  const saved = (next: AppConfigView) => {
+    setConfig(next);
+    onChanged?.();
+  };
+  return (
+    <section className="p-card" aria-labelledby="app-title">
+      <h2 id="app-title">App</h2>
+      <h3 className="p-subtitle">Agenda de Mereb</h3>
+      <MerebSteps />
+      <MerebLink api={api} config={config} onSaved={saved} />
+      <h3 className="p-subtitle">Lecciones con IA (opcional)</h3>
+      <AiKeyForm api={api} config={config} onSaved={saved} />
+    </section>
+  );
+}
+
 function AiPanel({ ai }: { ai: AiSummary }) {
   const pct = ai.capUsd > 0 ? Math.min(100, Math.round((ai.monthCostUsd / ai.capUsd) * 100)) : 0;
   return (
@@ -70,9 +97,10 @@ function AiPanel({ ai }: { ai: AiSummary }) {
   );
 }
 
-export function SettingsTab({ settings, connections, ai, onSaved, api }: Props) {
+export function SettingsTab({ settings, connections, ai, onSaved, api, onConnectionsChanged }: Props) {
   return (
     <div className="p-tab">
+      {IS_APP ? <AppSettings api={api} onChanged={onConnectionsChanged} /> : null}
       <SettingsForm settings={settings} onSaved={onSaved} api={api} />
       <div className="p-card">
         <ConnectionsPanel connections={connections} />
